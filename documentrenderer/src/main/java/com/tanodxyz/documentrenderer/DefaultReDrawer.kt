@@ -4,7 +4,7 @@ import android.graphics.Canvas
 import java.util.*
 import java.util.concurrent.locks.LockSupport
 
-class DefaultReDrawer() : ReDrawer, Runnable {
+class DefaultReDrawer : ReDrawer, Runnable {
     @Volatile
     private var rendererState: RendererState = RendererState.DEAD
     private var thread: Thread? = null

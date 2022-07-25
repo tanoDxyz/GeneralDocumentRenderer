@@ -4,10 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.util.AttributeSet
-import android.view.MotionEvent
-import android.view.SurfaceHolder
-import android.view.SurfaceView
-import android.view.View
+import android.view.*
 import kotlin.concurrent.thread
 
 class DocumentRenderingView @JvmOverloads constructor(
@@ -69,7 +66,6 @@ class DocumentRenderingView @JvmOverloads constructor(
         canvas?.apply {
             super.draw(canvas)
         }
-        println("Bako: frame Drawwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww")
     }
     
 }
