@@ -6,8 +6,9 @@ import com.tanodxyz.documentrenderer.page.DocumentPage
 
 interface DocumentDataLoader {
     fun loadDocumentMeta(): HashMap<String, String>
-    fun loadDocumentCompletly(): Document
+    fun loadDocument(withPages: Boolean = false): Document
     fun loadPage(position: Int): DocumentPage
     fun loadNextPage(): DocumentPage
+    fun loadPreviousPage(): DocumentPage
     fun close()
 }
