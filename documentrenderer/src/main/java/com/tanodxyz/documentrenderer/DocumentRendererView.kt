@@ -12,6 +12,8 @@ import kotlin.math.absoluteValue
 open class DocumentRendererView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr), MovementAndZoomHandler, View.OnTouchListener {
+    private var bottomEdgeScroll: Boolean = false
+    private var topEdgeScroll: Boolean = false
     var enableAntialiasing = true
     var nightMode = false
     var pageBackColor = Color.WHITE
@@ -31,6 +33,9 @@ open class DocumentRendererView @JvmOverloads constructor(
     protected var currentOffsetX = 0F
     protected var currentOffsetY = 0F
 
+    protected var enabledOverScrollTop = true
+    protected var enabledOverScrollBottom = true
+
     var swipeHorizontal = false
     var swipeVertical = true
     var currentPage = 0
@@ -41,6 +46,7 @@ open class DocumentRendererView @JvmOverloads constructor(
 
     private var topVisible = false
     private var bottomVisible = false
+    private lateinit var animationManager: AnimationManager
 
     init {
         init()
@@ -52,7 +58,8 @@ open class DocumentRendererView @JvmOverloads constructor(
         pageCorners = fourDp.toFloat()
         setupPagePaintObject()
         setOnTouchListener(this)
-        dragPinchManager = DragPinchManager(this.context, this)
+        animationManager = AnimationManager(this)
+        dragPinchManager = DragPinchManager(this.context, this, animationManager)
     }
 
     private fun setupPagePaintObject() {
@@ -149,13 +156,31 @@ open class DocumentRendererView @JvmOverloads constructor(
             val delta = absCurrentY - absRecentY
             var scrollPosY = offsetY
             if (offsetY > 0) {
-                scrollPosY = 0F
+                if (enabledOverScrollTop) {
+                    topEdgeScroll = true
+                    val halfHeight = (height / 2F)
+                    scrollPosY = if (offsetY > halfHeight) {
+                        halfHeight
+                    } else {
+                        offsetY
+                    }
+                } else {
+                    currentOffsetY = 0F
+                }
             } else if (offsetY < 0) {
                 lastPageBounds.top -= delta
                 lastPageBounds.bottom -= delta
                 if (isPageVisibleOnScreen(lastPageBounds)) {
                     if (lastPageBounds.bottom < height) {
-                        scrollPosY += (height - (lastPageBounds.bottom + pageMargins.bottom))
+                        if (enabledOverScrollBottom) {
+                            val halfHeight = (height / 2F)
+                            bottomEdgeScroll = true
+                            scrollPosY = if(pb.bottom > halfHeight) {
+
+                            }
+                        } else {
+                            scrollPosY += (height - (lastPageBounds.bottom + pageMargins.bottom))
+                        }
                     }
                 }
             }
@@ -202,6 +227,14 @@ open class DocumentRendererView @JvmOverloads constructor(
         moveTo(deltaX, deltaY)
     }
 
+    override fun moveToTopWithAnimation(startY: Float) {
+        animation
+    }
+
+    override fun getBottomBounds(): RectF {
+        return documentPages[documentPages.count() - 1].pageBounds
+    }
+
     override fun getCurrentX(): Float {
         return currentOffsetX
     }
@@ -214,15 +247,30 @@ open class DocumentRendererView @JvmOverloads constructor(
 
     }
 
+    override fun setCurrentY(y: Float) {
+        this.currentOffsetY = y
+    }
+
     override fun onScrollStart(direction: DragPinchManager.ScrollDirection) {
+        if (topEdgeScroll && enabledOverScrollTop) {
+            topEdgeScroll = false
+        }
+        if (bottomEdgeScroll && enabledOverScrollBottom) {
+            bottomEdgeScroll = false
+        }
     }
 
 
     override fun onScrollEnd() {
+        if (topEdgeScroll && enabledOverScrollTop) {
+            animationManager.startYAnimation(currentOffsetY, 0F)
+        }
+        if (bottomEdgeScroll && enabledOverScrollBottom) {
+            animationManager.startYAnimation(currentOffsetY, (height + pageMargins.bottom))
+        }
     }
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
         return dragPinchManager.onTouchEvent(event)
     }
-
 }

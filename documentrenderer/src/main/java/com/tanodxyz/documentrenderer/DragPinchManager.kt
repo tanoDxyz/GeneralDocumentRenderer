@@ -1,6 +1,7 @@
 package com.tanodxyz.documentrenderer
 
 import android.content.Context
+import android.os.Build
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
@@ -8,10 +9,10 @@ import android.view.ScaleGestureDetector
 class DragPinchManager(
     context: Context,
     private val movementAndZoomHandler: MovementAndZoomHandler,
+    private val animationManager: AnimationManager
 ) :
     GestureDetector.SimpleOnGestureListener(), ScaleGestureDetector.OnScaleGestureListener {
 
-    private val animationManager = AnimationManager(movementAndZoomHandler)
     private val gestureDetector = GestureDetector(context, this)
     private val scaleGestureDetector = ScaleGestureDetector(context, this)
 
@@ -85,8 +86,8 @@ class DragPinchManager(
             else ScrollDirection.Downward
         }
         scrolling = true
-        movementAndZoomHandler.scrollTo(currentX, currentY,scrollDirection)
         movementAndZoomHandler.onScrollStart(scrollDirection)
+        movementAndZoomHandler.scrollTo(currentX, currentY,scrollDirection)
         return true
     }
 

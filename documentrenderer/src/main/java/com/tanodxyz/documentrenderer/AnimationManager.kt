@@ -8,7 +8,7 @@ import android.graphics.PointF
 import android.view.animation.DecelerateInterpolator
 
 
-internal class AnimationManager(private val movementAndZoomHandler: MovementAndZoomHandler) {
+class AnimationManager(private val movementAndZoomHandler: MovementAndZoomHandler) {
     private var valueAnimator: ValueAnimator? = null
 
     //    private val scroller: OverScroller
