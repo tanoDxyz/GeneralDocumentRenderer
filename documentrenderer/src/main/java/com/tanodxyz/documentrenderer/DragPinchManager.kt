@@ -1,10 +1,10 @@
 package com.tanodxyz.documentrenderer
 
 import android.content.Context
-import android.os.Build
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
+import java.util.*
 
 class DragPinchManager(
     context: Context,
@@ -77,17 +77,24 @@ class DragPinchManager(
         val previousX = movementAndZoomHandler.getCurrentX()
         val currentY = previousY + (-distanceY)
         val currentX = previousX + (-distanceX)
-        val scrollDirection:ScrollDirection =
-        if(previousY <= -1) {
-            if(currentY <= previousY) ScrollDirection.Upward
-            else ScrollDirection.Downward
+        val scrollDirections = ScrollDirections()
+            if (previousY <= -1) {
+                if (currentY <= previousY) scrollDirections.top = true
+                else scrollDirections.bottom = true
+            } else {
+                if (currentY <= previousY) scrollDirections.top = true
+                else scrollDirections.bottom = true
+            }
+        if (previousX <= -1) {
+            if (currentX <= previousX) scrollDirections.left = true
+            else scrollDirections.right = true
         } else {
-            if(currentY <= previousY) ScrollDirection.Upward
-            else ScrollDirection.Downward
+            if (currentX <= previousX) scrollDirections.left = true
+            else scrollDirections.right = true
         }
         scrolling = true
-        movementAndZoomHandler.onScrollStart(scrollDirection)
-        movementAndZoomHandler.scrollTo(currentX, currentY,scrollDirection)
+        movementAndZoomHandler.onScrollStart(scrollDirections)
+        movementAndZoomHandler.scrollTo(currentX, currentY, scrollDirections)
         return true
     }
 
@@ -119,10 +126,12 @@ class DragPinchManager(
     }
 
     override fun onScaleEnd(detector: ScaleGestureDetector?) {
-
     }
 
-    enum class ScrollDirection {
-        Upward , Downward
-    }
+    data class ScrollDirections(
+        var left: Boolean = false,
+        var top: Boolean = false,
+        var right: Boolean = false,
+        var bottom: Boolean = false
+    )
 }

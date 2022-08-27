@@ -5,7 +5,6 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import android.widget.EdgeEffect
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import kotlin.math.absoluteValue
@@ -13,8 +12,10 @@ import kotlin.math.absoluteValue
 open class DocumentRendererView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr), MovementAndZoomHandler, View.OnTouchListener {
-    private var bottomEdgeScroll: Boolean = false
-    private var topEdgeScroll: Boolean = false
+    private var bottomEdgeScroll: Boolean = true
+    private var topEdgeScroll: Boolean = true
+    private var startEdgeScroll = false
+    private var endEdgeScroll = false
     var enableAntialiasing = true
     var nightMode = false
     var pageBackColor = Color.WHITE
@@ -34,10 +35,7 @@ open class DocumentRendererView @JvmOverloads constructor(
     protected var currentOffsetX = 0F
     protected var currentOffsetY = 0F
 
-    protected var enabledOverScrollTop = true
-    protected var enabledOverScrollBottom = true
 
-    var swipeHorizontal = false
     var swipeVertical = true
     var currentPage = 0
 
@@ -49,12 +47,14 @@ open class DocumentRendererView @JvmOverloads constructor(
     private var bottomVisible = false
     private lateinit var animationManager: AnimationManager
 
+    private var bottomOverscrollHeight = 0F
+
     init {
         init()
     }
 
     private fun init() {
-        val fourDp = resources.dpToPx(22).toFloat()
+        val fourDp = resources.dpToPx(12).toFloat()
         pageMargins = RectF(fourDp, fourDp, fourDp, fourDp)
         pageCorners = fourDp.toFloat()
         setupPagePaintObject()
@@ -87,12 +87,6 @@ open class DocumentRendererView @JvmOverloads constructor(
             for (i: Int in 0 until documentPages.count()) {
                 val page = documentPages[i]
                 drawPageBackground(page, contentHeight)
-                if (i == 0) {
-                    topVisible = isPageVisibleOnScreen(page.pageBounds)
-                }
-                if (i == documentPages.count() - 1) {
-                    bottomVisible = isPageVisibleOnScreen(page.pageBounds)
-                }
                 contentHeight += page.pageSize.height
             }
         }
@@ -108,15 +102,18 @@ open class DocumentRendererView @JvmOverloads constructor(
     }
 
     fun addDummyPages() {
-        for (i: Int in 0 until 9) {
+        for (i: Int in 0 until 3) {
             documentPages.add(DocumentPage())
         }
         invalidate()
     }
 
     open fun Canvas.drawPageBackground(page: DocumentPage, totalHeightConsumed: Float) {
-        val pageStartX = currentOffsetX + pageMargins.left
-        val pageStartY = currentOffsetY + pageMargins.top + totalHeightConsumed
+
+        val pageStartX =
+            if (swipeVertical) currentOffsetX + pageMargins.left else currentOffsetX + pageMargins.left + totalHeightConsumed
+        val pageStartY =
+            if (swipeVertical) currentOffsetY + pageMargins.top + totalHeightConsumed else currentOffsetY + pageMargins.top
         val pageEnd =
             if (pageFitPolicy == Document.PAGE_FIT_POLICY.FIT_WIDTH) {
                 val screenWidthInPixels = resources.displayMetrics.widthPixels
@@ -149,47 +146,100 @@ open class DocumentRendererView @JvmOverloads constructor(
     fun getPageCount(): Int = documentPages.count()
 
     override fun moveTo(offsetX: Float, offsetY: Float) {
+
         if (swipeVertical) {
-            val pb = documentPages[documentPages.count() - 1].pageBounds
-            val lastPageBounds = RectF(pb.left, pb.top, pb.right, pb.bottom)
-            val absCurrentY = offsetY.absoluteValue
-            val absRecentY = currentOffsetY.absoluteValue
-            val delta = absCurrentY - absRecentY
-            var scrollPosY = offsetY
-            if (offsetY > 0) { // downward scroll
-                if (enabledOverScrollTop) {
-                    topEdgeScroll = true
-                    val halfHeight = (height / 2F)
-                    scrollPosY = if (offsetY > halfHeight) {
-                        halfHeight
-                    } else {
-                        offsetY
-                    }
-                } else {
-                    currentOffsetY = 0F
+            var deltaY = offsetY
+            val halfHeight = height / 2F
+            if (deltaY >= 0) {
+                topEdgeScroll = true
+                if (deltaY > halfHeight) {
+                    deltaY = halfHeight
                 }
-            } else if (offsetY < 0) { // upward scroll
-                lastPageBounds.top -= delta
-                lastPageBounds.bottom -= delta
-                if (isPageVisibleOnScreen(lastPageBounds)) {
-                    if (lastPageBounds.bottom < height && isContentYScrollable()) {
-                        if (enabledOverScrollBottom) {
-                            val halfHeight = (height / 2F)
-                            bottomEdgeScroll = true
-                            if (pb.bottom < halfHeight) {
-                                scrollPosY += halfHeight - (pb.bottom + pageMargins.bottom)
-                            }
-                        } else {
-                            scrollPosY += (height - (lastPageBounds.bottom + pageMargins.bottom))
-                        }
-                    } else {
-                        scrollPosY = currentOffsetY
+                currentOffsetY = deltaY
+
+            } else {
+                val contentBottom = contentHeight + deltaY
+                val previousContentBottom = contentHeight + currentOffsetY
+                if (previousContentBottom >= halfHeight) {
+                    if (contentBottom < halfHeight) {
+                        deltaY += (halfHeight - contentBottom)
                     }
+                    if (contentBottom < (height + pageMargins.bottom)) {
+                        bottomOverscrollHeight += (currentOffsetY - deltaY)
+                        bottomEdgeScroll = true
+                    }
+                    currentOffsetY = deltaY
                 }
+//                if(contentBottom < height && contentHeight >= halfHeight) {
+//                    bottomEdgeScroll = true
+//                }
+//                if(contentBottom < halfHeight && previousContentBottom > halfHeight) {
+//                    deltaY += (halfHeight - contentBottom)
+//                }
+//                println("Bakko: half height $halfHeight $contentBottom $deltaY")
+
             }
-            currentOffsetY = scrollPosY
-            invalidate()
+
         }
+//        if (swipeVertical) {
+//            var finalPosY = offsetY
+//            if (offsetY > 0) {
+//                if (enabledOverScrollTop) {
+//                    topEdgeScroll = true
+//                    val halfHeight = (height / 2F)
+//                    finalPosY = if (offsetY > halfHeight) {
+//                        halfHeight
+//                    } else {
+//                        offsetY
+//                    }
+//                } else {
+//                    currentOffsetY = 0F
+//                }
+//            } else if (offsetY < 0) {
+//                val pb = documentPages[documentPages.count() - 1].pageBounds
+//                val lastPageBounds = RectF(pb.left, pb.top, pb.right, pb.bottom)
+//                val absCurrentY = offsetY.absoluteValue
+//                val absRecentY = currentOffsetY.absoluteValue
+//                val delta = absCurrentY - absRecentY
+//                lastPageBounds.top -= delta
+//                lastPageBounds.bottom -= delta
+//                if (isPageVisibleOnScreen(lastPageBounds)) {
+//                    if (lastPageBounds.bottom < height && contentHeight > height) {
+//                        if (enabledOverScrollBottom) {
+//                            val halfHeight = (height / 2F)
+//                            bottomEdgeScroll = true
+//                            if (pb.bottom < halfHeight) {
+//                                finalPosY += halfHeight - (pb.bottom + pageMargins.bottom)
+//                            }
+//                        } else {
+//                            finalPosY += (height - (lastPageBounds.bottom + pageMargins.bottom))
+//                        }
+//                    } else {
+//                        finalPosY = currentOffsetY
+//                    }
+//                }
+//            }
+//            currentOffsetY = finalPosY
+//        } else {
+//            // horizontal scroll so.
+//            val halfWidth = width / 2F
+//            var finalPosX = offsetX
+//            if (offsetX > 0) {
+//                if (enabledOverScrollStart) {
+//                    startEdgeScroll = true
+//                    finalPosX = if (offsetX > halfWidth) {
+//                        halfWidth
+//                    } else {
+//                        offsetY
+//                    }
+//                } else {
+//                    currentOffsetX = 0F
+//                }
+//            }
+//            currentOffsetX = finalPosX
+//
+//        }
+        invalidate()
     }
 
     fun isContentYScrollable(): Boolean = contentHeight > height
@@ -224,7 +274,7 @@ open class DocumentRendererView @JvmOverloads constructor(
     override fun scrollTo(
         deltaX: Float,
         deltaY: Float,
-        scrollDirection: DragPinchManager.ScrollDirection
+        scrollDirections: DragPinchManager.ScrollDirections
     ) {
         moveTo(deltaX, deltaY)
     }
@@ -253,25 +303,37 @@ open class DocumentRendererView @JvmOverloads constructor(
         this.currentOffsetY = y
     }
 
-    override fun onScrollStart(direction: DragPinchManager.ScrollDirection) {
-        if (topEdgeScroll && enabledOverScrollTop) {
+    override fun onScrollStart(direction: DragPinchManager.ScrollDirections) {
+        println("IOIP: scroll start ....")
+        animationManager.stopAll()
+        if (topEdgeScroll) {
             topEdgeScroll = false
         }
-        if (bottomEdgeScroll && enabledOverScrollBottom) {
+        if (bottomEdgeScroll) {
             bottomEdgeScroll = false
         }
     }
 
 
     override fun onScrollEnd() {
-        if (topEdgeScroll && enabledOverScrollTop) {
+        if (topEdgeScroll) {
             animationManager.startYAnimation(currentOffsetY, 0F)
-//            topEdgeEffect.onRelease()
         }
-        if (bottomEdgeScroll && enabledOverScrollBottom) {
+        if (bottomEdgeScroll) {
+            val contentTop = (currentOffsetY + bottomOverscrollHeight)
+            val contentBottom = (currentOffsetY + bottomOverscrollHeight) + contentHeight
+            if (contentBottom >= (height - pageMargins.bottom)) {
+                val fl = contentBottom - (height - pageMargins.bottom)
+                bottomOverscrollHeight -= (fl)
+            }
+            if(contentTop > pageMargins.top) {
+                val fl = contentTop - pageMargins.top
+                bottomOverscrollHeight -=fl
+            }
+            println("IOIP: contentTop = $contentTop contentBottom = $contentBottom contentHeight = $contentHeight currY = $currentOffsetY")
             animationManager.startYAnimation(
                 currentOffsetY,
-                currentOffsetY + (height - (getBottomBounds().bottom + pageMargins.bottom))
+                (currentOffsetY + bottomOverscrollHeight)
             )
         }
     }

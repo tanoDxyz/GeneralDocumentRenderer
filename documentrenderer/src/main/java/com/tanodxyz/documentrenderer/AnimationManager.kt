@@ -13,7 +13,10 @@ class AnimationManager(private val movementAndZoomHandler: MovementAndZoomHandle
 
     //    private val scroller: OverScroller
     private var flinging = false
-    private var pageFlinging = false
+    private var pageFlingScroll = false
+
+    val isScrollOrFling:Boolean get() = pageFlingScroll
+
     fun startXAnimation(xFrom: Float, xTo: Float) {
         stopAll()
         valueAnimator = ValueAnimator.ofFloat(xFrom, xTo).apply {
@@ -66,11 +69,11 @@ class AnimationManager(private val movementAndZoomHandler: MovementAndZoomHandle
         }
 
         override fun onAnimationCancel(animation: Animator) {
-            pageFlinging = false
+            pageFlingScroll = false
         }
 
         override fun onAnimationEnd(animation: Animator) {
-            pageFlinging = false
+            pageFlingScroll = false
         }
     }
 
@@ -82,11 +85,11 @@ class AnimationManager(private val movementAndZoomHandler: MovementAndZoomHandle
         }
 
         override fun onAnimationCancel(animation: Animator) {
-            pageFlinging = false
+            pageFlingScroll = false
         }
 
         override fun onAnimationEnd(animation: Animator) {
-            pageFlinging = false
+            pageFlingScroll = false
         }
     }
 
