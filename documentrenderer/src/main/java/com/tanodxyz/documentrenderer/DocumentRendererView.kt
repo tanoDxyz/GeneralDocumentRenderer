@@ -2,6 +2,7 @@ package com.tanodxyz.documentrenderer
 
 import android.content.Context
 import android.graphics.*
+import android.os.Handler
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -24,7 +25,7 @@ open class DocumentRendererView @JvmOverloads constructor(
     lateinit var pagePaddings: Rect
     lateinit var pageMargins: RectF
 
-    var pageFitPolicy: Document.PAGE_FIT_POLICY = Document.PAGE_FIT_POLICY.FIT_WIDTH
+    var pageFitPolicy: Document.PAGE_FIT_POLICY = Document.PAGE_FIT_POLICY.FIT_PAGE
     var pageCorners: Float = 0.0F
 
     protected val antialiasFilter =
@@ -36,7 +37,7 @@ open class DocumentRendererView @JvmOverloads constructor(
     protected var currentOffsetY = 0F
 
 
-    var swipeVertical = true
+    var swipeVertical = false
     var currentPage = 0
 
     private var contentHeight = 0f
@@ -54,7 +55,7 @@ open class DocumentRendererView @JvmOverloads constructor(
     }
 
     private fun init() {
-        val fourDp = resources.dpToPx(12).toFloat()
+        val fourDp = resources.dpToPx(36).toFloat()
         pageMargins = RectF(fourDp, fourDp, fourDp, fourDp)
         pageCorners = fourDp.toFloat()
         setupPagePaintObject()
@@ -87,7 +88,15 @@ open class DocumentRendererView @JvmOverloads constructor(
             for (i: Int in 0 until documentPages.count()) {
                 val page = documentPages[i]
                 drawPageBackground(page, contentHeight)
-                contentHeight += page.pageSize.height
+                contentHeight += if (swipeVertical) {
+                    page.pageSize.height
+                } else {
+                    if (pageFitPolicy == Document.PAGE_FIT_POLICY.FIT_WIDTH) {
+                        resources.displayMetrics.widthPixels.toFloat()
+                    } else {
+                        page.pageSize.width
+                    }
+                }
             }
         }
     }
@@ -102,10 +111,14 @@ open class DocumentRendererView @JvmOverloads constructor(
     }
 
     fun addDummyPages() {
-        for (i: Int in 0 until 3) {
+        for (i: Int in 0 until 10) {
             documentPages.add(DocumentPage())
         }
         invalidate()
+//        Handler().postDelayed({
+//            animationManager.startXAnimation(currentOffsetX,-2000F)
+//
+//        },4000)
     }
 
     open fun Canvas.drawPageBackground(page: DocumentPage, totalHeightConsumed: Float) {
@@ -117,13 +130,17 @@ open class DocumentRendererView @JvmOverloads constructor(
         val pageEnd =
             if (pageFitPolicy == Document.PAGE_FIT_POLICY.FIT_WIDTH) {
                 val screenWidthInPixels = resources.displayMetrics.widthPixels
-                (screenWidthInPixels - pageMargins.right).toFloat()
+                if (swipeVertical) {
+                    (screenWidthInPixels - pageMargins.right).toFloat()
+                } else {
+                    (pageStartX + screenWidthInPixels) - pageMargins.right
+                }
             } else if (pageFitPolicy == Document.PAGE_FIT_POLICY.FIT_PAGE) {
-                //todo fit the page to the screen amigo
-                (page.pageSize.width - pageMargins.right)
+                (pageStartX + page.pageSize.width) - pageMargins.right
             } else {
-                (page.pageSize.width - pageMargins.right)
+                (pageStartX + page.pageSize.width) - pageMargins.right
             }
+        println("pioso: start = $pageStartX   |   end =  $pageEnd")
         val pageBottom = (page.pageSize.height - pageMargins.bottom) + pageStartY
         if (pageCorners > 0) {
             drawRoundRect(
@@ -170,16 +187,29 @@ open class DocumentRendererView @JvmOverloads constructor(
                     }
                     currentOffsetY = deltaY
                 }
-//                if(contentBottom < height && contentHeight >= halfHeight) {
-//                    bottomEdgeScroll = true
-//                }
-//                if(contentBottom < halfHeight && previousContentBottom > halfHeight) {
-//                    deltaY += (halfHeight - contentBottom)
-//                }
-//                println("Bakko: half height $halfHeight $contentBottom $deltaY")
-
             }
 
+        } else {
+//            val halfWidth = width/2f
+//            val previousX = currentOffsetX
+//            var deltaX = offsetX
+//
+//            var contentStartPrevious = previousX
+//            var contentEndPrevious = previousX + contentHeight
+//            var contentStart = deltaX
+//            var contentEnd = deltaX + contentHeight
+//            println("zzbc: contentStart $contentStart")
+//            println("zzbc: deltaXBefore $deltaX")
+//            if(contentStart > halfWidth) {
+//                deltaX += contentStart - halfWidth
+//            }
+
+//            if(contentEnd < halfWidth) {
+//                deltaX -= (halfWidth - contentEnd)
+//            }
+//            println("zzbc: deltaXAfter $deltaX")
+
+            currentOffsetX = offsetX
         }
 //        if (swipeVertical) {
 //            var finalPosY = offsetY
@@ -326,9 +356,9 @@ open class DocumentRendererView @JvmOverloads constructor(
                 val fl = contentBottom - (height - pageMargins.bottom)
                 bottomOverscrollHeight -= (fl)
             }
-            if(contentTop > pageMargins.top) {
+            if (contentTop > pageMargins.top) {
                 val fl = contentTop - pageMargins.top
-                bottomOverscrollHeight -=fl
+                bottomOverscrollHeight -= fl
             }
             println("IOIP: contentTop = $contentTop contentBottom = $contentBottom contentHeight = $contentHeight currY = $currentOffsetY")
             animationManager.startYAnimation(

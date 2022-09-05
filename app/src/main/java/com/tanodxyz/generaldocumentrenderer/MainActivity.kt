@@ -17,6 +17,5 @@ class MainActivity : AppCompatActivity() {
         val findViewById = findViewById<DocumentRendererView>(R.id.asd)
         findViewById.addDummyPages()
 
-
     }
 }
