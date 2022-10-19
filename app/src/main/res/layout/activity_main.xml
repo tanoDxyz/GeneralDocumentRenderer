@@ -7,7 +7,7 @@
     tools:context=".MainActivity">
 
 
-    <com.tanodxyz.documentrenderer.DocumentRendererView
+    <com.tanodxyz.documentrenderer.DocumentRenderView
         android:id="@+id/asd"
         android:visibility="visible"
         android:layout_width="0dp"

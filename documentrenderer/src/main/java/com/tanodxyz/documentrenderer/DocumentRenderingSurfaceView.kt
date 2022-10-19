@@ -43,7 +43,7 @@ open class DocumentRenderingSurfaceView @JvmOverloads constructor(
     private var documentPages = mutableListOf<DocumentPage>()
 
     init {
-        val fourDp = resources.dpToPx(4)
+        val fourDp = resources.dpToPx(4).toInt()
         pageMargins = Rect(fourDp,fourDp,fourDp,fourDp)
         pageCorners = fourDp.toFloat()
         setupPagePaintObject()

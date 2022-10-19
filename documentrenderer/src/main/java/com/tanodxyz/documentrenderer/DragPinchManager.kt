@@ -4,7 +4,6 @@ import android.content.Context
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
-import java.util.*
 
 class DragPinchManager(
     context: Context,

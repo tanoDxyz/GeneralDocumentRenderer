@@ -8,19 +8,23 @@ import android.graphics.PointF
 import android.view.animation.DecelerateInterpolator
 
 
-class AnimationManager(private val movementAndZoomHandler: MovementAndZoomHandler) {
+class AnimationManager(private val animationListener: AnimationListener) {
     private var valueAnimator: ValueAnimator? = null
 
     //    private val scroller: OverScroller
     private var flinging = false
     private var pageFlingScroll = false
 
-    val isScrollOrFling:Boolean get() = pageFlingScroll
+    val isScrollOrFling: Boolean get() = pageFlingScroll
 
-    fun startXAnimation(xFrom: Float, xTo: Float) {
+    fun startXAnimation(
+        xFrom: Float,
+        xTo: Float,
+        movementDirections: TouchEventsManager.MovementDirections
+    ) {
         stopAll()
         valueAnimator = ValueAnimator.ofFloat(xFrom, xTo).apply {
-            val xAnimation = XAnimation()
+            val xAnimation = XAnimation(movementDirections)
             setInterpolator(DecelerateInterpolator())
             addUpdateListener(xAnimation)
             addListener(xAnimation)
@@ -29,10 +33,14 @@ class AnimationManager(private val movementAndZoomHandler: MovementAndZoomHandle
         }
     }
 
-    fun startYAnimation(yFrom: Float, yTo: Float) {
+    fun startYAnimation(
+        yFrom: Float,
+        yTo: Float,
+        movementDirections: TouchEventsManager.MovementDirections?
+    ) {
         stopAll()
         valueAnimator = ValueAnimator.ofFloat(yFrom, yTo).apply {
-            val yAnimation = YAnimation()
+            val yAnimation = YAnimation(movementDirections)
             setInterpolator(DecelerateInterpolator())
             addUpdateListener(yAnimation)
             addListener(yAnimation)
@@ -61,11 +69,12 @@ class AnimationManager(private val movementAndZoomHandler: MovementAndZoomHandle
     }
 
 
-    internal inner class XAnimation : AnimatorListenerAdapter(),
+    internal inner class XAnimation(val movementDirections: TouchEventsManager.MovementDirections) :
+        AnimatorListenerAdapter(),
         AnimatorUpdateListener {
         override fun onAnimationUpdate(animation: ValueAnimator) {
             val offset = animation.animatedValue as Float
-            movementAndZoomHandler.moveTo(offset, movementAndZoomHandler.getCurrentY())
+            animationListener.moveTo(offset, animationListener.getCurrentY(), movementDirections)
         }
 
         override fun onAnimationCancel(animation: Animator) {
@@ -77,11 +86,12 @@ class AnimationManager(private val movementAndZoomHandler: MovementAndZoomHandle
         }
     }
 
-    internal inner class YAnimation : AnimatorListenerAdapter(),
+    internal inner class YAnimation(val movementDirections: TouchEventsManager.MovementDirections?) :
+        AnimatorListenerAdapter(),
         AnimatorUpdateListener {
         override fun onAnimationUpdate(animation: ValueAnimator) {
             val offset = animation.animatedValue as Float
-            movementAndZoomHandler.moveTo(movementAndZoomHandler.getCurrentX(), offset)
+            animationListener.moveTo(animationListener.getCurrentX(), offset, movementDirections)
         }
 
         override fun onAnimationCancel(animation: Animator) {
@@ -97,7 +107,7 @@ class AnimationManager(private val movementAndZoomHandler: MovementAndZoomHandle
         AnimatorUpdateListener, Animator.AnimatorListener {
         override fun onAnimationUpdate(animation: ValueAnimator) {
             val zoom = animation.animatedValue as Float
-            movementAndZoomHandler.zoomCenteredTo(zoom, PointF(centerX,centerY))
+            animationListener.zoomCenteredTo(zoom, PointF(centerX, centerY))
         }
 
         override fun onAnimationCancel(animation: Animator) {
@@ -108,5 +118,17 @@ class AnimationManager(private val movementAndZoomHandler: MovementAndZoomHandle
 
         override fun onAnimationRepeat(animation: Animator) {}
         override fun onAnimationStart(animation: Animator) {}
+    }
+
+    interface AnimationListener {
+        fun moveTo(
+            offsetX: Float,
+            offsetY: Float,
+            movementDirections: TouchEventsManager.MovementDirections? = null
+        )
+
+        fun getCurrentX(): Float
+        fun getCurrentY(): Float
+        fun zoomCenteredTo(zoom: Float, pivot: PointF)
     }
 }
