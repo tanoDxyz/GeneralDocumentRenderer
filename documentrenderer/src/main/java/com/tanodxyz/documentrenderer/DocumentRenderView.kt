@@ -13,6 +13,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr), View.OnTouchListener,
     TouchEventsManager.TouchEventsListener, AnimationManager.AnimationListener {
 
+    private var ccx: Paint
     var topAnimation: Boolean = false
     var bottomAnimation: Boolean = false
     lateinit var touchEventMgr: TouchEventsManager
@@ -42,6 +43,8 @@ open class DocumentRenderView @JvmOverloads constructor(
     var documentPages = mutableListOf<DocumentPage>()
 
     init {
+        ccx = Paint()
+        ccx.color = Color.RED
         animationManager = AnimationManager(this)
         // todo these values will be parsed from attributes
         val defaultPageMargins = resources.dpToPx(12)
@@ -86,17 +89,36 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     override fun onScrollEnd() {
-        if (topAnimation) {
+        val contentEnd = contentDrawOffsetY + contentHeight
+        val halfHeight = height / 2F
+        println("Bako: $topAnimation $bottomAnimation")
+        if (topAnimation && bottomAnimation) {
+            println("Bako: both executed")
+            if (contentEnd > halfHeight) {
+                topAnimation = true
+                bottomAnimation = false
+                onScrollEnd()
+            }
+        } else if (topAnimation) {
+            println("Bako: top executed only.")
             animationManager.startYAnimation(
                 contentDrawOffsetY, (0F), null
             )
             topAnimation = false
-        }
-        if (bottomAnimation) {
-            val contentEnd = contentDrawOffsetY + contentHeight
-            val animationOffSetY = ((height - pageMargins.bottom) - contentEnd) + contentDrawOffsetY
-            animationManager.startYAnimation(contentDrawOffsetY, animationOffSetY, null)
-            bottomAnimation = false
+        } else if (bottomAnimation) {
+            println("Bako: bottom executed only")
+            if (contentHeight > height) {
+                println("Bako: inside bottom contentHeight > height")
+                val animationOffSetY =
+                    ((height - pageMargins.bottom) - contentEnd) + contentDrawOffsetY
+                animationManager.startYAnimation(contentDrawOffsetY, animationOffSetY, null)
+                bottomAnimation = false
+            } else {
+                println("Bako: inside bottom contentHeight < height")
+                bottomAnimation = false
+                topAnimation = true
+                onScrollEnd()
+            }
         }
     }
 
@@ -113,6 +135,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                 contentDrawOffsetY = offsetY
             } else {
                 if (movementDirections.bottom) {
+                    println("Bako: movement was bottom")
                     contentDrawOffsetY += if (contentStart <= halfHeight) {
                         offsetY
                     } else {
@@ -124,12 +147,15 @@ open class DocumentRenderView @JvmOverloads constructor(
                     }
                 }
                 if (movementDirections.top) {
-                    val cdofy = contentDrawOffsetY
                     contentDrawOffsetY += if (contentEnd >= halfHeight) {
                         offsetY
                     } else {
-                        val extraScrollHeight = halfHeight - contentEnd
-                        (offsetY + extraScrollHeight)
+                        if(contentHeight > halfHeight) {
+                            val extraScrollHeight = halfHeight - contentEnd
+                            (offsetY + extraScrollHeight)
+                        } else {
+                            contentDrawOffsetY
+                        }
                     }
                     if (contentEnd < (height.toFloat() + pageMargins.bottom) && contentEnd >= halfHeight) {
                         bottomAnimation = true
@@ -143,7 +169,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     fun addDummyPages() {
-        for (i: Int in 0 until 5) {
+        for (i: Int in 0 until 3) {
             documentPages.add(DocumentPage())
         }
         invalidate()
@@ -174,6 +200,8 @@ open class DocumentRenderView @JvmOverloads constructor(
             } else {
                 //todo do it for horizontal page ...
             }
+
+            drawLine(0F, (height / 2F), width.toFloat(), (height / 2F), ccx)
         }
     }
 

@@ -4,7 +4,6 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import com.tanodxyz.documentrenderer.DocumentRenderView
-import com.tanodxyz.documentrenderer.DocumentRendererViewProto
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
