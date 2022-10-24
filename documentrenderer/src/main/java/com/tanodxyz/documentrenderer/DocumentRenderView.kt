@@ -169,8 +169,9 @@ open class DocumentRenderView @JvmOverloads constructor(
             if (movementDirections == null) {
                 println("IOU: yes ")
                 if(contentDrawOffsetY == 0F) {
-                    return 
+                    return
                 }
+                println("Bakko: check")
                 contentDrawOffsetY = offsetY
             } else {
                 println("IOU: NO")
