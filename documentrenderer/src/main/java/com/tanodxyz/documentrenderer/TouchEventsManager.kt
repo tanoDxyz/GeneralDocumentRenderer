@@ -86,6 +86,14 @@ class TouchEventsManager(val context: Context) : GestureDetector.SimpleOnGesture
         return true
     }
 
+    override fun onFling(
+        e1: MotionEvent?,
+        e2: MotionEvent?,
+        velocityX: Float,
+        velocityY: Float
+    ): Boolean {
+        return eventsListener?.onFling(e1,e2,velocityX,velocityY) ?: false
+    }
     override fun onScaleBegin(detector: ScaleGestureDetector?): Boolean {
         return true
     }
@@ -104,6 +112,13 @@ class TouchEventsManager(val context: Context) : GestureDetector.SimpleOnGesture
             absoluteY: Float
         )
         fun onScrollEnd()
+
+        fun onFling(
+            downEvent: MotionEvent?,
+            moveEvent: MotionEvent?,
+            velocityX: Float,
+            velocityY: Float
+        ): Boolean
     }
 
     data class MovementDirections(

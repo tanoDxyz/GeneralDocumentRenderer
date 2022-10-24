@@ -45,7 +45,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     init {
         ccx = Paint()
         ccx.color = Color.RED
-        animationManager = AnimationManager(this)
+        animationManager = AnimationManager(this.context, this)
         // todo these values will be parsed from attributes
         val defaultPageMargins = resources.dpToPx(12)
         pageMargins =
@@ -122,6 +122,41 @@ open class DocumentRenderView @JvmOverloads constructor(
         }
     }
 
+
+    override fun computeScroll() {
+        super.computeScroll()
+        if (isInEditMode) {
+            return
+        }
+        if (animationManager.canMove()) {
+            moveTo(
+                animationManager.getCurrentFlingX().toFloat(),
+                animationManager.getCurrentFlingY().toFloat(),
+                null
+            )
+        }
+    }
+
+    override fun onFling(
+        downEvent: MotionEvent?,
+        moveEvent: MotionEvent?,
+        velocityX: Float,
+        velocityY: Float
+    ): Boolean {
+        val diffY = -contentHeight
+        animationManager.startFlingAnimation(
+            contentDrawOffsetX.toInt(),
+            contentDrawOffsetY.toInt(),
+            velocityX.toInt(),
+            velocityY.toInt(),
+            0,
+            0,
+            diffY.toInt(),
+            0
+        )
+        return true
+    }
+
     override fun moveTo(
         offsetX: Float,
         offsetY: Float,
@@ -132,10 +167,14 @@ open class DocumentRenderView @JvmOverloads constructor(
             val contentStart = contentDrawOffsetY + offsetY
             val contentEnd = contentDrawOffsetY + offsetY + contentHeight
             if (movementDirections == null) {
+                println("IOU: yes ")
+                if(contentDrawOffsetY == 0F) {
+                    return 
+                }
                 contentDrawOffsetY = offsetY
             } else {
+                println("IOU: NO")
                 if (movementDirections.bottom) {
-                    println("Bako: movement was bottom")
                     contentDrawOffsetY += if (contentStart <= halfHeight) {
                         offsetY
                     } else {
@@ -150,7 +189,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                     contentDrawOffsetY += if (contentEnd >= halfHeight) {
                         offsetY
                     } else {
-                        if(contentHeight > halfHeight) {
+                        if (contentHeight > halfHeight) {
                             val extraScrollHeight = halfHeight - contentEnd
                             (offsetY + extraScrollHeight)
                         } else {
@@ -169,7 +208,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     fun addDummyPages() {
-        for (i: Int in 0 until 3) {
+        for (i: Int in 0 until 50) {
             documentPages.add(DocumentPage())
         }
         invalidate()
@@ -195,6 +234,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                 for (i: Int in documentPages.indices) {
                     val page = documentPages[i]
                     drawPageBackground(page, contentHeight)
+                    drawText("Page No $i", 50F, page.pageBounds.top + 100, ccx)
                     contentHeight += page.pageSize.height
                 }
             } else {

@@ -4,18 +4,24 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
 import android.animation.ValueAnimator.AnimatorUpdateListener
+import android.content.Context
 import android.graphics.PointF
 import android.view.animation.DecelerateInterpolator
+import android.widget.OverScroller
 
 
-class AnimationManager(private val animationListener: AnimationListener) {
+class AnimationManager(context: Context, private val animationListener: AnimationListener) {
     private var valueAnimator: ValueAnimator? = null
 
     //    private val scroller: OverScroller
     private var flinging = false
     private var pageFlingScroll = false
-
+    private var scroller: OverScroller? = null
     val isScrollOrFling: Boolean get() = pageFlingScroll
+
+    init {
+        scroller = OverScroller(context)
+    }
 
     fun startXAnimation(
         xFrom: Float,
@@ -59,6 +65,50 @@ class AnimationManager(private val animationListener: AnimationListener) {
             setDuration(400)
             start()
         }
+    }
+
+    fun startFlingAnimation(
+        startX: Int,
+        startY: Int,
+        velocityX: Int,
+        velocityY: Int,
+        minX: Int,
+        maxX: Int,
+        minY: Int,
+        maxY: Int
+    ) {
+        stopAll()
+        flinging = true
+        println("FIL: $startY | $velocityY | $minY | $maxY")
+        scroller!!.fling(startX, startY, velocityX, velocityY, minX, maxX, minY, maxY)
+    }
+
+    fun canMove(): Boolean {
+        return if (scroller!!.computeScrollOffset()) {
+            true
+        } else {
+            if (flinging) {
+                flinging = false
+            }
+            false
+        }
+    }
+
+    fun getCurrentFlingX(): Int {
+        return scroller!!.currX
+    }
+
+    fun getCurrentFlingY(): Int {
+        return scroller!!.currY
+    }
+
+    fun stopFling() {
+        flinging = false
+        scroller!!.forceFinished(true)
+    }
+
+    fun isFlinging(): Boolean {
+        return flinging /*|| pageFlinging*/
     }
 
     fun stopAll() {
