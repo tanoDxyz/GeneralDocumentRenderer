@@ -45,6 +45,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     init {
         ccx = Paint()
         ccx.color = Color.RED
+        ccx.textSize = 50F
         animationManager = AnimationManager(this.context, this)
         // todo these values will be parsed from attributes
         val defaultPageMargins = resources.dpToPx(12)
@@ -89,6 +90,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     override fun onScrollEnd() {
+//        animationManager.scroller?.abortAnimation()
 //        val contentEnd = contentDrawOffsetY + contentHeight
 //        val halfHeight = height / 2F
 //        println("Bako: $topAnimation $bottomAnimation")
@@ -157,23 +159,34 @@ open class DocumentRenderView @JvmOverloads constructor(
         return true
     }
 
+    override fun onStopFling() {
+        animationManager.stopFling()
+    }
+
     override fun moveTo(absX: Float, absY: Float) {
         if (swipeVertical) {
-            val contentEnd = absY + contentHeight + pageMargins.bottom
-            contentDrawOffsetY = if(absY > 0 ) {
-                0F
+            // Check Y offset
+            // Check Y offset
+            var offsetY = absY
+            if (contentHeight < height) { // whole document height visible on screen
+                offsetY = (height - contentHeight) / 2
             } else {
-                if(contentEnd < height) {
-                    val delta = height - contentEnd
-                    absY + delta
-                } else {
-                    absY
+                if (offsetY > 0) { // top visible
+                    offsetY = 0f
+                } else if (offsetY + contentHeight < height) { // bottom visible
+                    offsetY = -contentHeight + height
                 }
             }
-            invalidate()
+            contentDrawOffsetY = offsetY
+            println("UIO: $absY")
         } else {
             //todo do it for horizontal
         }
+        redraw()
+    }
+
+    override fun redraw() {
+        invalidate()
     }
 
     override fun moveTo(

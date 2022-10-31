@@ -85,6 +85,10 @@ class TouchEventsManager(val context: Context) : GestureDetector.SimpleOnGesture
         return true
     }
 
+    override fun onDown(e: MotionEvent?): Boolean {
+        eventsListener?.onStopFling()
+        return true
+    }
     override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
         return true
     }
@@ -121,6 +125,8 @@ class TouchEventsManager(val context: Context) : GestureDetector.SimpleOnGesture
             velocityX: Float,
             velocityY: Float
         ): Boolean
+
+        fun onStopFling()
     }
 
     data class MovementDirections(

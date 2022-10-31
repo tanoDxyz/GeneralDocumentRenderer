@@ -16,7 +16,7 @@ class AnimationManager(context: Context, private val animationListener: Animatio
     //    private val scroller: OverScroller
     private var flinging = false
     private var pageFlingScroll = false
-    private var scroller: OverScroller? = null
+    var scroller: OverScroller? = null
     val isScrollOrFling: Boolean get() = pageFlingScroll
 
     init {
@@ -87,6 +87,7 @@ class AnimationManager(context: Context, private val animationListener: Animatio
             if (flinging) {
                 flinging = false
             }
+            animationListener.redraw()
             flinging
         }
     }
@@ -113,6 +114,7 @@ class AnimationManager(context: Context, private val animationListener: Animatio
             valueAnimator!!.cancel()
             valueAnimator = null
         }
+        stopFling()
     }
 
 
@@ -178,5 +180,6 @@ class AnimationManager(context: Context, private val animationListener: Animatio
         fun getCurrentX(): Float
         fun getCurrentY(): Float
         fun zoomCenteredTo(zoom: Float, pivot: PointF)
+        fun redraw()
     }
 }
