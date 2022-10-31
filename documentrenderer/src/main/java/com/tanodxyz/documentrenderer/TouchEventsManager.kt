@@ -13,7 +13,6 @@ class TouchEventsManager(val context: Context) : GestureDetector.SimpleOnGesture
 
     private var enabled = true
     private var scrolling = false
-
     fun registerListener(eventsListener: TouchEventsListener) {
         this.eventsListener = eventsListener
     }
@@ -86,6 +85,9 @@ class TouchEventsManager(val context: Context) : GestureDetector.SimpleOnGesture
         return true
     }
 
+    override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+        return true
+    }
     override fun onFling(
         e1: MotionEvent?,
         e2: MotionEvent?,

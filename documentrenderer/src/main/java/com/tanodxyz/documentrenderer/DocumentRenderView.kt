@@ -85,41 +85,41 @@ open class DocumentRenderView @JvmOverloads constructor(
         absoluteX: Float,
         absoluteY: Float
     ) {
-        moveTo(distanceX, distanceY, movementDirections)
+        moveTo(absoluteX, absoluteY)
     }
 
     override fun onScrollEnd() {
-        val contentEnd = contentDrawOffsetY + contentHeight
-        val halfHeight = height / 2F
-        println("Bako: $topAnimation $bottomAnimation")
-        if (topAnimation && bottomAnimation) {
-            println("Bako: both executed")
-            if (contentEnd > halfHeight) {
-                topAnimation = true
-                bottomAnimation = false
-                onScrollEnd()
-            }
-        } else if (topAnimation) {
-            println("Bako: top executed only.")
-            animationManager.startYAnimation(
-                contentDrawOffsetY, (0F), null
-            )
-            topAnimation = false
-        } else if (bottomAnimation) {
-            println("Bako: bottom executed only")
-            if (contentHeight > height) {
-                println("Bako: inside bottom contentHeight > height")
-                val animationOffSetY =
-                    ((height - pageMargins.bottom) - contentEnd) + contentDrawOffsetY
-                animationManager.startYAnimation(contentDrawOffsetY, animationOffSetY, null)
-                bottomAnimation = false
-            } else {
-                println("Bako: inside bottom contentHeight < height")
-                bottomAnimation = false
-                topAnimation = true
-                onScrollEnd()
-            }
-        }
+//        val contentEnd = contentDrawOffsetY + contentHeight
+//        val halfHeight = height / 2F
+//        println("Bako: $topAnimation $bottomAnimation")
+//        if (topAnimation && bottomAnimation) {
+//            println("Bako: both executed")
+//            if (contentEnd > halfHeight) {
+//                topAnimation = true
+//                bottomAnimation = false
+//                onScrollEnd()
+//            }
+//        } else if (topAnimation) {
+//            println("Bako: top executed only.")
+//            animationManager.startYAnimation(
+//                contentDrawOffsetY, (0F), null
+//            )
+//            topAnimation = false
+//        } else if (bottomAnimation) {
+//            println("Bako: bottom executed only")
+//            if (contentHeight > height) {
+//                println("Bako: inside bottom contentHeight > height")
+//                val animationOffSetY =
+//                    ((height - pageMargins.bottom) - contentEnd) + contentDrawOffsetY
+//                animationManager.startYAnimation(contentDrawOffsetY, animationOffSetY, null)
+//                bottomAnimation = false
+//            } else {
+//                println("Bako: inside bottom contentHeight < height")
+//                bottomAnimation = false
+//                topAnimation = true
+//                onScrollEnd()
+//            }
+//        }
     }
 
 
@@ -129,10 +129,10 @@ open class DocumentRenderView @JvmOverloads constructor(
             return
         }
         if (animationManager.canMove()) {
+            println("UIP: fling is ok")
             moveTo(
                 animationManager.getCurrentFlingX().toFloat(),
-                animationManager.getCurrentFlingY().toFloat(),
-                null
+                animationManager.getCurrentFlingY().toFloat()
             )
         }
     }
@@ -157,6 +157,25 @@ open class DocumentRenderView @JvmOverloads constructor(
         return true
     }
 
+    override fun moveTo(absX: Float, absY: Float) {
+        if (swipeVertical) {
+            val contentEnd = absY + contentHeight + pageMargins.bottom
+            contentDrawOffsetY = if(absY > 0 ) {
+                0F
+            } else {
+                if(contentEnd < height) {
+                    val delta = height - contentEnd
+                    absY + delta
+                } else {
+                    absY
+                }
+            }
+            invalidate()
+        } else {
+            //todo do it for horizontal
+        }
+    }
+
     override fun moveTo(
         offsetX: Float,
         offsetY: Float,
@@ -168,7 +187,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             val contentEnd = contentDrawOffsetY + offsetY + contentHeight
             if (movementDirections == null) {
                 println("IOU: yes ")
-                if(contentDrawOffsetY == 0F) {
+                if (contentDrawOffsetY == 0F) {
                     return
                 }
                 println("Bakko: check")
@@ -209,7 +228,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     fun addDummyPages() {
-        for (i: Int in 0 until 50) {
+        for (i: Int in 0 until 160) {
             documentPages.add(DocumentPage())
         }
         invalidate()

@@ -25,12 +25,11 @@ class AnimationManager(context: Context, private val animationListener: Animatio
 
     fun startXAnimation(
         xFrom: Float,
-        xTo: Float,
-        movementDirections: TouchEventsManager.MovementDirections
+        xTo: Float
     ) {
         stopAll()
         valueAnimator = ValueAnimator.ofFloat(xFrom, xTo).apply {
-            val xAnimation = XAnimation(movementDirections)
+            val xAnimation = XAnimation()
             setInterpolator(DecelerateInterpolator())
             addUpdateListener(xAnimation)
             addListener(xAnimation)
@@ -41,12 +40,11 @@ class AnimationManager(context: Context, private val animationListener: Animatio
 
     fun startYAnimation(
         yFrom: Float,
-        yTo: Float,
-        movementDirections: TouchEventsManager.MovementDirections?
+        yTo: Float
     ) {
         stopAll()
         valueAnimator = ValueAnimator.ofFloat(yFrom, yTo).apply {
-            val yAnimation = YAnimation(movementDirections)
+            val yAnimation = YAnimation()
             setInterpolator(DecelerateInterpolator())
             addUpdateListener(yAnimation)
             addListener(yAnimation)
@@ -79,7 +77,6 @@ class AnimationManager(context: Context, private val animationListener: Animatio
     ) {
         stopAll()
         flinging = true
-        println("FIL: $startY | $velocityY | $minY | $maxY")
         scroller!!.fling(startX, startY, velocityX, velocityY, minX, maxX, minY, maxY)
     }
 
@@ -90,7 +87,7 @@ class AnimationManager(context: Context, private val animationListener: Animatio
             if (flinging) {
                 flinging = false
             }
-            false
+            flinging
         }
     }
 
@@ -119,12 +116,12 @@ class AnimationManager(context: Context, private val animationListener: Animatio
     }
 
 
-    internal inner class XAnimation(val movementDirections: TouchEventsManager.MovementDirections) :
+    internal inner class XAnimation() :
         AnimatorListenerAdapter(),
         AnimatorUpdateListener {
         override fun onAnimationUpdate(animation: ValueAnimator) {
             val offset = animation.animatedValue as Float
-            animationListener.moveTo(offset, animationListener.getCurrentY(), movementDirections)
+            animationListener.moveTo(offset, animationListener.getCurrentY())
         }
 
         override fun onAnimationCancel(animation: Animator) {
@@ -136,12 +133,12 @@ class AnimationManager(context: Context, private val animationListener: Animatio
         }
     }
 
-    internal inner class YAnimation(val movementDirections: TouchEventsManager.MovementDirections?) :
+    internal inner class YAnimation() :
         AnimatorListenerAdapter(),
         AnimatorUpdateListener {
         override fun onAnimationUpdate(animation: ValueAnimator) {
             val offset = animation.animatedValue as Float
-            animationListener.moveTo(animationListener.getCurrentX(), offset, movementDirections)
+            animationListener.moveTo(animationListener.getCurrentX(),offset)
         }
 
         override fun onAnimationCancel(animation: Animator) {
@@ -177,6 +174,7 @@ class AnimationManager(context: Context, private val animationListener: Animatio
             movementDirections: TouchEventsManager.MovementDirections? = null
         )
 
+        fun moveTo(absX: Float, absY: Float)
         fun getCurrentX(): Float
         fun getCurrentY(): Float
         fun zoomCenteredTo(zoom: Float, pivot: PointF)
