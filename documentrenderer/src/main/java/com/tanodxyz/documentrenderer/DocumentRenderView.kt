@@ -13,7 +13,9 @@ open class DocumentRenderView @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr), View.OnTouchListener,
     TouchEventsManager.TouchEventsListener, AnimationManager.AnimationListener {
 
-    private var ccx: Paint
+    private var ccx: Paint = Paint()
+
+
     var topAnimation: Boolean = false
     var bottomAnimation: Boolean = false
     lateinit var touchEventMgr: TouchEventsManager
@@ -39,12 +41,24 @@ open class DocumentRenderView @JvmOverloads constructor(
     var currentPage = 0
     var contentHeight = 0f
     var contentWidth = 0f
+
+    var zoom = MINIMUM_ZOOM
     lateinit var animationManager: AnimationManager
+
+    var maxPageWidth = DocumentPage().pageSize.width //todo will be calculated at runtime later.
+    var maxPageHeight = DocumentPage().pageSize.height //todo will be calculated at tuntime later.
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+    private val minZoom = DEFAULT_MIN_SCALE
+    private val midZoom = DEFAULT_MID_SCALE
+    private val maxZoom = DEFAULT_MAX_SCALE
+
+    ///////////////////////////////////////////////////////////////////////////////////////////
     var documentPages = mutableListOf<DocumentPage>()
 
     init {
-        ccx = Paint()
         ccx.color = Color.RED
+        ccx.style = Paint.Style.FILL_AND_STROKE
         ccx.textSize = 50F
         animationManager = AnimationManager(this.context, this)
         // todo these values will be parsed from attributes
@@ -77,6 +91,35 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     override fun zoomCenteredTo(zoom: Float, pivot: PointF) {
+        val dzoom = zoom / this.zoom
+        zoomTo(zoom)
+        var baseX: Float = contentDrawOffsetX * dzoom
+        var baseY: Float = contentDrawOffsetY * dzoom
+        baseX += pivot.x - pivot.x * dzoom
+        baseY += pivot.y - pivot.y * dzoom
+        moveTo(baseX, baseY)
+    }
+
+
+    override fun getCurrentZoom(): Float {
+        return zoom
+    }
+
+    override fun getMinZoom(): Float {
+        return minZoom
+    }
+
+    override fun getMidZoom(): Float {
+        return midZoom
+    }
+
+    override fun getMaxZoom(): Float {
+        return maxZoom
+    }
+
+
+    fun zoomTo(zoom: Float) {
+        this.zoom = zoom
     }
 
     override fun onScrollStart(
@@ -130,13 +173,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (isInEditMode) {
             return
         }
-        if (animationManager.canMove()) {
-            println("UIP: fling is ok")
-            moveTo(
-                animationManager.getCurrentFlingX().toFloat(),
-                animationManager.getCurrentFlingY().toFloat()
-            )
-        }
+        animationManager.computeScrollOffset()
     }
 
     override fun onFling(
@@ -145,7 +182,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         velocityX: Float,
         velocityY: Float
     ): Boolean {
-        val diffY = -contentHeight
+        val diffY = -getDocLen(contentHeight)
         animationManager.startFlingAnimation(
             contentDrawOffsetX.toInt(),
             contentDrawOffsetY.toInt(),
@@ -163,22 +200,91 @@ open class DocumentRenderView @JvmOverloads constructor(
         animationManager.stopFling()
     }
 
+    override fun zoomCenteredRelativeTo(dr: Float, pointF: PointF) {
+        zoomCenteredTo(zoom * dr, pointF!!)
+    }
+
+    open fun toCurrentScale(size: Float): Float {
+        return size * zoom
+    }
+
+    open fun getDocLen(zoom: Float): Float {
+        return contentHeight * zoom
+    }
+
     override fun moveTo(absX: Float, absY: Float) {
         if (swipeVertical) {
-            // Check Y offset
-            // Check Y offset
-            var offsetY = absY
-            if (contentHeight < height) { // whole document height visible on screen
-                offsetY = (height - contentHeight) / 2
+
+//             Check X offset
+//            var offsetX = absX
+//            val scaledPageWidth: Float = toCurrentScale(maxPageWidth)
+//            if (scaledPageWidth < width) {
+//                offsetX = width / 2 - scaledPageWidth / 2
+//            } else {
+//                if (offsetX > 0) {
+//                    offsetX = 0f
+//                } else if (offsetX + scaledPageWidth < width) {
+//                    offsetX = width - scaledPageWidth
+//                }
+//            }
+//
+//            // Check Y offset
+//            var offsetY = absY
+//            val contentHeight: Float = getDocLen(zoom)
+//            if (contentHeight < height) { // whole document height visible on screen
+//                offsetY = (height - contentHeight) / 2
+//            } else {
+//                if (offsetY > 0) { // top visible
+//                    offsetY = 0f
+//                } else if (offsetY + contentHeight < height) { // bottom visible
+//                    offsetY = -contentHeight + height
+//                }
+//            }
+//
+//
+//
+//            contentDrawOffsetX = offsetX
+//            contentDrawOffsetY = offsetY
+            //////////////////////////////////////////////
+            //y
+            println("SANCHI: ------------------------------------------------------------------")
+            println("SANCHI: before contentData |$contentDrawOffsetX| |$contentDrawOffsetY|")
+            println("SANCHI: before absData     |$absX              | |$absY    ")
+
+
+            val documentHeight = getDocLen(zoom)
+            contentDrawOffsetY = if (documentHeight < height) {
+                (height - documentHeight) / 2
             } else {
-                if (offsetY > 0) { // top visible
-                    offsetY = 0f
-                } else if (offsetY + contentHeight < height) { // bottom visible
-                    offsetY = -contentHeight + height
+                val contentEnd = absY + documentHeight + pageMargins.bottom
+                if (absY > 0) {
+                    0F
+                } else {
+                    if (contentEnd < height) {
+                        val delta = height - contentEnd
+                        absY + delta
+                    } else {
+                        absY
+                    }
                 }
             }
-            contentDrawOffsetY = offsetY
-            println("UIO: $absY")
+
+
+//            x
+            var offsetX = absX
+            val scaledPageWidth: Float = toCurrentScale(maxPageWidth)
+            if (scaledPageWidth < width) {
+                offsetX = width / 2 - scaledPageWidth / 2
+            } else {
+                if (offsetX > 0) {
+                    offsetX = 0f
+                } else if (offsetX + scaledPageWidth < width) {
+                    offsetX = width - scaledPageWidth
+                }
+            }
+            contentDrawOffsetX = offsetX
+            println("SANCHI: after contentData |$contentDrawOffsetX| |$contentDrawOffsetY|")
+            println("SANCHI: --------------------------------------------------------------------")
         } else {
             //todo do it for horizontal
         }
@@ -189,59 +295,9 @@ open class DocumentRenderView @JvmOverloads constructor(
         invalidate()
     }
 
-    override fun moveTo(
-        offsetX: Float,
-        offsetY: Float,
-        movementDirections: TouchEventsManager.MovementDirections?
-    ) {
-        if (swipeVertical) {
-            val halfHeight = height / 2F
-            val contentStart = contentDrawOffsetY + offsetY
-            val contentEnd = contentDrawOffsetY + offsetY + contentHeight
-            if (movementDirections == null) {
-                println("IOU: yes ")
-                if (contentDrawOffsetY == 0F) {
-                    return
-                }
-                println("Bakko: check")
-                contentDrawOffsetY = offsetY
-            } else {
-                println("IOU: NO")
-                if (movementDirections.bottom) {
-                    contentDrawOffsetY += if (contentStart <= halfHeight) {
-                        offsetY
-                    } else {
-                        val contentStartPrevious = contentDrawOffsetY
-                        halfHeight - contentStartPrevious
-                    }
-                    if (contentStart > (pageMargins.top) && contentStart <= halfHeight) {
-                        topAnimation = true
-                    }
-                }
-                if (movementDirections.top) {
-                    contentDrawOffsetY += if (contentEnd >= halfHeight) {
-                        offsetY
-                    } else {
-                        if (contentHeight > halfHeight) {
-                            val extraScrollHeight = halfHeight - contentEnd
-                            (offsetY + extraScrollHeight)
-                        } else {
-                            contentDrawOffsetY
-                        }
-                    }
-                    if (contentEnd < (height.toFloat() + pageMargins.bottom) && contentEnd >= halfHeight) {
-                        bottomAnimation = true
-                    }
-                }
-            }
-            invalidate()
-        } else {
-            //todo horizontal
-        }
-    }
 
     fun addDummyPages() {
-        for (i: Int in 0 until 160) {
+        for (i: Int in 0 until 16) {
             documentPages.add(DocumentPage())
         }
         invalidate()
@@ -261,13 +317,13 @@ open class DocumentRenderView @JvmOverloads constructor(
                 null
             }
             drawBackground(this)
-
             if (swipeVertical) {
                 contentHeight = 0F
                 for (i: Int in documentPages.indices) {
                     val page = documentPages[i]
                     drawPageBackground(page, contentHeight)
-                    drawText("Page No $i", 50F, page.pageBounds.top + 100, ccx)
+                    drawText("Page No $i", page.pageBounds.left, page.pageBounds.top + 100, ccx)
+                    drawCircle(page.pageBounds.right, page.pageBounds.top + 100, 30F, ccx)
                     contentHeight += page.pageSize.height
                 }
             } else {
@@ -280,9 +336,10 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     open fun Canvas.drawPageBackground(page: DocumentPage, totalHeightConsumed: Float) {
         if (swipeVertical) {
-            val pageX = contentDrawOffsetX + pageMargins.left
-            val pageY = contentDrawOffsetY + pageMargins.top + totalHeightConsumed
-            val pageEnd = when (pageFitPolicy) {
+
+            val pageX = (contentDrawOffsetX + pageMargins.left)
+            val pageY = (contentDrawOffsetY + pageMargins.top + totalHeightConsumed)
+            val pageEnd = (when (pageFitPolicy) {
                 Document.PAGE_FIT_POLICY.FIT_WIDTH -> {
                     val screenWidthInPixels = resources.displayMetrics.widthPixels
                     (screenWidthInPixels - pageMargins.right).toFloat()
@@ -290,8 +347,9 @@ open class DocumentRenderView @JvmOverloads constructor(
                 else -> {
                     (pageX + page.pageSize.width) - pageMargins.right
                 }
-            }
-            val pageBottom = pageY + (page.pageSize.height - pageMargins.bottom)
+            })
+
+            val pageBottom = (pageY + (page.pageSize.height - pageMargins.bottom))
             if (pageCorners > 0) {
                 drawRoundRect(
                     RectF(pageX, pageY, pageEnd, pageBottom),
@@ -309,6 +367,9 @@ open class DocumentRenderView @JvmOverloads constructor(
                 right = pageEnd
                 bottom = pageBottom
             }
+            println("SANCHI: =========================================================")
+            println("SANCHI: page bounds are ${page.pageBounds}")
+            println("SANCHI: =========================================================")
         } else {
             //todo do it for horizontal page
         }
@@ -322,5 +383,13 @@ open class DocumentRenderView @JvmOverloads constructor(
         } else {
             bg.draw(canvas)
         }
+    }
+
+    companion object {
+        val DEFAULT_MAX_SCALE = 3.0f
+        val DEFAULT_MID_SCALE = 1.75f
+        val DEFAULT_MIN_SCALE = 1.0f
+        var MAXIMUM_ZOOM = 10f
+        var MINIMUM_ZOOM = 1f
     }
 }

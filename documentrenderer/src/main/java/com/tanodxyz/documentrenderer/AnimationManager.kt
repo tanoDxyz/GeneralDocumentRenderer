@@ -77,18 +77,17 @@ class AnimationManager(context: Context, private val animationListener: Animatio
     ) {
         stopAll()
         flinging = true
+        println("IOPI: fling is ACTIVE = $flinging")
         scroller!!.fling(startX, startY, velocityX, velocityY, minX, maxX, minY, maxY)
+        animationListener.redraw()
     }
 
-    fun canMove(): Boolean {
-        return if (scroller!!.computeScrollOffset()) {
-            true
-        } else {
-            if (flinging) {
-                flinging = false
-            }
+    fun computeScrollOffset() {
+        if (scroller!!.computeScrollOffset()) {
+            animationListener.moveTo(scroller!!.currX.toFloat(), scroller!!.currY.toFloat())
+        } else if (flinging) {
+            flinging = false
             animationListener.redraw()
-            flinging
         }
     }
 
@@ -140,7 +139,7 @@ class AnimationManager(context: Context, private val animationListener: Animatio
         AnimatorUpdateListener {
         override fun onAnimationUpdate(animation: ValueAnimator) {
             val offset = animation.animatedValue as Float
-            animationListener.moveTo(animationListener.getCurrentX(),offset)
+            animationListener.moveTo(animationListener.getCurrentX(), offset)
         }
 
         override fun onAnimationCancel(animation: Animator) {
@@ -170,12 +169,6 @@ class AnimationManager(context: Context, private val animationListener: Animatio
     }
 
     interface AnimationListener {
-        fun moveTo(
-            offsetX: Float,
-            offsetY: Float,
-            movementDirections: TouchEventsManager.MovementDirections? = null
-        )
-
         fun moveTo(absX: Float, absY: Float)
         fun getCurrentX(): Float
         fun getCurrentY(): Float

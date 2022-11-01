@@ -1,12 +1,17 @@
 package com.tanodxyz.documentrenderer
 
 import android.content.Context
+import android.graphics.PointF
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
+import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.MAXIMUM_ZOOM
+import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.MINIMUM_ZOOM
 
-class TouchEventsManager(val context: Context) : GestureDetector.SimpleOnGestureListener(),
+class TouchEventsManager(val context: Context, val settings: Settings = Settings()) :
+    GestureDetector.SimpleOnGestureListener(),
     ScaleGestureDetector.OnScaleGestureListener {
+    private var scaling: Boolean = false
     private var eventsListener: TouchEventsListener? = null
     private val scaleGestureDetector = ScaleGestureDetector(context, this)
     private val gestureDetector = GestureDetector(context, this)
@@ -82,34 +87,55 @@ class TouchEventsManager(val context: Context) : GestureDetector.SimpleOnGesture
     }
 
     override fun onScale(detector: ScaleGestureDetector?): Boolean {
+        var dr = detector!!.scaleFactor
+        val wantedZoom: Float = (eventsListener?.getCurrentZoom() ?: 1F) * dr
+        val minZoom: Float = Math.min(MINIMUM_ZOOM, eventsListener?.getMinZoom() ?: MINIMUM_ZOOM)
+        val maxZoom: Float = Math.min(MAXIMUM_ZOOM, eventsListener?.getMaxZoom() ?: MAXIMUM_ZOOM)
+        val currentZoom = eventsListener?.getCurrentZoom() ?: MINIMUM_ZOOM
+        if (wantedZoom < minZoom) {
+            dr = minZoom / currentZoom
+        } else if (wantedZoom > maxZoom) {
+            dr = maxZoom / currentZoom
+        }
+        eventsListener?.zoomCenteredRelativeTo(dr, PointF(detector!!.focusX, detector!!.focusY))
         return true
     }
+
 
     override fun onDown(e: MotionEvent?): Boolean {
         eventsListener?.onStopFling()
         return true
     }
+
     override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
         return true
     }
+
     override fun onFling(
         e1: MotionEvent?,
         e2: MotionEvent?,
         velocityX: Float,
         velocityY: Float
     ): Boolean {
-        return eventsListener?.onFling(e1,e2,velocityX,velocityY) ?: false
+        return eventsListener?.onFling(e1, e2, velocityX, velocityY) ?: false
     }
+
     override fun onScaleBegin(detector: ScaleGestureDetector?): Boolean {
+        scaling = true
         return true
     }
 
     override fun onScaleEnd(detector: ScaleGestureDetector?) {
+        scaling = false
     }
 
     interface TouchEventsListener {
         fun getCurrentX(): Float
         fun getCurrentY(): Float
+        fun getCurrentZoom(): Float
+        fun getMinZoom(): Float
+        fun getMidZoom(): Float
+        fun getMaxZoom(): Float
         fun onScrollStart(
             movementDirections: MovementDirections? = null,
             distanceX: Float,
@@ -117,6 +143,7 @@ class TouchEventsManager(val context: Context) : GestureDetector.SimpleOnGesture
             absoluteX: Float,
             absoluteY: Float
         )
+
         fun onScrollEnd()
 
         fun onFling(
@@ -127,6 +154,7 @@ class TouchEventsManager(val context: Context) : GestureDetector.SimpleOnGesture
         ): Boolean
 
         fun onStopFling()
+        fun zoomCenteredRelativeTo(dr: Float, pointF: PointF)
     }
 
     data class MovementDirections(
@@ -134,5 +162,11 @@ class TouchEventsManager(val context: Context) : GestureDetector.SimpleOnGesture
         var top: Boolean = false,
         var right: Boolean = false,
         var bottom: Boolean = false
+    )
+
+    data class Settings(
+        val minZoom: Float = DocumentRenderView.DEFAULT_MIN_SCALE,
+        val midZoom: Float = DocumentRenderView.DEFAULT_MID_SCALE,
+        val maxZoom: Float = DocumentRenderView.DEFAULT_MAX_SCALE
     )
 }
