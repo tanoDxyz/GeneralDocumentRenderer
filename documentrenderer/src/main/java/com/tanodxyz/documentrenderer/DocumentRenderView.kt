@@ -297,7 +297,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 
 
     fun addDummyPages() {
-        for (i: Int in 0 until 16) {
+        for (i: Int in 0 until 10) {
             documentPages.add(DocumentPage())
         }
         invalidate()
@@ -321,7 +321,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                 contentHeight = 0F
                 for (i: Int in documentPages.indices) {
                     val page = documentPages[i]
-                    drawPageBackground(page, contentHeight)
+                    drawPageBackgroundNew(page, contentHeight)
                     drawText("Page No $i", page.pageBounds.left, page.pageBounds.top + 100, ccx)
                     drawCircle(page.pageBounds.right, page.pageBounds.top + 100, 30F, ccx)
                     contentHeight += page.pageSize.height
@@ -331,6 +331,44 @@ open class DocumentRenderView @JvmOverloads constructor(
             }
 
             drawLine(0F, (height / 2F), width.toFloat(), (height / 2F), ccx)
+        }
+    }
+
+    open fun Canvas.drawPageBackgroundNew(page: DocumentPage, totalHeightConsumed: Float) {
+        if(swipeVertical) {
+            val pageX = contentDrawOffsetX + pageMargins.left
+            val pageY = contentDrawOffsetY + pageMargins.top + (toCurrentScale(totalHeightConsumed))
+//            val pageEnd = (pageX + (toCurrentScale(page.pageSize.width))) - pageMargins.right
+
+            val pageEnd = (when (pageFitPolicy) {
+                Document.PAGE_FIT_POLICY.FIT_WIDTH -> {
+                    val screenWidthInPixels = resources.displayMetrics.widthPixels
+                    (toCurrentScale(screenWidthInPixels.toFloat()) - pageMargins.right)
+                }
+                else -> {
+                    (pageX + (toCurrentScale(page.pageSize.width))) - pageMargins.right
+                }
+            })
+            val pageBottom = (pageY + (toCurrentScale(page.pageSize.height)) - pageMargins.bottom)
+            if (pageCorners > 0) {
+                drawRoundRect(
+                    RectF(pageX, pageY, pageEnd, pageBottom),
+                    pageCorners,
+                    pageCorners,
+                    pagePaint
+                )
+            } else {
+                drawRect(RectF(pageX, pageY, pageEnd, pageBottom), pagePaint)
+            }
+
+            page.pageBounds.apply {
+                left = pageX
+                top = pageY
+                right = pageEnd
+                bottom = pageBottom
+            }
+        } else {
+            // do it for horizontal
         }
     }
 
