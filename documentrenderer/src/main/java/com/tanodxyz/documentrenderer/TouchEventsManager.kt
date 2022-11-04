@@ -108,6 +108,24 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
         return true
     }
 
+    override fun onDoubleTap(e: MotionEvent?): Boolean {
+//        if (!pdfView.isDoubletapEnabled()) {
+//            return false
+//        }
+        eventsListener?.apply {
+            if (getCurrentZoom() < getMidZoom()) {
+                // zoom with animation
+                zoomWithAnimation(e!!.x, e.y, getMidZoom())
+            } else if (getCurrentZoom() < getMaxZoom()) {
+                // zoom with animation
+                zoomWithAnimation(e!!.x, e.y, getMaxZoom())
+            } else {
+                resetZoomWithAnimation()
+            }
+        }
+        return true
+    }
+
     override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
         return true
     }
@@ -157,6 +175,10 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
 
         fun onStopFling()
         fun zoomCenteredRelativeTo(dr: Float, pointF: PointF)
+
+        fun resetZoomWithAnimation()
+        fun zoomWithAnimation(centerX: Float, centerY: Float, scale: Float)
+        fun zoomWithAnimation(scale: Float)
     }
 
     data class MovementDirections(

@@ -139,38 +139,6 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     override fun onScrollEnd() {
-//        animationManager.scroller?.abortAnimation()
-//        val contentEnd = contentDrawOffsetY + contentHeight
-//        val halfHeight = height / 2F
-//        println("Bako: $topAnimation $bottomAnimation")
-//        if (topAnimation && bottomAnimation) {
-//            println("Bako: both executed")
-//            if (contentEnd > halfHeight) {
-//                topAnimation = true
-//                bottomAnimation = false
-//                onScrollEnd()
-//            }
-//        } else if (topAnimation) {
-//            println("Bako: top executed only.")
-//            animationManager.startYAnimation(
-//                contentDrawOffsetY, (0F), null
-//            )
-//            topAnimation = false
-//        } else if (bottomAnimation) {
-//            println("Bako: bottom executed only")
-//            if (contentHeight > height) {
-//                println("Bako: inside bottom contentHeight > height")
-//                val animationOffSetY =
-//                    ((height - pageMargins.bottom) - contentEnd) + contentDrawOffsetY
-//                animationManager.startYAnimation(contentDrawOffsetY, animationOffSetY, null)
-//                bottomAnimation = false
-//            } else {
-//                println("Bako: inside bottom contentHeight < height")
-//                bottomAnimation = false
-//                topAnimation = true
-//                onScrollEnd()
-//            }
-//        }
     }
 
 
@@ -221,42 +189,6 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     override fun moveTo(absX: Float, absY: Float) {
         if (swipeVertical) {
-//             Check X offset
-//            var offsetX = absX
-//            val scaledPageWidth: Float = toCurrentScale(maxPageWidth)
-//            if (scaledPageWidth < width) {
-//                offsetX = width / 2 - scaledPageWidth / 2
-//            } else {
-//                if (offsetX > 0) {
-//                    offsetX = 0f
-//                } else if (offsetX + scaledPageWidth < width) {
-//                    offsetX = width - scaledPageWidth
-//                }
-//            }
-//
-//            // Check Y offset
-//            var offsetY = absY
-//            val contentHeight: Float = getDocLen(zoom)
-//            if (contentHeight < height) { // whole document height visible on screen
-//                offsetY = (height - contentHeight) / 2
-//            } else {
-//                if (offsetY > 0) { // top visible
-//                    offsetY = 0f
-//                } else if (offsetY + contentHeight < height) { // bottom visible
-//                    offsetY = -contentHeight + height
-//                }
-//            }
-//
-//
-//
-//            contentDrawOffsetX = offsetX
-//            contentDrawOffsetY = offsetY
-            //////////////////////////////////////////////
-            //y
-            println("SANCHI: ------------------------------------------------------------------")
-            println("SANCHI: before contentData |$contentDrawOffsetX| |$contentDrawOffsetY|")
-            println("SANCHI: before absData     |$absX              | |$absY    ")
-
 
             val documentHeight = getDocLen(zoom)
             contentDrawOffsetY = if (documentHeight < height) {
@@ -277,8 +209,6 @@ open class DocumentRenderView @JvmOverloads constructor(
 
 
 //            x
-            val isZoomed = zoom != MINIMUM_ZOOM
-            println("p0i: before are absx = $absX $contentDrawOffsetX | $contentDrawOffsetY")
             var offsetX = absX
             val scaledPageWidth: Float = toCurrentScale(maxPageWidth)
             if (scaledPageWidth < width) {
@@ -294,8 +224,6 @@ open class DocumentRenderView @JvmOverloads constructor(
         } else {
             //todo do it for horizontal
         }
-        println("zander: scrollOffsets are absX = $absX |$contentDrawOffsetX | ${this.context.resources.displayMetrics.widthPixels} | pageWith = ${documentPages[0].pageSize.width}")
-        println("p0i: scrollOffsets are absX = $absX $contentDrawOffsetX | $contentDrawOffsetY")
         redraw()
     }
 
@@ -343,7 +271,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     open fun Canvas.drawPageBackgroundNew(page: DocumentPage, totalHeightConsumed: Float) {
-        if(swipeVertical) {
+        if (swipeVertical) {
             val pageX = contentDrawOffsetX + pageMargins.left
             val pageY = contentDrawOffsetY + pageMargins.top + (toCurrentScale(totalHeightConsumed))
             val pageEnd = (when (pageFitPolicy) {
@@ -430,6 +358,21 @@ open class DocumentRenderView @JvmOverloads constructor(
         } else {
             bg.draw(canvas)
         }
+    }
+
+    override fun resetZoomWithAnimation() {
+        zoomWithAnimation(minZoom)
+    }
+
+    override fun zoomWithAnimation(centerX: Float, centerY: Float, scale: Float) {
+        animationManager.startZoomAnimation(centerX, centerY, zoom, scale)
+    }
+
+    override fun zoomWithAnimation(scale: Float) {
+        animationManager.startZoomAnimation(
+            (width / 2).toFloat(),
+            (height / 2).toFloat(), zoom, scale
+        )
     }
 
     companion object {
