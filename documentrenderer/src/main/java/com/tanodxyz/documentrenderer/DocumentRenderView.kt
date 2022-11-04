@@ -97,6 +97,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         var baseY: Float = contentDrawOffsetY * dzoom
         baseX += pivot.x - pivot.x * dzoom
         baseY += pivot.y - pivot.y * dzoom
+        println("p0i: from zoom center")
         moveTo(baseX, baseY)
     }
 
@@ -117,6 +118,10 @@ open class DocumentRenderView @JvmOverloads constructor(
         return maxZoom
     }
 
+    override fun isZooming(): Boolean {
+        return zoom != MINIMUM_ZOOM
+    }
+
 
     fun zoomTo(zoom: Float) {
         this.zoom = zoom
@@ -129,6 +134,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         absoluteX: Float,
         absoluteY: Float
     ) {
+        println("p0i: from scroll")
         moveTo(absoluteX, absoluteY)
     }
 
@@ -182,15 +188,16 @@ open class DocumentRenderView @JvmOverloads constructor(
         velocityX: Float,
         velocityY: Float
     ): Boolean {
-        val diffY = -getDocLen(contentHeight)
+        val minY = -(getDocLen(zoom))
+        val minX = -(toCurrentScale(maxPageWidth))
         animationManager.startFlingAnimation(
             contentDrawOffsetX.toInt(),
             contentDrawOffsetY.toInt(),
             velocityX.toInt(),
             velocityY.toInt(),
+            minX.toInt(),
             0,
-            0,
-            diffY.toInt(),
+            minY.toInt(),
             0
         )
         return true
@@ -214,7 +221,6 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     override fun moveTo(absX: Float, absY: Float) {
         if (swipeVertical) {
-
 //             Check X offset
 //            var offsetX = absX
 //            val scaledPageWidth: Float = toCurrentScale(maxPageWidth)
@@ -271,6 +277,8 @@ open class DocumentRenderView @JvmOverloads constructor(
 
 
 //            x
+            val isZoomed = zoom != MINIMUM_ZOOM
+            println("p0i: before are absx = $absX $contentDrawOffsetX | $contentDrawOffsetY")
             var offsetX = absX
             val scaledPageWidth: Float = toCurrentScale(maxPageWidth)
             if (scaledPageWidth < width) {
@@ -283,11 +291,11 @@ open class DocumentRenderView @JvmOverloads constructor(
                 }
             }
             contentDrawOffsetX = offsetX
-            println("SANCHI: after contentData |$contentDrawOffsetX| |$contentDrawOffsetY|")
-            println("SANCHI: --------------------------------------------------------------------")
         } else {
             //todo do it for horizontal
         }
+        println("zander: scrollOffsets are absX = $absX |$contentDrawOffsetX | ${this.context.resources.displayMetrics.widthPixels} | pageWith = ${documentPages[0].pageSize.width}")
+        println("p0i: scrollOffsets are absX = $absX $contentDrawOffsetX | $contentDrawOffsetY")
         redraw()
     }
 
@@ -297,7 +305,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 
 
     fun addDummyPages() {
-        for (i: Int in 0 until 10) {
+        for (i: Int in 0 until 100) {
             documentPages.add(DocumentPage())
         }
         invalidate()
@@ -338,12 +346,10 @@ open class DocumentRenderView @JvmOverloads constructor(
         if(swipeVertical) {
             val pageX = contentDrawOffsetX + pageMargins.left
             val pageY = contentDrawOffsetY + pageMargins.top + (toCurrentScale(totalHeightConsumed))
-//            val pageEnd = (pageX + (toCurrentScale(page.pageSize.width))) - pageMargins.right
-
             val pageEnd = (when (pageFitPolicy) {
                 Document.PAGE_FIT_POLICY.FIT_WIDTH -> {
                     val screenWidthInPixels = resources.displayMetrics.widthPixels
-                    (toCurrentScale(screenWidthInPixels.toFloat()) - pageMargins.right)
+                    ((contentDrawOffsetX + toCurrentScale(screenWidthInPixels.toFloat())) - pageMargins.right)
                 }
                 else -> {
                     (pageX + (toCurrentScale(page.pageSize.width))) - pageMargins.right
@@ -370,6 +376,9 @@ open class DocumentRenderView @JvmOverloads constructor(
         } else {
             // do it for horizontal
         }
+
+        println("TRK: pageOffsets are ${page.pageBounds}")
+
     }
 
     open fun Canvas.drawPageBackground(page: DocumentPage, totalHeightConsumed: Float) {
@@ -428,6 +437,6 @@ open class DocumentRenderView @JvmOverloads constructor(
         val DEFAULT_MID_SCALE = 1.75f
         val DEFAULT_MIN_SCALE = 1.0f
         var MAXIMUM_ZOOM = 10f
-        var MINIMUM_ZOOM = 1f
+        var MINIMUM_ZOOM = 1.0F
     }
 }

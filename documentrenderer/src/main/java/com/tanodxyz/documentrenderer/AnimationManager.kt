@@ -77,15 +77,17 @@ class AnimationManager(context: Context, private val animationListener: Animatio
     ) {
         stopAll()
         flinging = true
-        println("IOPI: fling is ACTIVE = $flinging")
+        println("IOPI: fling is ACTIVE = $flinging $minX $minY $maxX $maxY")
         scroller!!.fling(startX, startY, velocityX, velocityY, minX, maxX, minY, maxY)
         animationListener.redraw()
     }
 
     fun computeScrollOffset() {
         if (scroller!!.computeScrollOffset()) {
+            println("p0i:from fling")
             animationListener.moveTo(scroller!!.currX.toFloat(), scroller!!.currY.toFloat())
         } else if (flinging) {
+            println("p0i: also from else fling")
             flinging = false
             animationListener.redraw()
         }
