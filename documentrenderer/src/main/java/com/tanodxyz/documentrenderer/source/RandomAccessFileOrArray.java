@@ -255,7 +255,7 @@ public class RandomAccessFileOrArray implements DataInput {
     /**
      * Gets the total amount of bytes in the source.
      *
-     * @return source's size.
+     * @return source's originalSize.
      */
     public long length() {
         return byteSource.length();

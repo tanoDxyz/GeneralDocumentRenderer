@@ -268,7 +268,7 @@
 //
 //        // if less than the fully mapped usage of PagedFileChannelRandomAccessSource,
 //        // just map the whole thing and be done with it
-//        if (channel.size() <= PagedChannelRandomAccessSource.DEFAULT_TOTAL_BUFSIZE){
+//        if (channel.originalSize() <= PagedChannelRandomAccessSource.DEFAULT_TOTAL_BUFSIZE){
 //            return new GetBufferedRandomAccessSource(new FileChannelRandomAccessSource(channel));
 //        } else {
 //            return new GetBufferedRandomAccessSource(new PagedChannelRandomAccessSource(channel));

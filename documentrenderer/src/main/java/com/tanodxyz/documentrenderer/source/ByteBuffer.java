@@ -168,7 +168,7 @@ public class ByteBuffer {
 
     /**
      * Fill {@code ByteBuffer} from the end.
-     * Set byte at {@code capacity() - size() - 1} position.
+     * Set byte at {@code capacity() - originalSize() - 1} position.
      * @param b {@code byte}.
      * @return {@code ByteBuffer}.
      */
@@ -180,7 +180,7 @@ public class ByteBuffer {
 
     /**
      * Fill {@code ByteBuffer} from the end.
-     * Set bytes from {@code capacity() - size() - b.length} position.
+     * Set bytes from {@code capacity() - originalSize() - b.length} position.
      * @param b {@code byte}.
      * @return {@code ByteBuffer}.
      */

@@ -23,21 +23,21 @@
 //
 //    /**
 //     * This method is an alternative for the {@code InputStream.skip()}
-//     * -method that doesn't seem to work properly for big values of {@code size
+//     * -method that doesn't seem to work properly for big values of {@code originalSize
 //     * }.
 //     *
 //     * @param stream   the {@code InputStream}
-//     * @param size the number of bytes to skip
+//     * @param originalSize the number of bytes to skip
 //     * @throws java.io.IOException
 //     */
-//    public static void skip(InputStream stream, long size) throws java.io.IOException {
+//    public static void skip(InputStream stream, long originalSize) throws java.io.IOException {
 //        long n;
-//        while (size > 0) {
-//            n = stream.skip(size);
+//        while (originalSize > 0) {
+//            n = stream.skip(originalSize);
 //            if (n <= 0) {
 //                break;
 //            }
-//            size -= n;
+//            originalSize -= n;
 //        }
 //    }
 //
@@ -60,7 +60,7 @@
 //    public static void writeEscapedString(OutputStream outputStream, byte[] bytes) throws IOException {
 //        ByteBuffer buf = createBufferedEscapedString(bytes);
 //        try {
-//            outputStream.write(buf.getInternalBuffer(), 0, buf.size());
+//            outputStream.write(buf.getInternalBuffer(), 0, buf.originalSize());
 //        } catch (java.io.IOException e) {
 //            throw new IOException(IoExceptionMessage.CannotWriteBytes, e);
 //        }
@@ -69,7 +69,7 @@
 //    public static void writeHexedString(OutputStream outputStream, byte[] bytes) throws IOException {
 //        ByteBuffer buf = createBufferedHexedString(bytes);
 //        try {
-//            outputStream.write(buf.getInternalBuffer(), 0, buf.size());
+//            outputStream.write(buf.getInternalBuffer(), 0, buf.originalSize());
 //        } catch (java.io.IOException e) {
 //            throw new IOException(IoExceptionMessage.CannotWriteBytes, e);
 //        }

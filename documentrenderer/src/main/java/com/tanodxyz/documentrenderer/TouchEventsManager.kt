@@ -58,7 +58,6 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
             val previousX = eventsListener!!.getCurrentX()
             val currentY = previousY + (-distanceY)
             val currentX = previousX + (-distanceX)
-            println("p0i: previousX = $previousX | previousY = $previousY | scrollX = $distanceX | scrollY = $distanceY | absX = $currentX | absy = $currentY")
             val movementDirections = MovementDirections()
             if (previousY <= -1) {
                 if (currentY <= previousY) movementDirections.top = true

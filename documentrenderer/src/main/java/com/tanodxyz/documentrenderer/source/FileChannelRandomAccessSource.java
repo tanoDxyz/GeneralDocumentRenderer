@@ -74,7 +74,7 @@ public class FileChannelRandomAccessSource implements IRandomAccessSource {
     public FileChannelRandomAccessSource(FileChannel channel) throws java.io.IOException {
         this.channel = channel;
         if(channel.size() == 0)
-            throw new java.io.IOException("File size is 0 bytes");
+            throw new java.io.IOException("File originalSize is 0 bytes");
         source = new MappedChannelRandomAccessSource(channel, 0, channel.size());
         source.open();
     }
