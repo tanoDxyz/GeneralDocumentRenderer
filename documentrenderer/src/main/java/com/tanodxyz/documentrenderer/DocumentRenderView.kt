@@ -87,16 +87,17 @@ open class DocumentRenderView @JvmOverloads constructor(
         }
         animationManager.stopAll()
         document.recalculatePageSizes(Size(w.toFloat(), h.toFloat()))
-//        val scaledPageWidth: Float = toCurrentScale(document.getMaxPageWidth())
-//        if (scaledPageWidth < width) {
-//            contentDrawOffsetX = width / 2 - scaledPageWidth / 2
-//        } else {
-//            if (contentDrawOffsetX > 0) {
-//                contentDrawOffsetX = 0f
-//            } else if (contentDrawOffsetX + scaledPageWidth < width) {
-//                contentDrawOffsetX = width - scaledPageWidth
-//            }
-//        }
+
+        // whenever size changes set X
+        val scaledPageWidth: Float = toCurrentScale(document.getMaxPageWidth())
+        if (scaledPageWidth < width) {
+            contentDrawOffsetX = width / 2 - scaledPageWidth / 2
+        }
+        // whenever size changes set Y
+        val documentHeight = getDocLen(zoom)
+        if (documentHeight < height) {
+            contentDrawOffsetY = (height - documentHeight) / 2
+        }
     }
 
 
@@ -178,7 +179,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         velocityX: Float,
         velocityY: Float
     ): Boolean {
-        val minY = -(getDocLen(zoom))
+        val minY = -(getRenderedDocLen(zoom))
         val minX = -(toCurrentScale(document.getMaxPageWidth()))
         animationManager.startFlingAnimation(
             contentDrawOffsetX.toInt(),
@@ -205,13 +206,17 @@ open class DocumentRenderView @JvmOverloads constructor(
         return size * zoom
     }
 
-    open fun getDocLen(zoom: Float): Float {
+    open fun getRenderedDocLen(zoom: Float): Float {
         return contentHeight * zoom
+    }
+
+    fun getDocLen(zoom: Float): Float {
+        return document.getContentHeight() * zoom
     }
 
     override fun moveTo(absX: Float, absY: Float) {
         if (swipeVertical) {
-            val documentHeight = getDocLen(zoom)
+            val documentHeight = getRenderedDocLen(zoom)
             contentDrawOffsetY = if (documentHeight < height) {
                 (height - documentHeight) / 2
             } else {
@@ -241,6 +246,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                     offsetX = width - scaledPageWidth
                 }
             }
+//
             contentDrawOffsetX = offsetX
         } else {
             //todo do it for horizontal
@@ -295,17 +301,15 @@ open class DocumentRenderView @JvmOverloads constructor(
             // set page width in a way
             var pageX = 0F
             var pageEnd = 0F
-            val scaledPageWidth: Float = toCurrentScale(page.size.width)
-
-            if(scaledPageWidth < width) {
-
-            } else {
-
-            }
+            pageX =
+                contentDrawOffsetX + toCurrentScale(document.getMaxPageWidth() - page.size.width) / 2;
             pageEnd =
-                (contentDrawOffsetX + (toCurrentScale(page.size.width))) - pageMargins.right
-            pageX = contentDrawOffsetX + pageMargins.left
-
+                (pageX + (toCurrentScale(page.size.width)))
+            val addSideWiseMargins = (page.size.width / width.toFloat()) >= 0.95F || zoom != minZoom
+            if (addSideWiseMargins) {
+                pageX += toCurrentScale(pageMargins.left)
+                pageEnd -= toCurrentScale(pageMargins.right)
+            }
             val pageY = contentDrawOffsetY + pageMargins.top + (toCurrentScale(totalHeightConsumed))
             val pageBottom = (pageY + (toCurrentScale(page.size.height)) - pageMargins.bottom)
 
@@ -358,8 +362,8 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     companion object {
-        val DEFAULT_MAX_SCALE = 6.0f // todo change this
-        val DEFAULT_MID_SCALE = 3.0f //todo and this to change the double tap zoom levels
+        val DEFAULT_MAX_SCALE = 3.0f // todo change this
+        val DEFAULT_MID_SCALE = 1.75f //todo and this to change the double tap zoom levels
         val DEFAULT_MIN_SCALE = 1.0f
         var MAXIMUM_ZOOM = 10f
         var MINIMUM_ZOOM = 1.0F

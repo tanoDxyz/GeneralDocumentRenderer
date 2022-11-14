@@ -12,9 +12,9 @@ data class DocumentPage(
     val index: Int = -1,
     val elements: MutableList<IElement> = mutableListOf(),
     val originalSize: Size = Size(
-        SecureRandom().nextInt(Resources.getSystem().displayMetrics.widthPixels).toFloat(),
-        SecureRandom().nextInt(Resources.getSystem().displayMetrics.heightPixels).toFloat()
-//       10000F,45678F
+//        SecureRandom().nextInt(Resources.getSystem().displayMetrics.widthPixels).toFloat(),
+//        SecureRandom().nextInt(Resources.getSystem().displayMetrics.heightPixels).toFloat()
+       10000F,45678F
     ),
     val pageBounds: RectF = RectF(0F, 0F, 0F, 0F),
 ) : Serializable {

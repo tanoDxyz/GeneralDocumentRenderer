@@ -33,6 +33,7 @@ class PageSizeCalculator(
         return when (fitPolicy) {
             PageFitPolicy.FIT_HEIGHT -> fitHeight(pageSize, maxHeight)
             PageFitPolicy.BOTH -> fitBoth(pageSize, maxWidth, maxHeight)
+            PageFitPolicy.NONE -> pageSize
             else -> fitWidth(pageSize, maxWidth)
         }
     }
@@ -68,6 +69,12 @@ class PageSizeCalculator(
                     originalMaxWidthSize.height * heightRatio
                 )
                 widthRatio = optimalMaxWidthSize.width / originalMaxWidthSize.width
+            }
+
+            PageFitPolicy.NONE -> {
+                optimalMaxWidthSize = Size(viewSize.width, viewSize.height)
+                widthRatio = optimalMaxWidthSize.width / optimalMaxWidthSize.height
+                optimalMaxHeightSize = Size(viewSize.height, viewSize.width)
             }
             else -> {
                 optimalMaxWidthSize =

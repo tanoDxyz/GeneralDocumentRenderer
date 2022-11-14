@@ -13,7 +13,7 @@ open class Document {
     protected val originalDocumentPageData = mutableListOf<DocumentPage>()
     protected var originalMaxPageWidth = Size(0F, 0F)
     protected var originalMaxPageHeight = Size(0F, 0F)
-
+    protected var totalContentHeight = 0F
     fun <T> get(property: String): T? {
         val propertyValue = documentMeta[property]
         return if (propertyValue != null) propertyValue as T else null
@@ -44,7 +44,7 @@ open class Document {
 
     var documentFitPagePolicy: PageFitPolicy
         get() {
-            return get<PageFitPolicy>(PROPERTY_DOOCUMENT_PAGE_FIT_POLICY) ?: PageFitPolicy.BOTH
+            return get<PageFitPolicy>(PROPERTY_DOOCUMENT_PAGE_FIT_POLICY) ?: PageFitPolicy.NONE
         }
         set(value) {
             this[PROPERTY_DOOCUMENT_PAGE_FIT_POLICY] = value
@@ -101,7 +101,7 @@ open class Document {
     }
 
     enum class PageFitPolicy {
-        FIT_WIDTH, FIT_HEIGHT, BOTH;
+        FIT_WIDTH, FIT_HEIGHT, BOTH, NONE;
 
         companion object {
             fun policy(name: String?): PageFitPolicy {
@@ -109,8 +109,10 @@ open class Document {
                     FIT_WIDTH
                 } else if (name.equals(FIT_HEIGHT.name, true)) {
                     FIT_HEIGHT
-                } else {
+                } else if (name.equals(BOTH.name, true)) {
                     BOTH
+                } else {
+                    NONE
                 }
             }
         }
@@ -222,8 +224,12 @@ open class Document {
         )
         maxWidthPageSize = calculator.optimalMaxWidthPageSize
         maxHeightPageSize = calculator.optimalMaxHeightPageSize
+        totalContentHeight = 0F
         originalDocumentPageData.forEach { documentPage ->
             documentPage.size = calculator.calculate(documentPage.originalSize)
+            //todo check for vertical and horizontal stuff amigo.
+            totalContentHeight += documentPage.size.height
+
         }
     }
 
@@ -245,6 +251,7 @@ open class Document {
         }
     }
 
+    fun getContentHeight(): Float = totalContentHeight
     fun getDocumentPages(): List<DocumentPage> = originalDocumentPageData
     fun documentPageIterator(): DocumentPageIterator = DocumentPageIterator()
 }
