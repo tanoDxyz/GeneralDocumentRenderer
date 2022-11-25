@@ -40,7 +40,7 @@
 //    var swipeVertical = true
 //    var currentPage = 0
 //
-//    private var contentHeight = 0f
+//    private var contentLength = 0f
 //    private lateinit var dragPinchManager: DragPinchManager
 //    private var documentPages = mutableListOf<DocumentPage>()
 //
@@ -114,11 +114,11 @@
 //            }
 //            drawBackground(this)
 //
-//            contentHeight = 0f
+//            contentLength = 0f
 //            for (i: Int in 0 until documentPages.count()) {
 //                val page = documentPages[i]
-//                drawPageBackground(page, contentHeight)
-//                contentHeight += if (swipeVertical) {
+//                drawPageBackground(page, contentLength)
+//                contentLength += if (swipeVertical) {
 //                    page.pageSize.height
 //                } else {
 //                    if (pageFitPolicy == Document.PAGE_FIT_POLICY.FIT_WIDTH) {
@@ -200,8 +200,8 @@
 //                currentOffsetY = deltaY
 //
 //            } else {
-//                val contentBottom = contentHeight + deltaY
-//                val previousContentBottom = contentHeight + currentOffsetY
+//                val contentBottom = contentLength + deltaY
+//                val previousContentBottom = contentLength + currentOffsetY
 //                if (previousContentBottom >= halfHeight) {
 //                    if (contentBottom < halfHeight) {
 //                        deltaY += (halfHeight - contentBottom)
@@ -221,10 +221,10 @@
 //            var deltaX = offsetX
 //
 //            var contentStartPrevious = previousX
-//            var contentEndPrevious = previousX + contentHeight
+//            var contentEndPrevious = previousX + contentLength
 //
 //            val contentStart = deltaX
-//            val contentEnd = deltaX + contentHeight
+//            val contentEnd = deltaX + contentLength
 //
 //            if (contentStart > 0) {
 //                startEdgeScroll = true
@@ -247,7 +247,7 @@
 //        invalidate()
 //    }
 //
-//    fun isContentYScrollable(): Boolean = contentHeight > height
+//    fun isContentYScrollable(): Boolean = contentLength > height
 //
 //    fun isPageVisibleOnScreen(
 //        pageBounds: RectF,
@@ -333,7 +333,7 @@
 //        }
 ////        if (bottomEdgeScroll) {
 ////            val contentTop = (currentOffsetY + bottomOverscrollHeight)
-////            val contentBottom = (currentOffsetY + bottomOverscrollHeight) + contentHeight
+////            val contentBottom = (currentOffsetY + bottomOverscrollHeight) + contentLength
 ////            if (contentBottom >= (height - pageMargins.bottom)) {
 ////                val fl = contentBottom - (height - pageMargins.bottom)
 ////                bottomOverscrollHeight -= (fl)
@@ -354,7 +354,7 @@
 ////            )
 ////        }
 ////        if (endEdgeScroll) {
-////            val finalContentEndAfterAnimation = contentHeight + currentOffsetX + endOverscrollWidth
+////            val finalContentEndAfterAnimation = contentLength + currentOffsetX + endOverscrollWidth
 ////            if(finalContentEndAfterAnimation > (width - pageMargins.right)) {
 ////                endOverscrollWidth -= (finalContentEndAfterAnimation - width) + pageMargins.right
 ////            }

@@ -1,19 +1,28 @@
 package com.tanodxyz.documentrenderer.document
 
+import android.content.Context
+import android.graphics.RectF
 import android.os.Build
-import com.tanodxyz.documentrenderer.PageSizeCalculator
-import com.tanodxyz.documentrenderer.getPagesViaPageIndexes
+import com.tanodxyz.documentrenderer.*
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import java.util.*
 
-open class Document {
-    private var maxHeightPageSize = Size(0F, 0F)
-    private var maxWidthPageSize = Size(0F, 0F)
+open class Document(context: Context) {
+    protected var maxHeightPageSize = Size(0, 0)
+    protected var maxWidthPageSize = Size(0, 0)
     protected val documentMeta = HashMap<String, Any?>()
     protected val originalDocumentPageData = mutableListOf<DocumentPage>()
-    protected var originalMaxPageWidth = Size(0F, 0F)
-    protected var originalMaxPageHeight = Size(0F, 0F)
+    protected var originalMaxPageWidth = Size(0, 0)
+    protected var originalMaxPageHeight = Size(0, 0)
     protected var totalContentHeight = 0F
+    var pageMargins: RectF = RectF(
+        context.resources.dpToPx(4), // left margin
+        context.resources.dpToPx(4), // top margin
+        context.resources.dpToPx(4), // right margin
+        context.resources.dpToPx(4) // bottom margin
+    )
+    var pageCorners: Float = 0.0F
+
     fun <T> get(property: String): T? {
         val propertyValue = documentMeta[property]
         return if (propertyValue != null) propertyValue as T else null
@@ -55,6 +64,11 @@ open class Document {
         set(value) {
             this[PROPERTY_DOCUMENT_SWIPE_VERTICAL] = value
         }
+    var pageSnap: Boolean
+        get() = get<Boolean>(PROPERTY_DOCUMENT_PAGE_SNAP) ?: false
+        set(value) {
+            this[PROPERTY_DOCUMENT_PAGE_SNAP] = value
+        }
 
     var documentViewMode: DocumentViewMode
         get() {
@@ -80,6 +94,7 @@ open class Document {
         val PROPERTY_DOCUMENT_PATH = "com.gdr.documentPath"
         val PROPERTY_DOCUMENT_FIT_EACH_PAGE = "com.gdr.fiteachpage"
         val PROPERTY_DOCUMENT_SWIPE_VERTICAL = "com.gdr.swipeVertical"
+        val PROPERTY_DOCUMENT_PAGE_SNAP = "com.gdr.page.snap"
         const val DOCUMENT_NAME = "document-"
     }
 
@@ -191,7 +206,6 @@ open class Document {
         return pageExistsForGivenIndex
     }
 
-    //TODO worker thread ......
     fun setup(viewSize: Size) {
         originalDocumentPageData.forEach { documentPage ->
             val pageSize = documentPage.originalSize
@@ -209,16 +223,16 @@ open class Document {
         return if (swipeVertical) maxWidthPageSize else maxHeightPageSize
     }
 
-    open fun getMaxPageWidth(): Float {
+    open fun getMaxPageWidth(): Int {
         return getMaxPageSize().width
     }
 
-    open fun getMaxPageHeight(): Float {
+    open fun getMaxPageHeight(): Int {
         return getMaxPageSize().height
     }
 
     open fun recalculatePageSizes(viewSize: Size) {
-        val calculator = PageSizeCalculator(
+        val calculator = DefaultPageSizeCalculator(
             documentFitPagePolicy, originalMaxPageWidth,
             originalMaxPageHeight, viewSize, get<Boolean>(PROPERTY_DOCUMENT_FIT_EACH_PAGE) ?: false
         )
@@ -227,11 +241,20 @@ open class Document {
         totalContentHeight = 0F
         originalDocumentPageData.forEach { documentPage ->
             documentPage.size = calculator.calculate(documentPage.originalSize)
-            //todo check for vertical and horizontal stuff amigo.
-            totalContentHeight += documentPage.size.height
-
+            if (documentPage.size.width > maxWidthPageSize.width) {
+                maxWidthPageSize.width = documentPage.size.width
+            }
+            if (documentPage.size.height > maxHeightPageSize.height) {
+                maxHeightPageSize.height = documentPage.size.height
+            }
+            totalContentHeight += if (this.swipeVertical) {
+                documentPage.size.height
+            } else {
+                documentPage.size.width
+            }
         }
     }
+
 
     inner class DocumentPageIterator : Iterable<DocumentPage> {
         private var nextElementIndex = 0
@@ -252,6 +275,9 @@ open class Document {
     }
 
     fun getContentHeight(): Float = totalContentHeight
-    fun getDocumentPages(): List<DocumentPage> = originalDocumentPageData
+    internal fun getDocumentPages(): List<DocumentPage> = originalDocumentPageData
     fun documentPageIterator(): DocumentPageIterator = DocumentPageIterator()
+    fun haveNoPages(): Boolean = getDocumentPages().isEmpty()
+    fun getPagesCount(): Int = getDocumentPages().count()
+
 }

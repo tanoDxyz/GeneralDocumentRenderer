@@ -89,6 +89,7 @@ class AnimationManager(context: Context, private val animationListener: Animatio
         } else if (flinging) {
             println("p0i: also from else fling")
             flinging = false
+            animationListener.performPageSnap()
             animationListener.redraw()
         }
     }
@@ -176,5 +177,6 @@ class AnimationManager(context: Context, private val animationListener: Animatio
         fun getCurrentY(): Float
         fun zoomCenteredTo(zoom: Float, pivot: PointF)
         fun redraw()
+        fun performPageSnap()
     }
 }

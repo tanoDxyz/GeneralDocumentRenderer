@@ -5,9 +5,10 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import androidx.core.view.marginEnd
 import com.tanodxyz.documentrenderer.document.Document
-import com.tanodxyz.documentrenderer.document.Size
 import com.tanodxyz.documentrenderer.page.DocumentPage
+import kotlin.concurrent.thread
 
 //todo we need logic for correctly defining page sizes.
 //todo there must be a page with varialbe length
@@ -29,10 +30,6 @@ open class DocumentRenderView @JvmOverloads constructor(
     var nightMode = false
     var pageBackColor = Color.WHITE
 
-    lateinit var pagePaddings: Rect
-    lateinit var pageMargins: RectF
-
-    var pageCorners: Float = 0.0F
 
     val antialiasFilter =
         PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
@@ -42,10 +39,8 @@ open class DocumentRenderView @JvmOverloads constructor(
     var contentDrawOffsetX = 0F
     var contentDrawOffsetY = 0F
 
-    var swipeVertical = true
     var currentPage = 0
-    var contentHeight = 0f
-    var contentWidth = 0f
+    var contentLength = 0f
 
 
     var zoom = MINIMUM_ZOOM
@@ -65,10 +60,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         ccx.textSize = 50F
         animationManager = AnimationManager(this.context, this)
         // todo these values will be parsed from attributes
-        val defaultPageMargins = resources.dpToPx(12)
-        pageMargins =
-            RectF(defaultPageMargins, defaultPageMargins, defaultPageMargins, defaultPageMargins)
-        pageCorners = resources.dpToPx(8)
+
 
         pagePaint.apply {
             style = Paint.Style.FILL_AND_STROKE
@@ -85,21 +77,43 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (isInEditMode) {
             return
         }
+        //todo check how many pages are visible ......
+        thread(start = true) {
+            while (true) {
+                Thread.sleep(2000)
+                println(
+                    "Bakko: visible pages are ${
+                        document.getDocumentPages().filter { it.isVisible(false) }.count()
+                    }"
+                )
+            }
+        }
         animationManager.stopAll()
-        document.recalculatePageSizes(Size(w.toFloat(), h.toFloat()))
+        document.recalculatePageSizes(Size(w, h))
+        if (document.swipeVertical) {
+            // whenever size changes set X
+            val scaledPageWidth: Float = toCurrentScale(document.getMaxPageWidth())
+            if (scaledPageWidth < width) {
+                contentDrawOffsetX = width / 2 - scaledPageWidth / 2
+            }
+            // whenever size changes set Y
+            val documentHeight = getDocLen(zoom)
+            if (documentHeight < height) {
+                contentDrawOffsetY = (height - documentHeight) / 2
+            }
 
-        // whenever size changes set X
-        val scaledPageWidth: Float = toCurrentScale(document.getMaxPageWidth())
-        if (scaledPageWidth < width) {
-            contentDrawOffsetX = width / 2 - scaledPageWidth / 2
+        } else {
+            val scaledPageHeight = toCurrentScale(document.getMaxPageHeight().toFloat())
+            if (scaledPageHeight < height) {
+                contentDrawOffsetY = height / 2 - scaledPageHeight / 2
+            }
+            val contentWidth: Float = getDocLen(zoom)
+            if (contentWidth < width) { // whole document width visible on screen
+                contentDrawOffsetX = (width - contentWidth) / 2
+            }
         }
-        // whenever size changes set Y
-        val documentHeight = getDocLen(zoom)
-        if (documentHeight < height) {
-            contentDrawOffsetY = (height - documentHeight) / 2
-        }
+
     }
-
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
         return touchEventMgr.onTouchEvent(event)
@@ -121,7 +135,6 @@ open class DocumentRenderView @JvmOverloads constructor(
         var baseY: Float = contentDrawOffsetY * dzoom
         baseX += pivot.x - pivot.x * dzoom
         baseY += pivot.y - pivot.y * dzoom
-        println("p0i: from zoom center")
         moveTo(baseX, baseY)
     }
 
@@ -158,12 +171,73 @@ open class DocumentRenderView @JvmOverloads constructor(
         absoluteX: Float,
         absoluteY: Float
     ) {
+//        if (pdfView.isZooming() || pdfView.isSwipeEnabled()) {
+//            pdfView.moveRelativeTo(-distanceX, -distanceY)
+//        }
+//        if (!scaling || pdfView.doRenderDuringScale()) {
+//            pdfView.loadPageByOffset()
+//        }
         moveTo(absoluteX, absoluteY)
     }
 
     override fun onScrollEnd() {
+//        pdfView.loadPages()
+//        hideHandle()
+        if (!animationManager.isFlinging()) {
+            performPageSnap()
+        }
     }
 
+    override fun performPageSnap() {
+        if (!document.pageSnap || document.haveNoPages()) {
+            return
+        }
+        //todo on background
+
+//        findFocusPage(contentDrawOffsetX,contentDrawOffsetY)
+//        val centerPage: Int = findFocusPage(currentXOffset, currentYOffset)
+//        val edge: SnapEdge = findSnapEdge(centerPage)
+//        if (edge === SnapEdge.NONE) {
+//            return
+//        }
+//
+//        val offset: Float = snapOffsetForPage(centerPage, edge)
+//        if (swipeVertical) {
+//            animationManager.startYAnimation(currentYOffset, -offset)
+//        } else {
+//            animationManager.startXAnimation(currentXOffset, -offset)
+//        }
+    }
+
+    open fun findFocusedPage(xOffset: Float, yOffset: Float): Int {
+        var pageOffset = -1
+        val currOffset: Float = if (document.swipeVertical) yOffset else xOffset
+        val length: Float =
+            if (document.swipeVertical) height.toFloat() else width.toFloat()
+        // make sure first and last page can be found
+        // make sure first and last page can be found
+        if (currOffset > -1) {
+            pageOffset = 0
+        } else if (currOffset < -getDocLen(zoom) + length + 1) {
+            pageOffset = document.getPagesCount() - 1
+        }
+        val center = currOffset - length / 2f
+        // find page in center so
+        return -1;
+    }
+//    open fun findFocusPage(xOffset: Float, yOffset: Float): Int {
+//        val currOffset = if (document.swipeVertical) yOffset else xOffset
+//        val length = if (document.swipeVertical) height.toFloat() else width.toFloat()
+//        // make sure first and last page can be found
+//        if (currOffset > -1) {
+//            return 0
+//        } else if (currOffset < -getDocLen(zoom) + length + 1) {
+//            return document.getPagesCount() - 1
+//        }
+//        // else find page in center
+//        val center = currOffset - length / 2f
+//        return getPageAtOffset(-center, zoom)
+//    }
 
     override fun computeScroll() {
         super.computeScroll()
@@ -179,8 +253,15 @@ open class DocumentRenderView @JvmOverloads constructor(
         velocityX: Float,
         velocityY: Float
     ): Boolean {
-        val minY = -(getRenderedDocLen(zoom))
-        val minX = -(toCurrentScale(document.getMaxPageWidth()))
+        var minY = 0F
+        var minX = 0F
+        if (document.swipeVertical) {
+            minY = -(getRenderedDocLen(zoom))
+            minX = -(toCurrentScale(document.getMaxPageWidth()))
+        } else {
+            minX = -(getDocLen(getCurrentZoom()) /*- width*/)
+            minY = -(toCurrentScale(document.getMaxPageHeight()) /*- height*/)
+        }
         animationManager.startFlingAnimation(
             contentDrawOffsetX.toInt(),
             contentDrawOffsetY.toInt(),
@@ -199,15 +280,23 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     override fun zoomCenteredRelativeTo(dr: Float, pointF: PointF) {
-        zoomCenteredTo(zoom * dr, pointF!!)
+        zoomCenteredTo(zoom * dr, pointF)
     }
 
-    open fun toCurrentScale(size: Float): Float {
-        return size * zoom
+    open fun toCurrentScale(size: Number): Float {
+        return size.toFloat() * zoom
+    }
+
+    open fun Number.shouldSubtractExtraBottomMargin(startPosition: Float): Boolean {
+        return (toCurrentScale(this.toFloat()) + startPosition) >= height
+    }
+
+    open fun Number.shouldSubtractExtraRightMargin(startPosition: Float): Boolean {
+        return (toCurrentScale(this.toFloat()) + startPosition) >= width
     }
 
     open fun getRenderedDocLen(zoom: Float): Float {
-        return contentHeight * zoom
+        return contentLength * zoom
     }
 
     fun getDocLen(zoom: Float): Float {
@@ -215,12 +304,12 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     override fun moveTo(absX: Float, absY: Float) {
-        if (swipeVertical) {
+        if (document.swipeVertical) {
             val documentHeight = getRenderedDocLen(zoom)
             contentDrawOffsetY = if (documentHeight < height) {
                 (height - documentHeight) / 2
             } else {
-                val contentEnd = absY + documentHeight + pageMargins.bottom
+                val contentEnd = absY + documentHeight + document.pageMargins.bottom
                 if (absY > 0) {
                     0F
                 } else {
@@ -232,8 +321,6 @@ open class DocumentRenderView @JvmOverloads constructor(
                     }
                 }
             }
-
-
 //            x
             var offsetX = absX
             val scaledPageWidth: Float = toCurrentScale(document.getMaxPageWidth())
@@ -249,7 +336,36 @@ open class DocumentRenderView @JvmOverloads constructor(
 //
             contentDrawOffsetX = offsetX
         } else {
-            //todo do it for horizontal
+
+            // Check Y offset
+            var offsetY = absY
+            val scaledPageHeight = toCurrentScale(document.getMaxPageHeight())
+            if (scaledPageHeight < height) {
+                offsetY = height / 2 - scaledPageHeight / 2
+            } else {
+                if (offsetY > 0) {
+                    offsetY = 0f
+                } else if (offsetY + scaledPageHeight < height) {
+                    offsetY = height - scaledPageHeight
+                }
+            }
+
+            // Check X offset
+
+            // Check X offset
+            var offsetX = absX
+            val contentWidth: Float = getDocLen(zoom)
+            if (contentWidth < width) { // whole document width visible on screen
+                offsetX = (width - contentWidth) / 2
+            } else {
+                if (offsetX > 0) { // left visible
+                    offsetX = 0f
+                } else if (offsetX + contentWidth < width) { // right visible
+                    offsetX = -contentWidth + width
+                }
+            }
+            contentDrawOffsetY = offsetY
+            contentDrawOffsetX = offsetX
         }
         redraw()
     }
@@ -261,7 +377,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     fun loadDocument(document: Document) {
         this.document = document
-        this.document.setup(Size(width.toFloat(), height.toFloat()))
+        this.document.setup(Size(width, height))
         redraw()
     }
 
@@ -278,63 +394,133 @@ open class DocumentRenderView @JvmOverloads constructor(
                 null
             }
             drawBackground(this)
-            if (swipeVertical) {
-                contentHeight = 0F
-                val documentPages = document.getDocumentPages()
-                for (i: Int in documentPages.indices) {
-                    val page = documentPages[i]
-                    drawPageBackgroundNew(page, contentHeight)
-                    drawText("Page No $i", page.pageBounds.left, page.pageBounds.top + 100, ccx)
-                    drawCircle(page.pageBounds.right, page.pageBounds.top + 100, 30F, ccx)
-                    contentHeight += page.size.height
-                }
-            } else {
-                //todo do it for horizontal page ...
-            }
 
+            contentLength = 0F
+            val documentPages = document.getDocumentPages()
+            for (i: Int in documentPages.indices) {
+                val page = documentPages[i]
+                drawPageBackground( page, contentLength)
+                drawText("Page No $i", page.pageBounds.left, page.pageBounds.top + 100, ccx)
+                drawCircle(page.pageBounds.right, page.pageBounds.top + 100, 30F, ccx)
+                contentLength += if (document.swipeVertical) {
+                    page.size.height
+                } else {
+                    page.size.width
+                }
+            }
+            // centered line // red one.
             drawLine(0F, (height / 2F), width.toFloat(), (height / 2F), ccx)
         }
     }
 
-    open fun Canvas.drawPageBackgroundNew(page: DocumentPage, totalHeightConsumed: Float) {
-        if (swipeVertical) {
-            // set page width in a way
-            var pageX = 0F
-            var pageEnd = 0F
+    open fun Canvas.drawPageBackground(
+        page: DocumentPage,
+        totalPagesDrawnLength: Float
+    ) {
+        var pageX = 0F
+        var pageY = 0F
+        var pageEnd = 0F
+        var pageBottom = 0F
+        var scaledPageStart = 0F
+        var shouldSubtractExtraRightMargin = false
+        var rightMarginToSubtract = 0F
+        var pageWidthToDraw = 0
+        var scaledFitPageWidth = 0F
+        var scaledPageY = 0F
+        var shouldSubtractExtraBottomMargin = false
+        var bottomMarginToSubtract = 0F
+        var pageHeightToDraw = 0
+        var scaledFitPageHeight = 0F
+        if (document.swipeVertical) {
+            // page x
+            scaledPageStart =
+                (toCurrentScale(document.getMaxPageWidth() - page.size.width) / 2)
             pageX =
-                contentDrawOffsetX + toCurrentScale(document.getMaxPageWidth() - page.size.width) / 2;
-            pageEnd =
-                (pageX + (toCurrentScale(page.size.width)))
-            val addSideWiseMargins = (page.size.width / width.toFloat()) >= 0.95F || zoom != minZoom
-            if (addSideWiseMargins) {
-                pageX += toCurrentScale(pageMargins.left)
-                pageEnd -= toCurrentScale(pageMargins.right)
-            }
-            val pageY = contentDrawOffsetY + pageMargins.top + (toCurrentScale(totalHeightConsumed))
-            val pageBottom = (pageY + (toCurrentScale(page.size.height)) - pageMargins.bottom)
+                contentDrawOffsetX + scaledPageStart + document.pageMargins.left;
+            // pageEnd
+//            shouldSubtractExtraRightMargin =
+//                page.size.width.shouldSubtractExtraRightMargin(pageX)
+            rightMarginToSubtract = /*if (shouldSubtractExtraRightMargin) {*/
+                document.pageMargins.left + document.pageMargins.right
+//            } else {
+//                document.pageMargins.right
+//            }
+            pageWidthToDraw = page.size.width
+            scaledFitPageWidth = toCurrentScale(pageWidthToDraw)
+            pageEnd = (pageX + scaledFitPageWidth) - rightMarginToSubtract
+            // page Y
+            scaledPageY = (toCurrentScale(
+                totalPagesDrawnLength
+            ))
+            pageY =
+                contentDrawOffsetY + document.pageMargins.top + scaledPageY
+            // page bottom
+//            shouldSubtractExtraBottomMargin =
+//                page.size.height.shouldSubtractExtraBottomMargin(pageY)
+            bottomMarginToSubtract = /*if (shouldSubtractExtraBottomMargin) {*/
+                document.pageMargins.top + document.pageMargins.bottom
+           /* } else {
+                document.pageMargins.bottom
+            }*/
+            pageHeightToDraw = page.size.height
+            scaledFitPageHeight = toCurrentScale(pageHeightToDraw)
+            pageBottom = (pageY + scaledFitPageHeight) - bottomMarginToSubtract
 
-            if (pageCorners > 0) {
-                drawRoundRect(
-                    RectF(pageX, pageY, pageEnd, pageBottom),
-                    pageCorners,
-                    pageCorners,
-                    pagePaint
-                )
-            } else {
-                drawRect(RectF(pageX, pageY, pageEnd, pageBottom), pagePaint)
-            }
-
-            page.pageBounds.apply {
-                left = pageX
-                top = pageY
-                right = pageEnd
-                bottom = pageBottom
-            }
         } else {
-            // do it for horizontal
+            //page x
+            scaledPageStart = (toCurrentScale(totalPagesDrawnLength))
+            pageX =
+                contentDrawOffsetX + scaledPageStart + document.pageMargins.left
+            // pageY
+            scaledPageY = toCurrentScale((document.getMaxPageHeight() - page.size.height) / 2)
+            pageY =
+                (contentDrawOffsetY + scaledPageY) + document.pageMargins.top
+            //pageBottom
+//            shouldSubtractExtraBottomMargin =
+//                page.size.height.shouldSubtractExtraBottomMargin(pageY)
+            bottomMarginToSubtract = /*if (shouldSubtractExtraBottomMargin) {*/
+                document.pageMargins.top + document.pageMargins.bottom
+            /*} else {
+                document.pageMargins.bottom
+            }*/
+            pageHeightToDraw = page.size.height
+            scaledFitPageHeight = toCurrentScale(pageHeightToDraw)
+            pageBottom = (pageY + scaledFitPageHeight) - bottomMarginToSubtract
+            // pageEnd
+//            shouldSubtractExtraRightMargin =
+//                page.size.width.shouldSubtractExtraRightMargin(pageX)
+            rightMarginToSubtract = /*if (shouldSubtractExtraRightMargin) {*/
+                document.pageMargins.left + document.pageMargins.right
+            /*} else {
+                document.pageMargins.right
+            }*/
+            pageWidthToDraw = page.size.width
+            scaledFitPageWidth = toCurrentScale(pageWidthToDraw)
+            pageEnd = (pageX + scaledFitPageWidth) - rightMarginToSubtract
         }
-
-
+        if (document.pageCorners > 0) {
+            drawRoundRect(
+                RectF(pageX, pageY, pageEnd, pageBottom),
+                document.pageCorners,
+                document.pageCorners,
+                pagePaint
+            )
+        } else {
+            drawRect(RectF(pageX, pageY, pageEnd, pageBottom), pagePaint)
+        }
+        page.pageBounds.apply {
+            left = pageX
+            top = pageY
+            right = pageEnd
+            bottom = pageBottom
+        }
+        val pageVisibleOnScreen =
+            DocumentPage.isPageVisibleOnScreen(
+                document.swipeVertical,
+                page.pageBounds,
+                viewSize = Size(width, height)
+            )
+        page.pageVisibility = pageVisibleOnScreen
     }
 
     open fun drawBackground(canvas: Canvas) {
