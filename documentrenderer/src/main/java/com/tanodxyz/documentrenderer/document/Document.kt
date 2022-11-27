@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.RectF
 import android.os.Build
 import com.tanodxyz.documentrenderer.*
+import com.tanodxyz.documentrenderer.document.Document.Companion.PROPERTY_DOCUMENT_FIT_EACH_PAGE
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import java.util.*
 
@@ -14,7 +15,7 @@ open class Document(context: Context) {
     protected val originalDocumentPageData = mutableListOf<DocumentPage>()
     protected var originalMaxPageWidth = Size(0, 0)
     protected var originalMaxPageHeight = Size(0, 0)
-    protected var totalContentHeight = 0F
+    protected var contentLength = 0F
     var pageMargins: RectF = RectF(
         context.resources.dpToPx(4), // left margin
         context.resources.dpToPx(4), // top margin
@@ -64,10 +65,10 @@ open class Document(context: Context) {
         set(value) {
             this[PROPERTY_DOCUMENT_SWIPE_VERTICAL] = value
         }
-    var pageSnap: Boolean
-        get() = get<Boolean>(PROPERTY_DOCUMENT_PAGE_SNAP) ?: false
+    var pageFling: Boolean
+        get() = get<Boolean>(PROPERTY_DOCUMENT_PAGE_FLING) ?: false
         set(value) {
-            this[PROPERTY_DOCUMENT_PAGE_SNAP] = value
+            this[PROPERTY_DOCUMENT_PAGE_FLING] = value
         }
 
     var documentViewMode: DocumentViewMode
@@ -94,7 +95,7 @@ open class Document(context: Context) {
         val PROPERTY_DOCUMENT_PATH = "com.gdr.documentPath"
         val PROPERTY_DOCUMENT_FIT_EACH_PAGE = "com.gdr.fiteachpage"
         val PROPERTY_DOCUMENT_SWIPE_VERTICAL = "com.gdr.swipeVertical"
-        val PROPERTY_DOCUMENT_PAGE_SNAP = "com.gdr.page.snap"
+        val PROPERTY_DOCUMENT_PAGE_FLING = "com.gdr.page.fling"
         const val DOCUMENT_NAME = "document-"
     }
 
@@ -156,6 +157,14 @@ open class Document(context: Context) {
         } catch (ex: Exception) {
             null
         }
+    }
+
+    fun isCurrentPage(pageIndex: Int) {
+
+    }
+
+    fun isCurrentPage(page: DocumentPage) {
+        val pageIsVisible = page.isCompletlyVisible()
     }
 
     fun getPageListIndex(pageIndex: Int): Int {
@@ -238,7 +247,7 @@ open class Document(context: Context) {
         )
         maxWidthPageSize = calculator.optimalMaxWidthPageSize
         maxHeightPageSize = calculator.optimalMaxHeightPageSize
-        totalContentHeight = 0F
+        contentLength = 0F
         originalDocumentPageData.forEach { documentPage ->
             documentPage.size = calculator.calculate(documentPage.originalSize)
             if (documentPage.size.width > maxWidthPageSize.width) {
@@ -247,7 +256,7 @@ open class Document(context: Context) {
             if (documentPage.size.height > maxHeightPageSize.height) {
                 maxHeightPageSize.height = documentPage.size.height
             }
-            totalContentHeight += if (this.swipeVertical) {
+            contentLength += if (this.swipeVertical) {
                 documentPage.size.height
             } else {
                 documentPage.size.width
@@ -255,6 +264,9 @@ open class Document(context: Context) {
         }
     }
 
+    fun getDocLen(zoom: Float): Float {
+        return getTotalContentLength() * zoom
+    }
 
     inner class DocumentPageIterator : Iterable<DocumentPage> {
         private var nextElementIndex = 0
@@ -274,7 +286,8 @@ open class Document(context: Context) {
         }
     }
 
-    fun getContentHeight(): Float = totalContentHeight
+
+    fun getTotalContentLength(): Float = contentLength
     internal fun getDocumentPages(): List<DocumentPage> = originalDocumentPageData
     fun documentPageIterator(): DocumentPageIterator = DocumentPageIterator()
     fun haveNoPages(): Boolean = getDocumentPages().isEmpty()

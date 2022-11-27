@@ -14,19 +14,13 @@ data class DocumentPage(
     val elements: MutableList<IElement> = mutableListOf(),
     val originalSize: Size = Size(
         3555,
-//        SecureRandom().nextInt(Resources.getSystem().displayMetrics.heightPixels).toFloat()
-//       1000F,4578F
-//        Resources.getSystem().displayMetrics.widthPixels.toFloat(),
         2666
     ),
     val pageBounds: RectF = RectF(0F, 0F, 0F, 0F),
 ) : Serializable {
     var size: Size = originalSize
-    var pageVisibility: PageVisibility = PageVisibility.INVISIBLE
 
-    fun isVisible(partially: Boolean = false): Boolean {
-        return if (partially) (pageVisibility == PageVisibility.VISIBLE || pageVisibility == PageVisibility.PARTIALLY_VISIBLE) else pageVisibility == PageVisibility.VISIBLE
-    }
+
 
     companion object {
         fun newPageWithWidthEqualsScreenWidth(context: Context, height: Int): DocumentPage {

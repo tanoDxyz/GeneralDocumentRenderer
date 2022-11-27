@@ -3,24 +3,27 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:background="#cf0"
     android:layout_height="match_parent"
+    android:background="#cff"
     tools:context=".MainActivity">
 
-
+    <Button
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:id="@+id/sanjo"
+        android:text="switch Swipe Mode"
+        android:onClick="switchSwipeModeClicked"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
     <com.tanodxyz.documentrenderer.DocumentRenderView
+        app:layout_constraintTop_toBottomOf="@id/sanjo"
         android:id="@+id/asd"
         android:visibility="visible"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintStart_toStartOf="parent" />
 
-    <Button
-        android:text="switch Swipe Mode"
-        android:onClick="switchSwipeModeClicked"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
