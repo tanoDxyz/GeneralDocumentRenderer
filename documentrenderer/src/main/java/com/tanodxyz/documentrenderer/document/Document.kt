@@ -163,9 +163,6 @@ open class Document(context: Context) {
 
     }
 
-    fun isCurrentPage(page: DocumentPage) {
-        val pageIsVisible = page.isCompletlyVisible()
-    }
 
     fun getPageListIndex(pageIndex: Int): Int {
         for (i: Int in originalDocumentPageData.indices) {
@@ -288,7 +285,7 @@ open class Document(context: Context) {
 
 
     fun getTotalContentLength(): Float = contentLength
-    internal fun getDocumentPages(): List<DocumentPage> = originalDocumentPageData
+    fun getDocumentPages(): List<DocumentPage> = originalDocumentPageData
     fun documentPageIterator(): DocumentPageIterator = DocumentPageIterator()
     fun haveNoPages(): Boolean = getDocumentPages().isEmpty()
     fun getPagesCount(): Int = getDocumentPages().count()

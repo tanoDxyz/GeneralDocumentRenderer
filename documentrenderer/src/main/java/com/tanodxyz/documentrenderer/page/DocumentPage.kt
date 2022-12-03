@@ -32,32 +32,5 @@ data class DocumentPage(
             val heightPixels = context.resources.displayMetrics.heightPixels
             return DocumentPage(originalSize = Size(width, heightPixels))
         }
-
-        fun isPageVisibleOnScreen(
-            isVertical: Boolean,
-            pageBounds: RectF,
-            viewSize: Size
-        ): PageVisibility {
-            if (isVertical) {
-                val pageBottom = pageBounds.bottom
-                val pageTop = pageBounds.top
-
-                val topIsVisible = (pageTop >= 0 && pageTop <= (viewSize.height))
-                val bottomIsVisible =
-                    (pageBottom <= (viewSize.height) && (pageBottom >= 0))
-
-                return if (topIsVisible && bottomIsVisible) PageVisibility.VISIBLE
-                else if (topIsVisible || bottomIsVisible) PageVisibility.PARTIALLY_VISIBLE
-                else PageVisibility.INVISIBLE
-            } else {
-                val pageStart = pageBounds.left
-                val pageEnd = pageBounds.right
-                val startIsVisible = (pageStart >= 0 && pageStart <= (viewSize.width))
-                val endIsVisible = pageEnd <= viewSize.width && pageEnd >= 0
-                return if (startIsVisible && endIsVisible) PageVisibility.VISIBLE
-                else if (startIsVisible || endIsVisible) PageVisibility.PARTIALLY_VISIBLE
-                else PageVisibility.INVISIBLE
-            }
-        }
     }
 }

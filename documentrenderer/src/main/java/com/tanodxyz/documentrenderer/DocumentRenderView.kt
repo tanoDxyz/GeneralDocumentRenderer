@@ -8,7 +8,6 @@ import android.view.View
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.page.PageVisibility
-import kotlin.concurrent.thread
 
 //todo we need logic for correctly defining page sizes.
 //todo there must be a page with varialbe length
@@ -56,7 +55,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     init {
         ccx.color = Color.MAGENTA
         ccx.style = Paint.Style.FILL_AND_STROKE
-        ccx.textSize = 22F
+        ccx.textSize = 30F
         animationManager = AnimationManager(this.context, this)
         // todo these values will be parsed from attributes
 
@@ -239,14 +238,84 @@ open class DocumentRenderView @JvmOverloads constructor(
         animationManager.computeScrollOffset()
     }
 
+    /**
+     * @return true if single page fills the entire screen in the scrolling direction
+     */
+    open fun pageFillsScreen(): Boolean {
+        println("foxi: currentpage is ${currentPage - 1}")
+        val currentPage = document.getDocumentPages().get(currentPage - 1)
+        val currentPageBounds = currentPage.pageBounds
+        val pageVisibility = isPageVisibleOnScreen(
+            currentPageBounds,
+        )
+        val pageIsVisible =
+            pageVisibility.isCompletelyVisible() || pageVisibility.isPartiallyVisible()
+        println("foxi: visible is $pageIsVisible $pageVisibility")
+        if (pageIsVisible) {
+            return if (document.swipeVertical) {
+                println("foxi: vertical $currentPageBounds")
+                currentPageBounds.top < 0 || currentPageBounds.left < 0 || currentPageBounds.bottom > height || currentPageBounds.right > width
+            } else {
+                println("foxi: horizontal $currentPageBounds")
+                currentPageBounds.top < 0 || currentPageBounds.left < 0 || currentPageBounds.bottom > height || currentPageBounds.right > width
+            }
+        }
+        return false
+    }
+
+    fun isPageVisibleOnScreen(pageBounds: RectF): PageVisibility {
+        val viewBounds = RectF(0F, 0F, width.toFloat(), height.toFloat())
+        val viewBoundsRelativeToPageBounds =
+            RectF(pageBounds.left, pageBounds.top, width.toFloat(), height.toFloat())
+        val pageIsTotallyVisible = viewBounds.contains(pageBounds)
+        var pageIsPartiallyVisible = false
+        if (!pageIsTotallyVisible) {
+            val pageAndViewIntersected = viewBoundsRelativeToPageBounds.intersects(
+                pageBounds.left,
+                pageBounds.top,
+                pageBounds.right,
+                pageBounds.bottom
+            )
+            pageIsPartiallyVisible = if(pageAndViewIntersected) {
+
+                if(document.swipeVertical) {
+                    if (pageBounds.top < viewBounds.top) {
+                        pageBounds.bottom >= viewBounds.top
+                    } else {
+                        pageBounds.top <= viewBounds.bottom
+                    }
+                } else {
+                    if(pageBounds.left < viewBounds.left) {
+                        pageBounds.right >= viewBounds.left
+                    } else {
+                        pageBounds.left <= viewBounds.right
+                    }
+                }
+            } else {
+                false
+            }
+        }
+        val pageVisibility =
+            if (pageIsTotallyVisible) PageVisibility.VISIBLE else if (pageIsPartiallyVisible) PageVisibility.PARTIALLY_VISIBLE else PageVisibility.INVISIBLE
+        return pageVisibility
+    }
+
     override fun onFling(
         downEvent: MotionEvent?,
         moveEvent: MotionEvent?,
         velocityX: Float,
         velocityY: Float
     ): Boolean {
-        var minY = 0F
-        var minX = 0F
+
+        if (document.pageFling) {
+//            val pageFillsScreen = pageFillsScreen()
+//            println("foxi: currentPage fills screen is $pageFillsScreen")
+            /*return true*/
+        }
+
+
+        val minY: Float
+        val minX: Float
         if (document.swipeVertical) {
             minY = -(getRenderedDocLen(zoom))
             minX = -(toCurrentScale(document.getMaxPageWidth()))
@@ -264,6 +333,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             minY.toInt(),
             0
         )
+
         return true
     }
 
@@ -389,7 +459,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             for (i: Int in documentPages.indices) {
                 val page = documentPages[i]
                 drawPageBackground(page, drawnContentLength)
-                currentPage = calculateCurrentPage(i, page.pageBounds)
+                currentPage = calculateCurrentPage(i, page.pageBounds) // todo take care of current page when we are about to use cache for pages.
                 someDebugDrawings(page)
                 drawnContentLength += if (document.swipeVertical) {
                     page.size.height
@@ -397,19 +467,19 @@ open class DocumentRenderView @JvmOverloads constructor(
                     page.size.width
                 }
             }
+            // drawPageNumber
+            drawText("PageNO #$currentPage" , 50F,height - 100F,ccx)
         }
     }
 
     fun calculateCurrentPage(index: Int, pageBounds: RectF): Int {
         val pageIndex: Int
-        if (DocumentPage.isPageVisibleOnScreen(
-                document.swipeVertical,
-                pageBounds,
-                Size(width, height)
+        if (isPageVisibleOnScreen(
+                pageBounds
             ) == PageVisibility.VISIBLE
         ) {
             pageIndex = index + 1
-        } else if(document.swipeVertical) {
+        } else if (document.swipeVertical) {
             pageIndex = if (pageBounds.top < (height / 2F)) {
                 index + 1
             } else {
@@ -435,6 +505,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         drawCircle(page.pageBounds.right, page.pageBounds.top + 100, 30F, ccx)
         // centered line // horizontal
         drawLine(0F, (height / 2F), width.toFloat(), (height / 2F), ccx)
+
     }
 
     open fun Canvas.drawPageBackground(
