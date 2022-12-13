@@ -38,6 +38,15 @@ class AnimationManager(context: Context, private val animationListener: Animatio
         }
     }
 
+    fun startPageFlingAnimation(targetOffset: Float) {
+        if (animationListener.isSwipeVertical()) {
+            startYAnimation(animationListener.getCurrentY(), targetOffset)
+        } else {
+            startXAnimation(animationListener.getCurrentX(), targetOffset)
+        }
+        pageFlingScroll = true
+    }
+
     fun startYAnimation(
         yFrom: Float,
         yTo: Float
@@ -177,6 +186,7 @@ class AnimationManager(context: Context, private val animationListener: Animatio
         fun getCurrentY(): Float
         fun zoomCenteredTo(zoom: Float, pivot: PointF)
         fun redraw()
+        fun isSwipeVertical(): Boolean
         fun performPageSnap()
     }
 }

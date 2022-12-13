@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.RectF
 import android.os.Build
 import com.tanodxyz.documentrenderer.*
-import com.tanodxyz.documentrenderer.document.Document.Companion.PROPERTY_DOCUMENT_FIT_EACH_PAGE
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import java.util.*
 
@@ -289,5 +288,22 @@ open class Document(context: Context) {
     fun documentPageIterator(): DocumentPageIterator = DocumentPageIterator()
     fun haveNoPages(): Boolean = getDocumentPages().isEmpty()
     fun getPagesCount(): Int = getDocumentPages().count()
+    fun getPage(pageNumber: Int): DocumentPage {
+        return originalDocumentPageData[pageNumber]
+    }
+
+    open fun getPageAtOffset(offset: Float): Int {
+        var currentPage = 0
+        val documentPages = getDocumentPages()
+        for (i: Int in documentPages.indices) {
+            val page = documentPages[i]
+            val off: Float = if (swipeVertical) page.pageBounds.top else page.pageBounds.left
+            if (off >= offset) {
+                break
+            }
+            currentPage++
+        }
+        return if (--currentPage >= 0) currentPage else 0
+    }
 
 }

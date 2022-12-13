@@ -28,5 +28,6 @@ infix fun IntRange.getPagesViaPageIndexes(pageData: MutableList<DocumentPage>): 
 }
 
 
-data class Size(var width:Int, var height:Int)
-data class SizeF(var width:Float, var height:Float)
+data class Size(var width: Int, var height: Int)
+data class SizeF(var width: Float, var height: Float)
+

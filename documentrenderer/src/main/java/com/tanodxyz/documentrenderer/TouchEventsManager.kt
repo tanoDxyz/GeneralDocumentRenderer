@@ -58,21 +58,8 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
             val previousX = eventsListener!!.getCurrentX()
             val currentY = previousY + (-distanceY)
             val currentX = previousX + (-distanceX)
-            val movementDirections = MovementDirections()
-            if (previousY <= -1) {
-                if (currentY <= previousY) movementDirections.top = true
-                else movementDirections.bottom = true
-            } else {
-                if (currentY <= previousY) movementDirections.top = true
-                else movementDirections.bottom = true
-            }
-            if (previousX <= -1) {
-                if (currentX <= previousX) movementDirections.left = true
-                else movementDirections.right = true
-            } else {
-                if (currentX <= previousX) movementDirections.left = true
-                else movementDirections.right = true
-            }
+            val movementDirections =
+                calculateScrollDirections(previousX, previousY, currentX, currentY)
             scrolling = true
             eventsListener?.onScrollStart(
                 movementDirections,
@@ -84,6 +71,30 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
             true
         }
 
+    }
+
+    fun calculateScrollDirections(
+        previousX: Float,
+        previousY: Float,
+        currentX: Float,
+        currentY: Float
+    ): MovementDirections {
+        val movementDirections = MovementDirections()
+        if (previousY <= -1) {
+            if (currentY <= previousY) movementDirections.top = true
+            else movementDirections.bottom = true
+        } else {
+            if (currentY <= previousY) movementDirections.top = true
+            else movementDirections.bottom = true
+        }
+        if (previousX <= -1) {
+            if (currentX <= previousX) movementDirections.left = true
+            else movementDirections.right = true
+        } else {
+            if (currentX <= previousX) movementDirections.left = true
+            else movementDirections.right = true
+        }
+        return movementDirections
     }
 
     override fun onScale(detector: ScaleGestureDetector?): Boolean {
@@ -103,7 +114,7 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
 
 
     override fun onDown(e: MotionEvent?): Boolean {
-        eventsListener?.onStopFling()
+        eventsListener?.onDownEvent()
         return true
     }
 
@@ -172,7 +183,7 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
             velocityY: Float
         ): Boolean
 
-        fun onStopFling()
+        fun onDownEvent()
         fun zoomCenteredRelativeTo(dr: Float, pointF: PointF)
 
         fun resetZoomWithAnimation()

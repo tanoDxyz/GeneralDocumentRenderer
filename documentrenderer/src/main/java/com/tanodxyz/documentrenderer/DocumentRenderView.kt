@@ -7,7 +7,11 @@ import android.view.MotionEvent
 import android.view.View
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.page.DocumentPage
-import com.tanodxyz.documentrenderer.page.PageVisibility
+import com.tanodxyz.documentrenderer.page.PageViewState
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 //todo we need logic for correctly defining page sizes.
 //todo there must be a page with varialbe length
@@ -20,6 +24,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     private lateinit var document: Document
     private var ccx: Paint = Paint()
 
+    private val pageSnap = true
 
     var topAnimation: Boolean = false
     var bottomAnimation: Boolean = false
@@ -28,7 +33,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     var nightMode = false
     var pageBackColor = Color.WHITE
 
-
+    var currentPageVisibilityForImmediateEvent = PageViewState.INVISIBLE
     val antialiasFilter =
         PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     val pagePaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -180,55 +185,22 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     override fun performPageSnap() {
-//        if (!document.pageSnap || document.haveNoPages()) {
-//            return
-//        }
-//        println("SANCHO: cleared")
-        findFocusedPage(contentDrawOffsetX, contentDrawOffsetY)
-        //todo on background
-//        findFocusPage(contentDrawOffsetX,contentDrawOffsetY)
-//        val centerPage: Int = findFocusPage(currentXOffset, currentYOffset)
-//        val edge: SnapEdge = findSnapEdge(centerPage)
-//        if (edge === SnapEdge.NONE) {
-//            return
-//        }
-//
-//        val offset: Float = snapOffsetForPage(centerPage, edge)
-//        if (swipeVertical) {
-//            animationManager.startYAnimation(currentYOffset, -offset)
-//        } else {
-//            animationManager.startXAnimation(currentXOffset, -offset)
-//        }
     }
 
     open fun findFocusedPage(xOffset: Float, yOffset: Float): Int {
-        var pageOffset = -1
         val currOffset: Float = if (document.swipeVertical) yOffset else xOffset
         val length: Float =
             if (document.swipeVertical) height.toFloat() else width.toFloat()
         // make sure first and last page can be found
-        // make sure first and last page can be found
         if (currOffset > -1) {
-            pageOffset = 0
+            return 0
         } else if (currOffset < -document.getDocLen(zoom) + length + 1) {
-            pageOffset = document.getPagesCount() - 1
+            return document.getPagesCount() - 1
         }
-
-        return -1;
+        // else find page in center
+        val center = currOffset - length / 2f
+        return document.getPageAtOffset(-center)
     }
-//    open fun findFocusPage(xOffset: Float, yOffset: Float): Int {
-//        val currOffset = if (document.swipeVertical) yOffset else xOffset
-//        val length = if (document.swipeVertical) height.toFloat() else width.toFloat()
-//        // make sure first and last page can be found
-//        if (currOffset > -1) {
-//            return 0
-//        } else if (currOffset < -getDocLen(zoom) + length + 1) {
-//            return document.getPagesCount() - 1
-//        }
-//        // else find page in center
-//        val center = currOffset - length / 2f
-//        return getPageAtOffset(-center, zoom)
-//    }
 
     override fun computeScroll() {
         super.computeScroll()
@@ -242,28 +214,18 @@ open class DocumentRenderView @JvmOverloads constructor(
      * @return true if single page fills the entire screen in the scrolling direction
      */
     open fun pageFillsScreen(): Boolean {
-        println("foxi: currentpage is ${currentPage - 1}")
-        val currentPage = document.getDocumentPages().get(currentPage - 1)
-        val currentPageBounds = currentPage.pageBounds
-        val pageVisibility = isPageVisibleOnScreen(
-            currentPageBounds,
-        )
-        val pageIsVisible =
-            pageVisibility.isCompletelyVisible() || pageVisibility.isPartiallyVisible()
-        println("foxi: visible is $pageIsVisible $pageVisibility")
-        if (pageIsVisible) {
-            return if (document.swipeVertical) {
-                println("foxi: vertical $currentPageBounds")
-                currentPageBounds.top < 0 || currentPageBounds.left < 0 || currentPageBounds.bottom > height || currentPageBounds.right > width
-            } else {
-                println("foxi: horizontal $currentPageBounds")
-                currentPageBounds.top < 0 || currentPageBounds.left < 0 || currentPageBounds.bottom > height || currentPageBounds.right > width
-            }
+        val page = getCurrentPage()
+        val start: Float = page.pageBounds.left
+        val end: Float = start - page.pageBounds.right
+        return if (document.swipeVertical) {
+            start > contentDrawOffsetY && end < contentDrawOffsetY - height
+        } else {
+            start > contentDrawOffsetX && end < contentDrawOffsetX - width
         }
-        return false
     }
 
-    fun isPageVisibleOnScreen(pageBounds: RectF): PageVisibility {
+
+    fun getPageViewState(pageBounds: RectF): PageViewState {
         val viewBounds = RectF(0F, 0F, width.toFloat(), height.toFloat())
         val viewBoundsRelativeToPageBounds =
             RectF(pageBounds.left, pageBounds.top, width.toFloat(), height.toFloat())
@@ -276,16 +238,15 @@ open class DocumentRenderView @JvmOverloads constructor(
                 pageBounds.right,
                 pageBounds.bottom
             )
-            pageIsPartiallyVisible = if(pageAndViewIntersected) {
-
-                if(document.swipeVertical) {
+            pageIsPartiallyVisible = if (pageAndViewIntersected) {
+                if (document.swipeVertical) {
                     if (pageBounds.top < viewBounds.top) {
                         pageBounds.bottom >= viewBounds.top
                     } else {
                         pageBounds.top <= viewBounds.bottom
                     }
                 } else {
-                    if(pageBounds.left < viewBounds.left) {
+                    if (pageBounds.left < viewBounds.left) {
                         pageBounds.right >= viewBounds.left
                     } else {
                         pageBounds.left <= viewBounds.right
@@ -295,9 +256,125 @@ open class DocumentRenderView @JvmOverloads constructor(
                 false
             }
         }
-        val pageVisibility =
-            if (pageIsTotallyVisible) PageVisibility.VISIBLE else if (pageIsPartiallyVisible) PageVisibility.PARTIALLY_VISIBLE else PageVisibility.INVISIBLE
-        return pageVisibility
+        val pageViewState =
+            if (pageIsTotallyVisible) PageViewState.VISIBLE else if (pageIsPartiallyVisible) PageViewState.PARTIALLY_VISIBLE else PageViewState.INVISIBLE
+        return pageViewState
+    }
+
+    fun getCurrentPage(): DocumentPage {
+        return document.getPage(currentPage - 1)
+    }
+
+    open fun startPageFling(
+        downEvent: MotionEvent,
+        ev: MotionEvent,
+        velocityX: Float,
+        velocityY: Float
+    ) {
+        if (!checkDoPageFling(velocityX, velocityY)) {
+            return
+        }
+        val direction: Int
+        direction = if (document.swipeVertical) {
+            if (velocityY > 0) -1 else 1
+        } else {
+            if (velocityX > 0) -1 else 1
+        }
+        // get the focused page during the down event to ensure only a single page is changed
+        val delta = if (document.swipeVertical) ev.y - downEvent.y else ev.x - downEvent.x
+        val offsetX: Float = contentDrawOffsetX - delta * getCurrentZoom()
+        val offsetY: Float = contentDrawOffsetY - delta * getCurrentZoom()
+        val startingPage: Int = findFocusedPage(offsetX, offsetY)
+        val targetPage = max(0, min(document.getPagesCount() - 1, startingPage + direction))
+        val edge: SnapEdge = findSnapEdge(targetPage)
+        val offset: Float = snapOffsetForPage(targetPage, edge)
+        animationManager.startPageFlingAnimation(-offset)
+    }
+
+    open fun checkDoPageFling(velocityX: Float, velocityY: Float): Boolean {
+        val absX = abs(velocityX)
+        val absY = abs(velocityY)
+        return if (document.swipeVertical) absY > absX else absX > absY
+    }
+
+    /**
+     * Get the offset to move to in order to snap to the page
+     */
+    open fun snapOffsetForPage(pageIndex: Int, edge: SnapEdge): Float {
+        var offset: Float = getPageOffset(pageIndex)
+        val length = if (document.swipeVertical) height.toFloat() else width.toFloat()
+        val page = document.getPage(pageIndex)
+        val pageLength: Float = page.pageBounds.height()
+        if (edge === SnapEdge.CENTER) {
+            offset = offset - length / 2f + pageLength / 2f
+        } else if (edge === SnapEdge.END) {
+            offset = offset - length + pageLength
+        }
+        return offset
+    }
+
+    fun getPageOffset(page: DocumentPage): Float {
+        return if (document.swipeVertical) page.pageBounds.top else page.pageBounds.left
+    }
+
+    fun getPageOffset(pageIndex: Int): Float {
+        return getPageOffset(document.getPage(pageIndex))
+    }
+
+    open fun findSnapEdge(page: Int): SnapEdge {
+        if (!pageSnap || page < 0) {
+            return SnapEdge.NONE
+        }
+        val documentPage = document.getPage(page)
+        val currentOffset: Float =
+            if (document.swipeVertical) contentDrawOffsetY else contentDrawOffsetX
+        val offset: Float = -getPageOffset(documentPage)
+        val length = if (document.swipeVertical) height else width
+        val pageLength: Float = documentPage.pageBounds.height()
+        return if (length >= pageLength) {
+            SnapEdge.CENTER
+        } else if (currentOffset >= offset) {
+            SnapEdge.START
+        } else if (offset - pageLength > currentOffset - length) {
+            SnapEdge.END
+        } else {
+            SnapEdge.NONE
+        }
+    }
+
+    open fun onBoundedFling(velocityX: Float, velocityY: Float) {
+
+        val (index, elements, originalSize, pageBounds) = getCurrentPage()
+
+
+        val pageStart: Float = -pageBounds.left
+        val pageEnd: Float =
+           pageBounds.right
+        val minX: Float
+        val minY: Float
+        val maxX: Float
+        val maxY: Float
+        if (document.swipeVertical) {
+            minX = -(toCurrentScale(document.getMaxPageWidth()) /*- width*/)
+            minY = pageEnd + height
+            maxX = 0f
+            maxY = pageStart
+        } else {
+            minX = pageEnd + width
+            minY = -(toCurrentScale(document.getMaxPageHeight()) /*- height*/)
+            maxX = pageStart
+            maxY = 0f
+        }
+        animationManager.startFlingAnimation(
+            contentDrawOffsetX.roundToInt(),
+            contentDrawOffsetY.roundToInt(),
+            velocityX.toInt(),
+            velocityY.toInt(),
+            minX.toInt(),
+            maxX.toInt(),
+            minY.toInt(),
+            maxY.toInt()
+        )
     }
 
     override fun onFling(
@@ -306,11 +383,15 @@ open class DocumentRenderView @JvmOverloads constructor(
         velocityX: Float,
         velocityY: Float
     ): Boolean {
-
         if (document.pageFling) {
-//            val pageFillsScreen = pageFillsScreen()
-//            println("foxi: currentPage fills screen is $pageFillsScreen")
-            /*return true*/
+            if (currentPageVisibilityForImmediateEvent.isPagePartiallyVisible()) {
+                println("foxi: pagePartiallyVisible $currentPage SO BOUNDED FLING....")
+//                onBoundedFling(velocityX, velocityY)
+            } else {
+                println("foxi: . so NEXT PAGE FLING")
+//                startPageFling(downEvent!!, moveEvent!!, velocityX, velocityY)
+            }
+//            return true
         }
 
 
@@ -337,8 +418,10 @@ open class DocumentRenderView @JvmOverloads constructor(
         return true
     }
 
-    override fun onStopFling() {
+    override fun onDownEvent() {
         animationManager.stopFling()
+        // calculate if current page is visible or not
+        currentPageVisibilityForImmediateEvent = getPageViewState(getCurrentPage().pageBounds)
     }
 
     override fun zoomCenteredRelativeTo(dr: Float, pointF: PointF) {
@@ -433,6 +516,10 @@ open class DocumentRenderView @JvmOverloads constructor(
         invalidate()
     }
 
+    override fun isSwipeVertical(): Boolean {
+        return document.swipeVertical
+    }
+
 
     fun loadDocument(document: Document) {
         this.document = document
@@ -459,7 +546,10 @@ open class DocumentRenderView @JvmOverloads constructor(
             for (i: Int in documentPages.indices) {
                 val page = documentPages[i]
                 drawPageBackground(page, drawnContentLength)
-                currentPage = calculateCurrentPage(i, page.pageBounds) // todo take care of current page when we are about to use cache for pages.
+                currentPage = calculateCurrentPage(
+                    i,
+                    page.pageBounds
+                ) // todo take care of current page when we are about to use cache for pages.
                 someDebugDrawings(page)
                 drawnContentLength += if (document.swipeVertical) {
                     page.size.height
@@ -467,16 +557,17 @@ open class DocumentRenderView @JvmOverloads constructor(
                     page.size.width
                 }
             }
+
             // drawPageNumber
-            drawText("PageNO #$currentPage" , 50F,height - 100F,ccx)
+            drawText("PageNO #$currentPage", 50F, height - 100F, ccx)
         }
     }
 
     fun calculateCurrentPage(index: Int, pageBounds: RectF): Int {
         val pageIndex: Int
-        if (isPageVisibleOnScreen(
+        if (getPageViewState(
                 pageBounds
-            ) == PageVisibility.VISIBLE
+            ) == PageViewState.VISIBLE
         ) {
             pageIndex = index + 1
         } else if (document.swipeVertical) {
