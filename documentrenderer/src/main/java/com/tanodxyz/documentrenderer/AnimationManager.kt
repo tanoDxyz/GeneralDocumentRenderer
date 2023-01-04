@@ -13,7 +13,6 @@ import android.widget.OverScroller
 class AnimationManager(context: Context, private val animationListener: AnimationListener) {
     private var valueAnimator: ValueAnimator? = null
 
-    //    private val scroller: OverScroller
     private var flinging = false
     private var pageFlingScroll = false
     var scroller: OverScroller? = null
@@ -46,6 +45,8 @@ class AnimationManager(context: Context, private val animationListener: Animatio
         }
         pageFlingScroll = true
     }
+
+
 
     fun startYAnimation(
         yFrom: Float,

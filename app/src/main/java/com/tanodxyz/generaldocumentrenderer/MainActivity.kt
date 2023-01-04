@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.view.View
 import com.tanodxyz.documentrenderer.DocumentRenderView
+import com.tanodxyz.documentrenderer.Size
 import com.tanodxyz.documentrenderer.document.Document
 
 import com.tanodxyz.documentrenderer.page.DocumentPage
@@ -61,10 +62,10 @@ class MainActivity : AppCompatActivity() {
                     document!!.addPage(DocumentPage())
                 }
 
-//                document!!.addPage(DocumentPage(originalSize = Size(10000, 10000)))
-//                document!!.addPage(DocumentPage(originalSize = Size(2342, 420)))
-//                document!!.addPage(DocumentPage(originalSize = Size(320, 420)))
-//                document!!.addPage(DocumentPage(originalSize = Size(32, 42)))
+                document!!.addPage(DocumentPage(originalSize = Size(10000, 10000)))
+                document!!.addPage(DocumentPage(originalSize = Size(2342, 420)))
+                document!!.addPage(DocumentPage(originalSize = Size(320, 420)))
+                document!!.addPage(DocumentPage(originalSize = Size(32, 42)))
             }
 
             return document!!

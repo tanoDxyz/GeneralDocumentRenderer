@@ -16,10 +16,10 @@ open class Document(context: Context) {
     protected var originalMaxPageHeight = Size(0, 0)
     protected var contentLength = 0F
     var pageMargins: RectF = RectF(
-        context.resources.dpToPx(4), // left margin
-        context.resources.dpToPx(4), // top margin
-        context.resources.dpToPx(4), // right margin
-        context.resources.dpToPx(4) // bottom margin
+        context.resources.dpToPx(8), // left margin
+        context.resources.dpToPx(8), // top margin
+        context.resources.dpToPx(8), // right margin
+        context.resources.dpToPx(8) // bottom margin
     )
     var pageCorners: Float = 0.0F
 
@@ -288,8 +288,12 @@ open class Document(context: Context) {
     fun documentPageIterator(): DocumentPageIterator = DocumentPageIterator()
     fun haveNoPages(): Boolean = getDocumentPages().isEmpty()
     fun getPagesCount(): Int = getDocumentPages().count()
-    fun getPage(pageNumber: Int): DocumentPage {
-        return originalDocumentPageData[pageNumber]
+    fun getPage(pageNumber: Int): DocumentPage? {
+        return if(pageNumber < 0 || pageNumber >= getPagesCount()) {
+            null
+        } else {
+            originalDocumentPageData[pageNumber]
+        }
     }
 
     open fun getPageAtOffset(offset: Float): Int {
