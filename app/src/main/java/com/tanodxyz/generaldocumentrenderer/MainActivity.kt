@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.view.View
 import com.tanodxyz.documentrenderer.DocumentRenderView
+import com.tanodxyz.documentrenderer.FixPageSizeCalculator
 import com.tanodxyz.documentrenderer.Size
 import com.tanodxyz.documentrenderer.document.Document
 
@@ -21,9 +22,9 @@ class MainActivity : AppCompatActivity() {
         this.findViewById = findViewById<DocumentRenderView>(R.id.asd)
         val getseesa = getseesa(this)
         getseesa[Document.PROPERTY_DOOCUMENT_PAGE_FIT_POLICY] = Document.PageFitPolicy.BOTH
-        getseesa.swipeVertical = false
+        getseesa.swipeVertical = true
         getseesa[Document.PROPERTY_DOCUMENT_FIT_EACH_PAGE] = true
-        getseesa[Document.PROPERTY_DOCUMENT_PAGE_FLING] = true
+        getseesa[Document.PROPERTY_DOCUMENT_PAGE_FLING] = false
         findViewById.loadDocument(getseesa)
         //todo test to get current page.
 //        val handler = Handler()
@@ -56,7 +57,7 @@ class MainActivity : AppCompatActivity() {
             if (document != null) {
                 return document!!
             } else {
-                document = Document(context)
+                document = Document(context,FixPageSizeCalculator())
 
                 for(i:Int in 0 until 10) {
                     document!!.addPage(DocumentPage())

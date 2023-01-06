@@ -7,8 +7,9 @@ import android.os.Build
 import com.tanodxyz.documentrenderer.*
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import java.util.*
+import kotlin.reflect.KClass
 
-open class Document(context: Context) {
+open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator? = null) {
     protected var maxHeightPageSize = Size(0, 0)
     protected var maxWidthPageSize = Size(0, 0)
     protected val documentMeta = HashMap<String, Any?>()
@@ -23,6 +24,7 @@ open class Document(context: Context) {
         context.resources.dpToPx(8) // bottom margin
     )
     var pageCorners: Float = 0.0F
+
 
     fun <T> get(property: String): T? {
         val propertyValue = documentMeta[property]
@@ -253,15 +255,34 @@ open class Document(context: Context) {
     }
 
     open fun recalculatePageSizes(viewSize: Size) {
-        val calculator = DefaultPageSizeCalculator(
-            documentFitPagePolicy, originalMaxPageWidth,
-            originalMaxPageHeight, viewSize, get<Boolean>(PROPERTY_DOCUMENT_FIT_EACH_PAGE) ?: false
-        )
-        maxWidthPageSize = calculator.optimalMaxWidthPageSize
-        maxHeightPageSize = calculator.optimalMaxHeightPageSize
+
+        if (pageSizeCalculator == null) {
+            pageSizeCalculator = DefaultPageSizeCalculator()
+        }
+
+        if (pageSizeCalculator is DefaultPageSizeCalculator) {
+            val defaultPageSizeCalculator = pageSizeCalculator as DefaultPageSizeCalculator
+            defaultPageSizeCalculator.setup(
+                documentFitPagePolicy,
+                originalMaxPageWidth,
+                originalMaxPageHeight,
+                viewSize,
+                get<Boolean>(PROPERTY_DOCUMENT_FIT_EACH_PAGE) ?: false
+            )
+            maxWidthPageSize = defaultPageSizeCalculator.optimalMaxWidthPageSize
+            maxHeightPageSize = defaultPageSizeCalculator.optimalMaxHeightPageSize
+        } else {
+            pageSizeCalculator?.viewSize = viewSize
+            pageSizeCalculator?.optimalMaxHeightPageSize = viewSize
+            pageSizeCalculator?.optimalMaxWidthPageSize = viewSize
+            maxWidthPageSize = viewSize
+            maxHeightPageSize = viewSize
+        }
+
+
         contentLength = 0F
         originalDocumentPageData.forEach { documentPage ->
-            documentPage.size = calculator.calculate(documentPage.originalSize)
+            documentPage.size = pageSizeCalculator!!.calculate(documentPage.originalSize)
             if (documentPage.size.width > maxWidthPageSize.width) {
                 maxWidthPageSize.width = documentPage.size.width
             }
@@ -305,7 +326,7 @@ open class Document(context: Context) {
     fun haveNoPages(): Boolean = getDocumentPages().isEmpty()
     fun getPagesCount(): Int = getDocumentPages().count()
     fun getPage(pageNumber: Int): DocumentPage? {
-        return if(pageNumber < 0 || pageNumber >= getPagesCount()) {
+        return if (pageNumber < 0 || pageNumber >= getPagesCount()) {
             null
         } else {
             originalDocumentPageData[pageNumber]

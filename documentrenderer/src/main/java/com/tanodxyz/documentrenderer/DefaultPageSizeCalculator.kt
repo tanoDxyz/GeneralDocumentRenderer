@@ -6,23 +6,42 @@ import com.tanodxyz.documentrenderer.document.Document.PageFitPolicy
 
 //todo switch is needed......
 class DefaultPageSizeCalculator(
-    val fitPolicy: PageFitPolicy,
-    val originalMaxWidthSize: Size,
-    val originalMaxHeightSize: Size,
-    val viewSize: Size,
-    val fitEachPage: Boolean = false
-):PageSizeCalculator {
+    private var fitPolicy: PageFitPolicy = PageFitPolicy.BOTH,
+    private var originalMaxWidthSize: Size = Size(0,0),
+    private var originalMaxHeightSize: Size = Size(0,0),
+    override var viewSize: Size = Size(0,0),
+    private var fitEachPage: Boolean = false
+) : PageSizeCalculator {
     private var widthRatio = 0f
     private var heightRatio = 0f
     private lateinit var optimalMaxWidthSize: Size
     private lateinit var optimalMaxHeightSize: Size
 
-    init {
+    fun setup(fitPolicy: PageFitPolicy,
+              originalMaxWidthSize: Size,
+              originalMaxHeightSize: Size,
+              viewSize: Size,
+              fitEachPage: Boolean = false) {
+        this.fitPolicy = fitPolicy
+        this.originalMaxWidthSize = originalMaxWidthSize
+        this.originalMaxHeightSize = originalMaxHeightSize
+        this.viewSize = viewSize
+        this.fitEachPage = fitEachPage
         calculateMaxPages()
     }
 
-    override val optimalMaxWidthPageSize: Size get() = optimalMaxWidthSize
-    override val optimalMaxHeightPageSize: Size get() = optimalMaxHeightSize
+    override var optimalMaxWidthPageSize: Size
+        set(value) {
+            optimalMaxWidthSize = value
+        }
+        get() = optimalMaxWidthSize
+
+    override var optimalMaxHeightPageSize: Size
+        set(value) {
+            optimalMaxHeightSize = value
+        }
+        get() = optimalMaxHeightSize
+
 
     override fun calculate(pageSize: Size): Size {
         if (pageSize.width <= 0 || pageSize.height <= 0) {

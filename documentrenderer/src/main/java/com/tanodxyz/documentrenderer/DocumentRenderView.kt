@@ -70,7 +70,6 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (isInEditMode) {
             return
         }
-        println("MARKO: size changed......")
         animationManager.stopAll()
         document.recalculatePageSizes(Size(w, h))
         if (document.swipeVertical) {
