@@ -1,6 +1,7 @@
 package com.tanodxyz.documentrenderer.document
 
 import android.content.Context
+import android.graphics.Color
 import android.graphics.RectF
 import android.os.Build
 import com.tanodxyz.documentrenderer.*
@@ -64,6 +65,19 @@ open class Document(context: Context) {
         set(value) {
             this[PROPERTY_DOCUMENT_SWIPE_VERTICAL] = value
         }
+
+    var nightMode: Boolean
+        get() = get<Boolean>(PROPERTY_NIGHT_MODE) ?: false
+        set(value) {
+            this[PROPERTY_NIGHT_MODE] = value
+        }
+
+    var pageBackColor: Int
+        get() = get<Int>(PROPERTY_PAGE_BACK_COLOR) ?: Color.WHITE
+        set(value) {
+            this[PROPERTY_PAGE_BACK_COLOR] = value
+        }
+
     var pageFling: Boolean
         get() = get<Boolean>(PROPERTY_DOCUMENT_PAGE_FLING) ?: false
         set(value) {
@@ -95,6 +109,8 @@ open class Document(context: Context) {
         val PROPERTY_DOCUMENT_FIT_EACH_PAGE = "com.gdr.fiteachpage"
         val PROPERTY_DOCUMENT_SWIPE_VERTICAL = "com.gdr.swipeVertical"
         val PROPERTY_DOCUMENT_PAGE_FLING = "com.gdr.page.fling"
+        val PROPERTY_NIGHT_MODE = "com.night.mode"
+        val PROPERTY_PAGE_BACK_COLOR = "com.page.back.color"
         const val DOCUMENT_NAME = "document-"
     }
 

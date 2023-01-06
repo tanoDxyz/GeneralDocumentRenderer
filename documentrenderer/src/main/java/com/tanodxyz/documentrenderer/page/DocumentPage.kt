@@ -20,8 +20,6 @@ data class DocumentPage(
     val pageBounds: RectF = RectF(0F, 0F, 0F, 0F),
 ) : Serializable {
     var size: Size = originalSize
-    internal var pageVisibilityOffsetX: Float = 0F
-    internal var pageVisibilityOffsetXCalculated = false
 
     fun getWidth(): Float {
         return if (pageBounds.left > 0 && pageBounds.right >= pageBounds.left) {
@@ -46,6 +44,7 @@ data class DocumentPage(
             pageBounds.width()
         }
     }
+
 
     companion object {
         fun newPageWithWidthEqualsScreenWidth(context: Context, height: Int): DocumentPage {
