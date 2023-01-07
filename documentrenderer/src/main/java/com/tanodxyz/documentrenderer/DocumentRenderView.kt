@@ -46,7 +46,6 @@ open class DocumentRenderView @JvmOverloads constructor(
     protected var zoom = MINIMUM_ZOOM
     protected var animationManager: AnimationManager
 
-    protected var reCalculateAllPageVisibilityOffsets = false
     ///////////////////////////////////////////////////////////////////////////////////////////
 
     private val minZoom = DEFAULT_MIN_SCALE

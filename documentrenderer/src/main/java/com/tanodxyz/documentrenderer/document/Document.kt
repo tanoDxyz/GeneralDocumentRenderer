@@ -7,7 +7,6 @@ import android.os.Build
 import com.tanodxyz.documentrenderer.*
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import java.util.*
-import kotlin.reflect.KClass
 
 open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator? = null) {
     protected var maxHeightPageSize = Size(0, 0)
@@ -37,29 +36,29 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
 
     var documentName: String
         get() {
-            return get<String>(PROPERTY_DOOCUMENT_NAME)
+            return get<String>(PROPERTY_DOCUMENT_NAME)
                 ?: "$DOCUMENT_NAME-${System.currentTimeMillis()}"
         }
         set(value) {
-            this[PROPERTY_DOOCUMENT_NAME] = value
+            this[PROPERTY_DOCUMENT_NAME] = value
         }
 
 
     var documentScrollStrategy: DocumentScrollStrategy
         get() {
-            return get<DocumentScrollStrategy>(PROPERTY_DOOCUMENT_SCROLL_STRATEGY)
+            return get<DocumentScrollStrategy>(PROPERTY_DOCUMENT_SCROLL_STRATEGY)
                 ?: DocumentScrollStrategy.VERTICAL
         }
         set(value) {
-            this[PROPERTY_DOOCUMENT_SCROLL_STRATEGY] = value
+            this[PROPERTY_DOCUMENT_SCROLL_STRATEGY] = value
         }
 
     var documentFitPagePolicy: PageFitPolicy
         get() {
-            return get<PageFitPolicy>(PROPERTY_DOOCUMENT_PAGE_FIT_POLICY) ?: PageFitPolicy.NONE
+            return get<PageFitPolicy>(PROPERTY_DOCUMENT_PAGE_FIT_POLICY) ?: PageFitPolicy.NONE
         }
         set(value) {
-            this[PROPERTY_DOOCUMENT_PAGE_FIT_POLICY] = value
+            this[PROPERTY_DOCUMENT_PAGE_FIT_POLICY] = value
         }
 
     var swipeVertical: Boolean
@@ -88,10 +87,10 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
 
     var documentViewMode: DocumentViewMode
         get() {
-            return get<DocumentViewMode>(PROPERTY_DOOCUMENT_VIEW_MODE) ?: DocumentViewMode.DAY
+            return get<DocumentViewMode>(PROPERTY_DOCUMENT_VIEW_MODE) ?: DocumentViewMode.DAY
         }
         set(value) {
-            this[PROPERTY_DOOCUMENT_VIEW_MODE] = value
+            this[PROPERTY_DOCUMENT_VIEW_MODE] = value
         }
 
     var documentPath: String?
@@ -103,16 +102,16 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         }
 
     companion object {
-        val PROPERTY_DOOCUMENT_NAME = "com.gdr.documentName"
-        val PROPERTY_DOOCUMENT_SCROLL_STRATEGY = "com.gdr.documentScrollStrategy"
-        val PROPERTY_DOOCUMENT_PAGE_FIT_POLICY = "com.gdr.documentPageFitPolicy"
-        val PROPERTY_DOOCUMENT_VIEW_MODE = "com.gdr.documentViewMode"
-        val PROPERTY_DOCUMENT_PATH = "com.gdr.documentPath"
-        val PROPERTY_DOCUMENT_FIT_EACH_PAGE = "com.gdr.fiteachpage"
-        val PROPERTY_DOCUMENT_SWIPE_VERTICAL = "com.gdr.swipeVertical"
-        val PROPERTY_DOCUMENT_PAGE_FLING = "com.gdr.page.fling"
-        val PROPERTY_NIGHT_MODE = "com.night.mode"
-        val PROPERTY_PAGE_BACK_COLOR = "com.page.back.color"
+        const val PROPERTY_DOCUMENT_NAME = "com.gdr.documentName"
+        const val PROPERTY_DOCUMENT_SCROLL_STRATEGY = "com.gdr.documentScrollStrategy"
+        const val PROPERTY_DOCUMENT_PAGE_FIT_POLICY = "com.gdr.documentPageFitPolicy"
+        const val PROPERTY_DOCUMENT_VIEW_MODE = "com.gdr.documentViewMode"
+        const val PROPERTY_DOCUMENT_PATH = "com.gdr.documentPath"
+        const val PROPERTY_DOCUMENT_FIT_EACH_PAGE = "com.gdr.fiteachpage"
+        const val PROPERTY_DOCUMENT_SWIPE_VERTICAL = "com.gdr.swipeVertical"
+        const val PROPERTY_DOCUMENT_PAGE_FLING = "com.gdr.page.fling"
+        const val PROPERTY_NIGHT_MODE = "com.night.mode"
+        const val PROPERTY_PAGE_BACK_COLOR = "com.page.back.color"
         const val DOCUMENT_NAME = "document-"
     }
 
@@ -260,26 +259,20 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
             pageSizeCalculator = DefaultPageSizeCalculator()
         }
 
-        if (pageSizeCalculator is DefaultPageSizeCalculator) {
-            val defaultPageSizeCalculator = pageSizeCalculator as DefaultPageSizeCalculator
-            defaultPageSizeCalculator.setup(
-                documentFitPagePolicy,
-                originalMaxPageWidth,
-                originalMaxPageHeight,
-                viewSize,
+        val props = hashMapOf<String, Any>().apply {
+            put(PageSizeCalculator.FIT_POLICY, documentFitPagePolicy)
+            put(PageSizeCalculator.MAX_WIDTH_PAGE_SIZE, originalMaxPageWidth)
+            put(PageSizeCalculator.MAX_HEIGHT_PAGE_SIZE, originalMaxPageHeight)
+            put(PageSizeCalculator.VIEW_SIZE, viewSize)
+            put(
+                PageSizeCalculator.FIT_EACH_PAGE,
                 get<Boolean>(PROPERTY_DOCUMENT_FIT_EACH_PAGE) ?: false
             )
-            maxWidthPageSize = defaultPageSizeCalculator.optimalMaxWidthPageSize
-            maxHeightPageSize = defaultPageSizeCalculator.optimalMaxHeightPageSize
-        } else {
-            pageSizeCalculator?.viewSize = viewSize
-            pageSizeCalculator?.optimalMaxHeightPageSize = viewSize
-            pageSizeCalculator?.optimalMaxWidthPageSize = viewSize
-            maxWidthPageSize = viewSize
-            maxHeightPageSize = viewSize
         }
-
-
+        pageSizeCalculator!!.setup(props)
+        maxWidthPageSize = pageSizeCalculator!!.optimalMaxWidthPageSize
+        maxHeightPageSize = pageSizeCalculator!!.optimalMaxHeightPageSize
+        
         contentLength = 0F
         originalDocumentPageData.forEach { documentPage ->
             documentPage.size = pageSizeCalculator!!.calculate(documentPage.originalSize)

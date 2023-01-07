@@ -1,10 +1,18 @@
 package com.tanodxyz.documentrenderer
 
-class FixPageSizeCalculator(
-    override var viewSize: Size = Size(0,0),
-    override var optimalMaxWidthPageSize: Size = viewSize,
-    override var optimalMaxHeightPageSize: Size = viewSize
-) : PageSizeCalculator {
+class FixPageSizeCalculator() : PageSizeCalculator() {
+
+    override var viewSize: Size = Size(0, 0)
+    override var optimalMaxWidthPageSize: Size = Size(0, 0)
+    override var optimalMaxHeightPageSize: Size = Size(0, 0)
+
+
+    override fun setup(args: HashMap<String, Any>) {
+        viewSize = args[VIEW_SIZE] as Size
+        optimalMaxWidthPageSize = viewSize
+        optimalMaxHeightPageSize = viewSize
+    }
+
     override fun calculate(pageSize: Size): Size {
         if (pageSize.width <= 0 || pageSize.height <= 0) {
             return viewSize
@@ -23,11 +31,5 @@ class FixPageSizeCalculator(
             pageSize.height
         }
         return Size(w, h)
-    }
-
-    override fun reset() {
-        viewSize = Size(0,0)
-        optimalMaxHeightPageSize = viewSize
-        optimalMaxWidthPageSize = viewSize
     }
 }

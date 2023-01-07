@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         this.findViewById = findViewById<DocumentRenderView>(R.id.asd)
         val getseesa = getseesa(this)
-        getseesa[Document.PROPERTY_DOOCUMENT_PAGE_FIT_POLICY] = Document.PageFitPolicy.BOTH
+        getseesa[Document.PROPERTY_DOCUMENT_PAGE_FIT_POLICY] = Document.PageFitPolicy.BOTH
         getseesa.swipeVertical = true
         getseesa[Document.PROPERTY_DOCUMENT_FIT_EACH_PAGE] = true
         getseesa[Document.PROPERTY_DOCUMENT_PAGE_FLING] = false
@@ -57,7 +57,7 @@ class MainActivity : AppCompatActivity() {
             if (document != null) {
                 return document!!
             } else {
-                document = Document(context,FixPageSizeCalculator())
+                document = Document(context/*,FixPageSizeCalculator()*/)
 
                 for(i:Int in 0 until 10) {
                     document!!.addPage(DocumentPage())

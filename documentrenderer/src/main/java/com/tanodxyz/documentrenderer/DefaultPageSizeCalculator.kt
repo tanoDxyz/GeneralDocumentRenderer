@@ -1,27 +1,38 @@
 package com.tanodxyz.documentrenderer
 
 
-import android.util.SizeF
 import com.tanodxyz.documentrenderer.document.Document.PageFitPolicy
 
 //todo switch is needed......
-class DefaultPageSizeCalculator(
-    private var fitPolicy: PageFitPolicy = PageFitPolicy.BOTH,
-    private var originalMaxWidthSize: Size = Size(0,0),
-    private var originalMaxHeightSize: Size = Size(0,0),
-    override var viewSize: Size = Size(0,0),
+class DefaultPageSizeCalculator : PageSizeCalculator() {
+    private var fitPolicy: PageFitPolicy = PageFitPolicy.BOTH
+    private var originalMaxWidthSize: Size = Size(0, 0)
+    private var originalMaxHeightSize: Size = Size(0, 0)
+    override var viewSize: Size = Size(0, 0)
     private var fitEachPage: Boolean = false
-) : PageSizeCalculator {
     private var widthRatio = 0f
     private var heightRatio = 0f
     private lateinit var optimalMaxWidthSize: Size
     private lateinit var optimalMaxHeightSize: Size
 
-    fun setup(fitPolicy: PageFitPolicy,
-              originalMaxWidthSize: Size,
-              originalMaxHeightSize: Size,
-              viewSize: Size,
-              fitEachPage: Boolean = false) {
+
+    override fun setup(args: HashMap<String, Any>) {
+        setup(
+            args[PageSizeCalculator.FIT_POLICY] as PageFitPolicy,
+            args[PageSizeCalculator.MAX_WIDTH_PAGE_SIZE] as Size,
+            args[PageSizeCalculator.MAX_HEIGHT_PAGE_SIZE] as Size,
+            args[PageSizeCalculator.VIEW_SIZE] as Size,
+            args[PageSizeCalculator.FIT_EACH_PAGE] as Boolean
+        )
+    }
+
+    private fun setup(
+        fitPolicy: PageFitPolicy,
+        originalMaxWidthSize: Size,
+        originalMaxHeightSize: Size,
+        viewSize: Size,
+        fitEachPage: Boolean = false
+    ) {
         this.fitPolicy = fitPolicy
         this.originalMaxWidthSize = originalMaxWidthSize
         this.originalMaxHeightSize = originalMaxHeightSize
