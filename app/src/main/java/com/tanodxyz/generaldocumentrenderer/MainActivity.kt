@@ -57,7 +57,7 @@ class MainActivity : AppCompatActivity() {
             if (document != null) {
                 return document!!
             } else {
-                document = Document(context/*,FixPageSizeCalculator()*/)
+                document = Document(context,FixPageSizeCalculator())
 
                 for(i:Int in 0 until 10) {
                     document!!.addPage(DocumentPage())
@@ -74,8 +74,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun switchSwipeModeClicked(view: View) {
-        document?.swipeVertical = !document!!.swipeVertical
-        findViewById.redraw()
-
+        findViewById.changeSwipeMode()
     }
 }

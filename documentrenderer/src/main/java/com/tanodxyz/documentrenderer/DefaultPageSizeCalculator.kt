@@ -26,7 +26,7 @@ class DefaultPageSizeCalculator : PageSizeCalculator() {
         )
     }
 
-    private fun setup(
+    fun setup(
         fitPolicy: PageFitPolicy,
         originalMaxWidthSize: Size,
         originalMaxHeightSize: Size,

@@ -143,6 +143,35 @@ open class DocumentRenderView @JvmOverloads constructor(
         this.zoom = zoom
     }
 
+    fun changeSwipeMode(swipeVertical: Boolean) {
+        document.swipeVertical = swipeVertical
+        animationManager.stopAll()
+        document.recalculatePageSizes(Size(width, height))
+        jumpToPage(currentPage - 1, withAnimation = true)
+    }
+
+    fun jumpToPage(pageNumber: Int, withAnimation: Boolean = false) {
+        if(document.swipeVertical) {
+            val yOffsetForPage = findYForVisiblePage(pageNumber) * -1
+            if(withAnimation) {
+                animationManager.startPageFlingAnimation(yOffsetForPage)
+            } else {
+                moveTo(yOffsetForPage,contentDrawOffsetY)
+            }
+        } else {
+            val xOffsetForPage = findXForVisiblePage(pageNumber) * -1
+            if(withAnimation) {
+                animationManager.startPageFlingAnimation(xOffsetForPage)
+            } else {
+                moveTo(xOffsetForPage,contentDrawOffsetY)
+            }
+        }
+    }
+
+    fun changeSwipeMode() {
+        changeSwipeMode(!document.swipeVertical)
+    }
+
     override fun onScrollStart(
         movementDirections: TouchEventsManager.MovementDirections?,
         distanceX: Float,
@@ -219,6 +248,140 @@ open class DocumentRenderView @JvmOverloads constructor(
         val absX = abs(velocityX)
         val absY = abs(velocityY)
         return if (document.swipeVertical) absY > absX else absX > absY
+    }
+
+    /**
+     * page number starting from zero
+     */
+    fun findXForVisiblePage(pageNo: Int): Float {
+        val contentDrawX = 0
+        var totalPagesDrawnLength = 0F
+        var pageX = 0F
+        var pageY = 0F
+        var pageEnd = 0F
+        var pageBottom = 0F
+        var scaledPageStart = 0F
+        var rightMarginToSubtract = 0F
+        var pageWidthToDraw = 0
+        var scaledFitPageWidth = 0F
+        var scaledPageY = 0F
+        var bottomMarginToSubtract = 0F
+        var pageHeightToDraw = 0
+        var scaledFitPageHeight = 0F
+        val documentPages = document.getDocumentPages()
+        val targetPageBounds = RectF(0F, 0F, 0F, 0F)
+        var pageVisibilityOffsetX = 0F
+        var previousPageVisibilityOffset = 0F
+        for (i: Int in 0..pageNo) {
+            val page = documentPages[i]
+            val previousPage: DocumentPage? = if (i == 0) null else documentPages[i]
+            //page x
+            scaledPageStart = (toCurrentScale(totalPagesDrawnLength))
+            pageX =
+                contentDrawX + scaledPageStart + document.pageMargins.left
+            // pageY
+            scaledPageY = toCurrentScale((document.getMaxPageHeight() - page.size.height) / 2)
+            pageY =
+                (contentDrawOffsetY + scaledPageY) + document.pageMargins.top
+
+            bottomMarginToSubtract =
+                document.pageMargins.top + document.pageMargins.bottom
+
+            pageHeightToDraw = page.size.height
+            scaledFitPageHeight = toCurrentScale(pageHeightToDraw)
+            pageBottom = (pageY + scaledFitPageHeight) - bottomMarginToSubtract
+            // pageEnd
+//
+            rightMarginToSubtract =
+                document.pageMargins.left + document.pageMargins.right
+
+            pageWidthToDraw = page.size.width
+            scaledFitPageWidth = toCurrentScale(pageWidthToDraw)
+            pageEnd = (pageX + scaledFitPageWidth) - rightMarginToSubtract
+
+            targetPageBounds.apply {
+                left = pageX
+                right = pageEnd
+                top = pageY
+                bottom = pageBottom
+            }
+            totalPagesDrawnLength += page.size.width
+
+            if (previousPage != null) {
+                val previousPageWidth = previousPage.getWidth()
+                pageVisibilityOffsetX =
+                    ((previousPageWidth + (document.pageMargins.left + document.pageMargins.right)
+                            + previousPageVisibilityOffset))
+                previousPageVisibilityOffset = pageVisibilityOffsetX
+            }
+        }
+
+        return pageVisibilityOffsetX
+    }
+
+    fun findYForVisiblePage(pageNo: Int): Float {
+        var contentDrawY = 0
+        var totalPagesDrawnLength = 0F
+        var pageX = 0F
+        var pageY = 0F
+        var pageEnd = 0F
+        var pageBottom = 0F
+        var scaledPageStart = 0F
+        var rightMarginToSubtract = 0F
+        var pageWidthToDraw = 0
+        var scaledFitPageWidth = 0F
+        var scaledPageY = 0F
+        var bottomMarginToSubtract = 0F
+        var pageHeightToDraw = 0
+        var scaledFitPageHeight = 0F
+        val documentPages = document.getDocumentPages()
+        val targetPageBounds = RectF(0F, 0F, 0F, 0F)
+        var pageVisibilityOffsetY = 0F
+        var previousPageVisibilityOffset = 0F
+        for (i: Int in 0..pageNo) {
+            val page = documentPages[i]
+            val previousPage: DocumentPage? = if (i == 0) null else documentPages[i]
+            scaledPageStart =
+                (toCurrentScale(document.getMaxPageWidth() - page.size.width) / 2)
+            pageX =
+                contentDrawOffsetX + scaledPageStart + document.pageMargins.left;
+
+            rightMarginToSubtract =
+                document.pageMargins.left + document.pageMargins.right
+            pageWidthToDraw = page.size.width
+            scaledFitPageWidth = toCurrentScale(pageWidthToDraw)
+            pageEnd = (pageX + scaledFitPageWidth) - rightMarginToSubtract
+            // page Y
+            scaledPageY = (toCurrentScale(
+                totalPagesDrawnLength
+            ))
+            pageY =
+                contentDrawY + document.pageMargins.top + scaledPageY
+            // page bottom
+            bottomMarginToSubtract =
+                document.pageMargins.top + document.pageMargins.bottom
+
+            pageHeightToDraw = page.size.height
+            scaledFitPageHeight = toCurrentScale(pageHeightToDraw)
+            pageBottom = (pageY + scaledFitPageHeight) - bottomMarginToSubtract
+
+            targetPageBounds.apply {
+                left = pageX
+                right = pageEnd
+                top = pageY
+                bottom = pageBottom
+            }
+            totalPagesDrawnLength += page.size.height
+
+            if(previousPage != null) {
+                val previousPageHeight = previousPage.getHeight()
+                pageVisibilityOffsetY =
+                    ((previousPageHeight + (document.pageMargins.top + document.pageMargins.bottom)
+                            + previousPageVisibilityOffset))
+                previousPageVisibilityOffset = pageVisibilityOffsetY
+            }
+        }
+        return pageVisibilityOffsetY
     }
 
     /**
