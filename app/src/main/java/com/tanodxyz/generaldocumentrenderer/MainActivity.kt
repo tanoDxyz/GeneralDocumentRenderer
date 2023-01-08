@@ -19,7 +19,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        this.findViewById = findViewById<DocumentRenderView>(R.id.asd)
+        this.findViewById = findViewById<DocumentRenderView>(R.id.cvxd)
         val getseesa = getseesa(this)
         getseesa[Document.PROPERTY_DOCUMENT_PAGE_FIT_POLICY] = Document.PageFitPolicy.BOTH
         getseesa.swipeVertical = true

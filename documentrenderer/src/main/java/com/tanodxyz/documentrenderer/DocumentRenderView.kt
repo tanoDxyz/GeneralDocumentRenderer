@@ -2,13 +2,15 @@ package com.tanodxyz.documentrenderer
 
 import android.content.Context
 import android.graphics.*
+import android.os.Bundle
+import android.os.Parcelable
 import android.util.AttributeSet
+import android.util.Log.e
 import android.view.MotionEvent
 import android.view.View
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.page.PageViewState
-import java.io.Serializable
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -69,8 +71,16 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (isInEditMode) {
             return
         }
+        recalculatePageSizesAndSetXYForNewBounds(w,h)
+    }
+
+    private fun recalculatePageSizesAndSetXYForNewBounds(width: Int, height: Int) {
         animationManager.stopAll()
-        document.recalculatePageSizes(Size(w, h))
+        document.recalculatePageSizes(Size(width, height))
+        setXYForNewBounds()
+    }
+
+    private fun setXYForNewBounds() {
         if (document.swipeVertical) {
             // whenever size changes set X
             val scaledPageWidth: Float = toCurrentScale(document.getMaxPageWidth())
@@ -92,8 +102,31 @@ open class DocumentRenderView @JvmOverloads constructor(
                 contentDrawOffsetX = (width - contentWidth) / 2
             }
         }
-        
     }
+
+    override fun onSaveInstanceState(): Parcelable? {
+        val bundle = Bundle()
+        bundle.putParcelable("superState", super.onSaveInstanceState())
+        bundle.putParcelable("viewState", ViewState(currentPage, zoom))
+        super.onSaveInstanceState()
+        return bundle
+    }
+
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        var superState: Parcelable? = null
+        var viewState: ViewState? = null
+        if (state is Bundle) {
+            viewState = state.getParcelable<ViewState>("viewState")!!
+            superState = state.getParcelable("superState")!!
+        }
+        super.onRestoreInstanceState(superState)
+        viewState?.apply {
+            recalculatePageSizesAndSetXYForNewBounds(width,height) //todo problem 
+            this@DocumentRenderView.zoom = this.zoomLevel
+            jumpToPage(this.currentPage - 1, false)
+        }
+    }
+
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
         return touchEventMgr.onTouchEvent(event)
@@ -147,21 +180,32 @@ open class DocumentRenderView @JvmOverloads constructor(
     fun changeSwipeMode(swipeVertical: Boolean) {
         document.swipeVertical = swipeVertical
         animationManager.stopAll()
-        document.recalculatePageSizes(Size(width, height))
+        recalculatePageSizesAndSetXYForNewBounds(width,height)
         jumpToPage(currentPage - 1, withAnimation = false)
     }
 
     fun jumpToPage(pageNumber: Int, withAnimation: Boolean = false) {
-        var targetPageOffset = 0F
-        targetPageOffset = if(document.swipeVertical) {
-            findYForVisiblePage(pageNumber) * -1
+        if (document.swipeVertical) {
+            var yOffset = findYForVisiblePage(pageNumber)
+            if(yOffset > 0) {
+                yOffset *= -1
+            }
+            println("Bako: yoffset is $yOffset")
+            if (withAnimation) {
+                animationManager.startPageFlingAnimation(yOffset)
+            } else {
+                moveTo(contentDrawOffsetX, yOffset)
+            }
         } else {
-            findXForVisiblePage(pageNumber) * -1
-        }
-        if (withAnimation) {
-            animationManager.startPageFlingAnimation(targetPageOffset)
-        } else {
-            moveTo(targetPageOffset, contentDrawOffsetY)
+            var xOffset = findXForVisiblePage(pageNumber)
+            if(xOffset > 0) {
+                xOffset *= -1
+            }
+            if (withAnimation) {
+                animationManager.startPageFlingAnimation(xOffset)
+            } else {
+                moveTo(xOffset, contentDrawOffsetY)
+            }
         }
     }
 
@@ -302,7 +346,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                 top = pageY
                 bottom = pageBottom
             }
-            totalPagesDrawnLength += page.size.width
+            totalPagesDrawnLength += targetPageBounds.getWidth()
 
             if (previousPage != null) {
                 val previousPageWidth = previousPage.getWidth()
@@ -312,12 +356,12 @@ open class DocumentRenderView @JvmOverloads constructor(
                 previousPageVisibilityOffset = pageVisibilityOffsetX
             }
         }
-
+        drawnContentLength = totalPagesDrawnLength
         return pageVisibilityOffsetX
     }
 
     fun findYForVisiblePage(pageNo: Int): Float {
-        var contentDrawY = 0
+        val contentDrawY = 0
         var totalPagesDrawnLength = 0F
         var pageX = 0F
         var pageY = 0F
@@ -368,9 +412,8 @@ open class DocumentRenderView @JvmOverloads constructor(
                 top = pageY
                 bottom = pageBottom
             }
-            totalPagesDrawnLength += page.size.height
-
-            if(previousPage != null) {
+            totalPagesDrawnLength += targetPageBounds.getHeight()
+            if (previousPage != null) {
                 val previousPageHeight = previousPage.getHeight()
                 pageVisibilityOffsetY =
                     ((previousPageHeight + (document.pageMargins.top + document.pageMargins.bottom)
@@ -378,6 +421,8 @@ open class DocumentRenderView @JvmOverloads constructor(
                 previousPageVisibilityOffset = pageVisibilityOffsetY
             }
         }
+        drawnContentLength = totalPagesDrawnLength
+        println("Bako: yes content length is now $drawnContentLength |||| $totalPagesDrawnLength")
         return pageVisibilityOffsetY
     }
 
@@ -548,6 +593,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     override fun moveTo(absX: Float, absY: Float) {
         if (document.swipeVertical) {
             val documentHeight = getRenderedDocLen(zoom)
+            println("Bako: document height is $documentHeight")
             contentDrawOffsetY = if (documentHeight < height) {
                 (height - documentHeight) / 2
             } else {
@@ -607,7 +653,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             contentDrawOffsetY = offsetY
             contentDrawOffsetX = offsetX
         }
-        println("MIRINDA: x is $contentDrawOffsetX")
+        println("MIRINDA: Y is $contentDrawOffsetY")
         redraw()
     }
 
@@ -699,10 +745,8 @@ open class DocumentRenderView @JvmOverloads constructor(
         // centered line // horizontal
         drawLine(0F, (height / 2F), width.toFloat(), (height / 2F), ccx)
         drawText("X= $contentDrawOffsetX ", 100F, 200F, ccx)
-        if (index == 0) {
-            drawText("P1 -> Left ${page.pageBounds.left} ", 100F, 250F, ccx)
-            drawText("P1 -> Right ${page.pageBounds.right} ", 100F, 300F, ccx)
-        }
+        drawText("y= $contentDrawOffsetY ", 100F, 250F, ccx)
+
         drawLine(
             page.pageBounds.left,
             page.pageBounds.bottom,

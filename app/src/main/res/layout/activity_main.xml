@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"/>
     <com.tanodxyz.documentrenderer.DocumentRenderView
         app:layout_constraintTop_toBottomOf="@id/sanjo"
-        android:id="@+id/asd"
+        android:id="@+id/cvxd"
         android:visibility="visible"
         android:layout_width="0dp"
         android:layout_height="0dp"
