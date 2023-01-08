@@ -92,6 +92,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                 contentDrawOffsetX = (width - contentWidth) / 2
             }
         }
+        
     }
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
@@ -147,24 +148,20 @@ open class DocumentRenderView @JvmOverloads constructor(
         document.swipeVertical = swipeVertical
         animationManager.stopAll()
         document.recalculatePageSizes(Size(width, height))
-        jumpToPage(currentPage - 1, withAnimation = true)
+        jumpToPage(currentPage - 1, withAnimation = false)
     }
 
     fun jumpToPage(pageNumber: Int, withAnimation: Boolean = false) {
-        if(document.swipeVertical) {
-            val yOffsetForPage = findYForVisiblePage(pageNumber) * -1
-            if(withAnimation) {
-                animationManager.startPageFlingAnimation(yOffsetForPage)
-            } else {
-                moveTo(yOffsetForPage,contentDrawOffsetY)
-            }
+        var targetPageOffset = 0F
+        targetPageOffset = if(document.swipeVertical) {
+            findYForVisiblePage(pageNumber) * -1
         } else {
-            val xOffsetForPage = findXForVisiblePage(pageNumber) * -1
-            if(withAnimation) {
-                animationManager.startPageFlingAnimation(xOffsetForPage)
-            } else {
-                moveTo(xOffsetForPage,contentDrawOffsetY)
-            }
+            findXForVisiblePage(pageNumber) * -1
+        }
+        if (withAnimation) {
+            animationManager.startPageFlingAnimation(targetPageOffset)
+        } else {
+            moveTo(targetPageOffset, contentDrawOffsetY)
         }
     }
 
