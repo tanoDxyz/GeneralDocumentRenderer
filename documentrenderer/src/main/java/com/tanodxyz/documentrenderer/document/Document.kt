@@ -254,7 +254,6 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
     }
 
     open fun recalculatePageSizes(viewSize: Size) {
-
         if (pageSizeCalculator == null) {
             pageSizeCalculator = DefaultPageSizeCalculator()
         }
@@ -272,7 +271,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         pageSizeCalculator!!.setup(props)
         maxWidthPageSize = pageSizeCalculator!!.optimalMaxWidthPageSize
         maxHeightPageSize = pageSizeCalculator!!.optimalMaxHeightPageSize
-        
+
         contentLength = 0F
         originalDocumentPageData.forEach { documentPage ->
             documentPage.size = pageSizeCalculator!!.calculate(documentPage.originalSize)
@@ -287,8 +286,16 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
             } else {
                 documentPage.size.width
             }
+            documentPage.resetPageBounds()
         }
+        println("simi: calle calculator $contentLength and all done")
     }
+
+    open fun toCurrentScale(size: Number, zoom: Float): Float {
+        return size.toFloat() * zoom
+    }
+
+
 
     fun getDocLen(zoom: Float): Float {
         return getTotalContentLength() * zoom

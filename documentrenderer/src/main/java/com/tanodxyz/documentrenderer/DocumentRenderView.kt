@@ -3,9 +3,9 @@ package com.tanodxyz.documentrenderer
 import android.content.Context
 import android.graphics.*
 import android.os.Bundle
+import android.os.Handler
 import android.os.Parcelable
 import android.util.AttributeSet
-import android.util.Log.e
 import android.view.MotionEvent
 import android.view.View
 import com.tanodxyz.documentrenderer.document.Document
@@ -42,7 +42,10 @@ open class DocumentRenderView @JvmOverloads constructor(
     protected var contentDrawOffsetY = 0F
 
     protected var currentPage = 1
+    //todo @remove
+/*
     protected var drawnContentLength = 0f
+*/
 
 
     protected var zoom = MINIMUM_ZOOM
@@ -71,16 +74,27 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (isInEditMode) {
             return
         }
-        recalculatePageSizesAndSetXYForNewBounds(w,h)
+        println("simi: size changed")
+        recalculatePageSizesAndSetDefaultXYOffsets(w,h)
+        gotoPageIfApplicable()
     }
 
-    private fun recalculatePageSizesAndSetXYForNewBounds(width: Int, height: Int) {
+    private fun gotoPageIfApplicable() {
+        println("simi: content Length is ${document.getTotalContentLength()}")
+        //todo remember the cache
+        if(currentPage > 1) {
+            println("simi: page number is $currentPage")
+            jumpToPage(currentPage -1 ,false)
+        }
+    }
+    private fun recalculatePageSizesAndSetDefaultXYOffsets(width: Int, height: Int) {
+        println("Bako: mimiri::")
         animationManager.stopAll()
         document.recalculatePageSizes(Size(width, height))
-        setXYForNewBounds()
+        setDefaultContentDrawOffsets()
     }
 
-    private fun setXYForNewBounds() {
+    private fun setDefaultContentDrawOffsets() {
         if (document.swipeVertical) {
             // whenever size changes set X
             val scaledPageWidth: Float = toCurrentScale(document.getMaxPageWidth())
@@ -121,9 +135,9 @@ open class DocumentRenderView @JvmOverloads constructor(
         }
         super.onRestoreInstanceState(superState)
         viewState?.apply {
-            recalculatePageSizesAndSetXYForNewBounds(width,height) //todo problem 
+            println("simi: onrestore instance state called on ")
             this@DocumentRenderView.zoom = this.zoomLevel
-            jumpToPage(this.currentPage - 1, false)
+            this@DocumentRenderView.currentPage = currentPage
         }
     }
 
@@ -180,17 +194,18 @@ open class DocumentRenderView @JvmOverloads constructor(
     fun changeSwipeMode(swipeVertical: Boolean) {
         document.swipeVertical = swipeVertical
         animationManager.stopAll()
-        recalculatePageSizesAndSetXYForNewBounds(width,height)
+        println("Bako: from swipe mode ")
+        recalculatePageSizesAndSetDefaultXYOffsets(width,height)
         jumpToPage(currentPage - 1, withAnimation = false)
     }
 
     fun jumpToPage(pageNumber: Int, withAnimation: Boolean = false) {
         if (document.swipeVertical) {
             var yOffset = findYForVisiblePage(pageNumber)
+            println("simi: contentHeight is ${document.getTotalContentLength()} | yOffset = $yOffset")
             if(yOffset > 0) {
                 yOffset *= -1
             }
-            println("Bako: yoffset is $yOffset")
             if (withAnimation) {
                 animationManager.startPageFlingAnimation(yOffset)
             } else {
@@ -346,17 +361,20 @@ open class DocumentRenderView @JvmOverloads constructor(
                 top = pageY
                 bottom = pageBottom
             }
-            totalPagesDrawnLength += targetPageBounds.getWidth()
+            totalPagesDrawnLength += /*targetPageBounds.getWidth()*/page.size.width
 
             if (previousPage != null) {
-                val previousPageWidth = previousPage.getWidth()
+                val previuosX = contentDrawX + scaledPageStart + document.pageMargins.left
+                val previousEnd = (previuosX + toCurrentScale(previousPage.size.width)) - rightMarginToSubtract
+                val previousPageWidth = Pair(previuosX,previousEnd).getWidth()
                 pageVisibilityOffsetX =
                     ((previousPageWidth + (document.pageMargins.left + document.pageMargins.right)
                             + previousPageVisibilityOffset))
                 previousPageVisibilityOffset = pageVisibilityOffsetX
             }
         }
-        drawnContentLength = totalPagesDrawnLength
+        //todo @remove
+//        drawnContentLength = totalPagesDrawnLength
         return pageVisibilityOffsetX
     }
 
@@ -380,6 +398,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         var pageVisibilityOffsetY = 0F
         var previousPageVisibilityOffset = 0F
         for (i: Int in 0..pageNo) {
+            println("poi: --------------------------------------------------")
             val page = documentPages[i]
             val previousPage: DocumentPage? = if (i == 0) null else documentPages[i]
             scaledPageStart =
@@ -412,17 +431,17 @@ open class DocumentRenderView @JvmOverloads constructor(
                 top = pageY
                 bottom = pageBottom
             }
-            totalPagesDrawnLength += targetPageBounds.getHeight()
+            totalPagesDrawnLength += /*targetPageBounds.getHeight()*/page.size.height
             if (previousPage != null) {
-                val previousPageHeight = previousPage.getHeight()
+                val previousY = contentDrawY + document.pageMargins.top + scaledPageY
+                val previousBottom = (previousY + toCurrentScale(previousPage.size.height)) - bottomMarginToSubtract
+                val previousPageHeight = Pair(previousY,previousBottom).getHeight()
                 pageVisibilityOffsetY =
                     ((previousPageHeight + (document.pageMargins.top + document.pageMargins.bottom)
                             + previousPageVisibilityOffset))
                 previousPageVisibilityOffset = pageVisibilityOffsetY
             }
         }
-        drawnContentLength = totalPagesDrawnLength
-        println("Bako: yes content length is now $drawnContentLength |||| $totalPagesDrawnLength")
         return pageVisibilityOffsetY
     }
 
@@ -586,14 +605,19 @@ open class DocumentRenderView @JvmOverloads constructor(
         return size.toFloat() * zoom
     }
 
-    open fun getRenderedDocLen(zoom: Float): Float {
-        return drawnContentLength * zoom
-    }
+    //todo @remove
+//    open fun getRenderedDocLen(zoom: Float): Float {
+//        return drawnContentLength * zoom
+//    }
 
+    open fun getRenderedDocLen(zoom: Float): Float {
+        return document.getTotalContentLength() * zoom
+    }
     override fun moveTo(absX: Float, absY: Float) {
         if (document.swipeVertical) {
             val documentHeight = getRenderedDocLen(zoom)
             println("Bako: document height is $documentHeight")
+            println("Bako: called with $absX , $absY")
             contentDrawOffsetY = if (documentHeight < height) {
                 (height - documentHeight) / 2
             } else {
@@ -689,8 +713,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                 null
             }
             drawBackground(this)
-
-            drawnContentLength = 0F
+            var drawnContentLength = 0F
             val documentPages = document.getDocumentPages()
             for (i: Int in documentPages.indices) {
                 val page = documentPages[i]
@@ -699,6 +722,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                     i,
                     page.pageBounds
                 )
+                //todo it will slow down the app....
                 someDebugDrawings(i, page)
                 drawnContentLength += if (document.swipeVertical) {
                     page.size.height
@@ -735,32 +759,45 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     fun Canvas.someDebugDrawings(index: Int, page: DocumentPage) {
-        drawText(
-            "P#No ${index + 1} | b= ${page.pageBounds}",
-            page.pageBounds.left,
-            page.pageBounds.top + 100,
-            ccx
-        )
-        drawCircle(page.pageBounds.right, page.pageBounds.top + 100, 30F, ccx)
-        // centered line // horizontal
-        drawLine(0F, (height / 2F), width.toFloat(), (height / 2F), ccx)
-        drawText("X= $contentDrawOffsetX ", 100F, 200F, ccx)
-        drawText("y= $contentDrawOffsetY ", 100F, 250F, ccx)
+//        drawText(
+//            "P#No ${index + 1} | b= ${page.pageBounds}",
+//            page.pageBounds.left,
+//            page.pageBounds.top + 100,
+//            ccx
+//        )
+//        drawCircle(page.pageBounds.right, page.pageBounds.top + 100, 30F, ccx)
+//        // centered line // horizontal
+//        drawLine(0F, (height / 2F), width.toFloat(), (height / 2F), ccx)
+//        drawText("X= $contentDrawOffsetX ", 100F, 200F, ccx)
+//        drawText("y= $contentDrawOffsetY ", 100F, 250F, ccx)
+//
+//        drawLine(
+//            page.pageBounds.left,
+//            page.pageBounds.bottom,
+//            page.pageBounds.right,
+//            page.pageBounds.bottom,
+//            ccx
+//        )
+//        drawLine(
+//            page.pageBounds.left,
+//            page.pageBounds.top,
+//            page.pageBounds.right,
+//            page.pageBounds.top,
+//            ccx
+//        )
 
-        drawLine(
-            page.pageBounds.left,
-            page.pageBounds.bottom,
-            page.pageBounds.right,
-            page.pageBounds.bottom,
-            ccx
-        )
-        drawLine(
-            page.pageBounds.left,
-            page.pageBounds.top,
-            page.pageBounds.right,
-            page.pageBounds.top,
-            ccx
-        )
+//        Bitmap.createBitmap(page.size.width,page.size.height,Bitmap.Config.ARGB_8888).apply {
+//            drawBitmap(this,page.pageBounds.left,page.pageBounds.top,ccx)
+//        }
+
+//        drawText(
+//            "This is the long text for page No $index and we \n" +
+//                    "should know that it is dangerous totally",
+//            page.pageBounds.left,
+//            page.pageBounds.top + 100,
+//            ccx
+//        )
+
     }
 
     open fun Canvas.drawPageBackground(

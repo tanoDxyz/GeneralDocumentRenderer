@@ -31,6 +31,12 @@ data class DocumentPage(
         return pageBounds.getHeight()
     }
 
+    fun resetPageBounds() {
+        pageBounds.top = 0F
+        pageBounds.left = 0F
+        pageBounds.right = 0F
+        pageBounds.bottom = 0F
+    }
 
     companion object {
         fun newPageWithWidthEqualsScreenWidth(context: Context, height: Int): DocumentPage {

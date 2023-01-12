@@ -2,6 +2,7 @@ package com.tanodxyz.documentrenderer
 
 import android.content.Context
 import android.content.res.Resources
+import android.graphics.PointF
 import android.graphics.RectF
 import android.util.TypedValue
 import com.tanodxyz.documentrenderer.page.DocumentPage
@@ -48,6 +49,7 @@ fun RectF.getWidth(): Float {
 }
 
 fun RectF.getHeight(): Float {
+    println("poi: pageBounds are $this")
     val pageBounds = this
     return if (pageBounds.top > 0 && pageBounds.bottom >= pageBounds.top) {
         pageBounds.height()
@@ -58,5 +60,13 @@ fun RectF.getHeight(): Float {
     } else {
         pageBounds.width()
     }
+}
+
+fun Pair<Float, Float>.getHeight(): Float {
+    return RectF(0F, this.first, 0F, this.second).getHeight()
+}
+
+fun Pair<Float, Float>.getWidth(): Float {
+    return RectF(this.first, 0F, this.second, 0F).getWidth()
 }
 
