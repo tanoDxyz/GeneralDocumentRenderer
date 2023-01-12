@@ -158,6 +158,13 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
         scaling = false
     }
 
+    fun disable() {
+        enabled = false
+    }
+    fun enable() {
+        enabled = true
+    }
+
     interface TouchEventsListener {
         fun getCurrentX(): Float
         fun getCurrentY(): Float

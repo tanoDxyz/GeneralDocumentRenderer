@@ -5,12 +5,17 @@ import android.graphics.*
 import android.os.Bundle
 import android.os.Handler
 import android.os.Parcelable
+import android.util.AtomicFile
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import com.google.android.material.progressindicator.CircularProgressIndicatorSpec
+import com.google.android.material.progressindicator.IndeterminateDrawable
 import com.tanodxyz.documentrenderer.document.Document
+import com.tanodxyz.documentrenderer.elements.IElement
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.page.PageViewState
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -23,8 +28,10 @@ open class DocumentRenderView @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr), View.OnTouchListener,
     TouchEventsManager.TouchEventsListener, AnimationManager.AnimationListener {
 
+    private lateinit var progressBarElementForBuzyState: IElement
     private var currentPageForImmediateTouchEvent: Int = 0
     protected lateinit var document: Document
+    protected var buzyTokensCounter = 0
 
     //////////////////////////////////////////
     private var ccx: Paint = Paint()
@@ -75,18 +82,31 @@ open class DocumentRenderView @JvmOverloads constructor(
             return
         }
         println("simi: size changed")
-        recalculatePageSizesAndSetDefaultXYOffsets(w,h)
+        recalculatePageSizesAndSetDefaultXYOffsets(w, h)
         gotoPageIfApplicable()
     }
 
     private fun gotoPageIfApplicable() {
         println("simi: content Length is ${document.getTotalContentLength()}")
         //todo remember the cache
-        if(currentPage > 1) {
+        if (currentPage > 1) {
             println("simi: page number is $currentPage")
-            jumpToPage(currentPage -1 ,false)
+            jumpToPage(currentPage - 1, false)
         }
     }
+
+    fun buzy() {
+        ++buzyTokensCounter
+        redraw()
+    }
+
+    fun free() {
+        if (buzyTokensCounter > 0) {
+            --buzyTokensCounter
+            redraw()
+        }
+    }
+
     private fun recalculatePageSizesAndSetDefaultXYOffsets(width: Int, height: Int) {
         println("Bako: mimiri::")
         animationManager.stopAll()
@@ -195,7 +215,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         document.swipeVertical = swipeVertical
         animationManager.stopAll()
         println("Bako: from swipe mode ")
-        recalculatePageSizesAndSetDefaultXYOffsets(width,height)
+        recalculatePageSizesAndSetDefaultXYOffsets(width, height)
         jumpToPage(currentPage - 1, withAnimation = false)
     }
 
@@ -203,7 +223,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (document.swipeVertical) {
             var yOffset = findYForVisiblePage(pageNumber)
             println("simi: contentHeight is ${document.getTotalContentLength()} | yOffset = $yOffset")
-            if(yOffset > 0) {
+            if (yOffset > 0) {
                 yOffset *= -1
             }
             if (withAnimation) {
@@ -213,7 +233,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             }
         } else {
             var xOffset = findXForVisiblePage(pageNumber)
-            if(xOffset > 0) {
+            if (xOffset > 0) {
                 xOffset *= -1
             }
             if (withAnimation) {
@@ -365,8 +385,9 @@ open class DocumentRenderView @JvmOverloads constructor(
 
             if (previousPage != null) {
                 val previuosX = contentDrawX + scaledPageStart + document.pageMargins.left
-                val previousEnd = (previuosX + toCurrentScale(previousPage.size.width)) - rightMarginToSubtract
-                val previousPageWidth = Pair(previuosX,previousEnd).getWidth()
+                val previousEnd =
+                    (previuosX + toCurrentScale(previousPage.size.width)) - rightMarginToSubtract
+                val previousPageWidth = Pair(previuosX, previousEnd).getWidth()
                 pageVisibilityOffsetX =
                     ((previousPageWidth + (document.pageMargins.left + document.pageMargins.right)
                             + previousPageVisibilityOffset))
@@ -434,8 +455,9 @@ open class DocumentRenderView @JvmOverloads constructor(
             totalPagesDrawnLength += /*targetPageBounds.getHeight()*/page.size.height
             if (previousPage != null) {
                 val previousY = contentDrawY + document.pageMargins.top + scaledPageY
-                val previousBottom = (previousY + toCurrentScale(previousPage.size.height)) - bottomMarginToSubtract
-                val previousPageHeight = Pair(previousY,previousBottom).getHeight()
+                val previousBottom =
+                    (previousY + toCurrentScale(previousPage.size.height)) - bottomMarginToSubtract
+                val previousPageHeight = Pair(previousY, previousBottom).getHeight()
                 pageVisibilityOffsetY =
                     ((previousPageHeight + (document.pageMargins.top + document.pageMargins.bottom)
                             + previousPageVisibilityOffset))
@@ -605,14 +627,14 @@ open class DocumentRenderView @JvmOverloads constructor(
         return size.toFloat() * zoom
     }
 
-    //todo @remove
-//    open fun getRenderedDocLen(zoom: Float): Float {
-//        return drawnContentLength * zoom
-//    }
+    fun setProgressBarForBuzyState(iElement: IElement) {
+        this.progressBarElementForBuzyState = iElement
+    }
 
     open fun getRenderedDocLen(zoom: Float): Float {
         return document.getTotalContentLength() * zoom
     }
+
     override fun moveTo(absX: Float, absY: Float) {
         if (document.swipeVertical) {
             val documentHeight = getRenderedDocLen(zoom)
@@ -706,13 +728,28 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (isInEditMode) {
             return
         }
+        
+        canvas?.let { drawBackground(it) }
+
+
+        // code to display progress bar in case of buzy state ====================================================================
+        if (buzyTokensCounter > 0) {
+            animationManager.stopAll()
+            progressBarElementForBuzyState.draw(canvas!!)
+            touchEventMgr.disable()
+            postInvalidateDelayed(REFRESH_RATE_IN_CASE_VIEW_BUZY)
+            return
+        } else {
+            touchEventMgr.enable()
+        }
+
+        //================================================================================================================================
         canvas?.apply {
             drawFilter = if (enableAntialiasing && drawFilter == null) {
                 antialiasFilter
             } else {
                 null
             }
-            drawBackground(this)
             var drawnContentLength = 0F
             val documentPages = document.getDocumentPages()
             for (i: Int in documentPages.indices) {
@@ -730,7 +767,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                     page.size.width
                 }
             }
-            // drawPageNumber
+            // drawPageNumber //todo debug
             drawText("PageNO #$currentPage", 50F, height - 100F, ccx)
         }
     }
@@ -915,5 +952,6 @@ open class DocumentRenderView @JvmOverloads constructor(
         val DEFAULT_MIN_SCALE = 1.0f
         var MAXIMUM_ZOOM = 10f
         var MINIMUM_ZOOM = 1.0F
+        var REFRESH_RATE_IN_CASE_VIEW_BUZY = 500L
     }
 }
