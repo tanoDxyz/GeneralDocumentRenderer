@@ -3,19 +3,14 @@ package com.tanodxyz.documentrenderer
 import android.content.Context
 import android.graphics.*
 import android.os.Bundle
-import android.os.Handler
 import android.os.Parcelable
-import android.util.AtomicFile
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import com.google.android.material.progressindicator.CircularProgressIndicatorSpec
-import com.google.android.material.progressindicator.IndeterminateDrawable
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.elements.IElement
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.page.PageViewState
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -28,7 +23,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr), View.OnTouchListener,
     TouchEventsManager.TouchEventsListener, AnimationManager.AnimationListener {
 
-    private var progressBarElementForBuzyState: IElement? = null
+    private var buzyStateIndicator: IElement? = null
     private var currentPageForImmediateTouchEvent: Int = 0
     protected lateinit var document: Document
     protected var buzyTokensCounter = 0
@@ -614,8 +609,8 @@ open class DocumentRenderView @JvmOverloads constructor(
         return size.toFloat() * zoom
     }
 
-    fun setProgressBarForBuzyState(iElement: IElement) {
-        this.progressBarElementForBuzyState = iElement
+    fun setBuzyStateIndicator(iElement: IElement) {
+        this.buzyStateIndicator = iElement
     }
 
     open fun getRenderedDocLen(zoom: Float): Float {
@@ -717,9 +712,9 @@ open class DocumentRenderView @JvmOverloads constructor(
         canvas?.let { drawBackground(it) }
 
 
-        if (buzyTokensCounter > 0 && progressBarElementForBuzyState != null) {
+        if (buzyTokensCounter > 0 && buzyStateIndicator != null) {
             animationManager.stopAll()
-            progressBarElementForBuzyState!!.draw(canvas!!)
+            buzyStateIndicator!!.draw(canvas!!)
             touchEventMgr.disable()
             postInvalidateDelayed(REFRESH_RATE_IN_CASE_VIEW_BUZY)
             return

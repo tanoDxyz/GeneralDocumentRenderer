@@ -1,10 +1,8 @@
 package com.tanodxyz.generaldocumentrenderer
 
 import android.content.Context
-import android.graphics.RectF
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Handler
 import android.view.View
 import com.tanodxyz.documentrenderer.DocumentRenderView
 import com.tanodxyz.documentrenderer.FixPageSizeCalculator
@@ -13,7 +11,6 @@ import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.elements.DefaultCircularProgressBarElement
 
 import com.tanodxyz.documentrenderer.page.DocumentPage
-import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
     private lateinit var findViewById: DocumentRenderView
@@ -27,7 +24,7 @@ class MainActivity : AppCompatActivity() {
         getseesa[Document.PROPERTY_DOCUMENT_FIT_EACH_PAGE] = true
         getseesa[Document.PROPERTY_DOCUMENT_PAGE_FLING] = false
         findViewById.loadDocument(getseesa)
-        findViewById.setProgressBarForBuzyState(DefaultCircularProgressBarElement(this))
+        findViewById.setBuzyStateIndicator(DefaultCircularProgressBarElement(this))
         findViewById.buzy()
         //todo test to get current page.
 //        val handler = Handler()
