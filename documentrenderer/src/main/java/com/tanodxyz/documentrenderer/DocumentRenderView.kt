@@ -28,7 +28,11 @@ open class DocumentRenderView @JvmOverloads constructor(
     protected lateinit var document: Document
     protected var buzyTokensCounter = 0
 
-    private var ccx: Paint = Paint()
+    private var ccx: Paint = Paint().apply {
+        color = Color.MAGENTA
+        style = Paint.Style.FILL_AND_STROKE
+        textSize = 30F
+    }
 
     protected var touchEventMgr: TouchEventsManager
     protected var enableAntialiasing = true
@@ -44,7 +48,6 @@ open class DocumentRenderView @JvmOverloads constructor(
     protected var currentPage = 1
 
 
-
     protected var zoom = MINIMUM_ZOOM
     protected var animationManager: AnimationManager
 
@@ -53,9 +56,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     private val maxZoom = DEFAULT_MAX_SCALE
 
     init {
-        ccx.color = Color.MAGENTA
-        ccx.style = Paint.Style.FILL_AND_STROKE
-        ccx.textSize = 30F
+
         animationManager = AnimationManager(this.context, this)
         setOnTouchListener(this)
         touchEventMgr = TouchEventsManager(this.context)
@@ -101,21 +102,21 @@ open class DocumentRenderView @JvmOverloads constructor(
             // whenever size changes set X
             val scaledPageWidth: Float = toCurrentScale(document.getMaxPageWidth())
             if (scaledPageWidth < width) {
-                contentDrawOffsetX = width / 2 - scaledPageWidth / 2
+                contentDrawOffsetX = width.div(2) - scaledPageWidth.div(2)
             }
             // whenever size changes set Y
             val documentHeight = document.getDocLen(zoom)
             if (documentHeight < height) {
-                contentDrawOffsetY = (height - documentHeight) / 2
+                contentDrawOffsetY = (height - documentHeight).div(2)
             }
         } else {
             val scaledPageHeight = toCurrentScale(document.getMaxPageHeight().toFloat())
             if (scaledPageHeight < height) {
-                contentDrawOffsetY = height / 2 - scaledPageHeight / 2
+                contentDrawOffsetY = height.div(2) - scaledPageHeight.div(2)
             }
             val contentWidth: Float = document.getDocLen(zoom)
             if (contentWidth < width) { // whole document width visible on screen
-                contentDrawOffsetX = (width - contentWidth) / 2
+                contentDrawOffsetX = (width - contentWidth).div(2)
             }
         }
     }
@@ -338,7 +339,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             pageX =
                 contentDrawX + scaledPageStart + document.pageMargins.left
             // pageY
-            scaledPageY = toCurrentScale((document.getMaxPageHeight() - page.size.height) / 2)
+            scaledPageY = toCurrentScale((document.getMaxPageHeight() - page.size.height).div(2))
             pageY =
                 (contentDrawOffsetY + scaledPageY) + document.pageMargins.top
 
@@ -405,7 +406,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             val page = documentPages[i]
             val previousPage: DocumentPage? = if (i == 0) null else documentPages[i]
             scaledPageStart =
-                (toCurrentScale(document.getMaxPageWidth() - page.size.width) / 2)
+                (toCurrentScale(document.getMaxPageWidth() - page.size.width).div(2))
             pageX =
                 contentDrawOffsetX + scaledPageStart + document.pageMargins.left;
 
@@ -475,7 +476,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             pageX =
                 contentDrawX + scaledPageStart + document.pageMargins.left
             // pageY
-            scaledPageY = toCurrentScale((document.getMaxPageHeight() - page.size.height) / 2)
+            scaledPageY = toCurrentScale((document.getMaxPageHeight() - page.size.height).div(2))
             pageY =
                 (contentDrawOffsetY + scaledPageY) + document.pageMargins.top
 
@@ -621,7 +622,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (document.swipeVertical) {
             val documentHeight = getRenderedDocLen(zoom)
             contentDrawOffsetY = if (documentHeight < height) {
-                (height - documentHeight) / 2
+                (height - documentHeight).div(2)
             } else {
                 val contentEnd = absY + documentHeight + document.pageMargins.bottom
                 if (absY > 0) {
@@ -639,7 +640,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             var offsetX = absX
             val scaledPageWidth: Float = toCurrentScale(document.getMaxPageWidth())
             if (scaledPageWidth < width) {
-                offsetX = width / 2 - scaledPageWidth / 2
+                offsetX = width.div(2) - scaledPageWidth.div(2)
             } else {
                 if (offsetX > 0) {
                     offsetX = 0f
@@ -655,7 +656,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             var offsetY = absY
             val scaledPageHeight = toCurrentScale(document.getMaxPageHeight())
             if (scaledPageHeight < height) {
-                offsetY = height / 2 - scaledPageHeight / 2
+                offsetY = height.div(2) - scaledPageHeight.div(2)
             } else {
                 if (offsetY > 0) {
                     offsetY = 0f
@@ -668,7 +669,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             var offsetX = absX
             val contentWidth: Float = document.getDocLen(zoom)
             if (contentWidth < width) { // whole document width visible on screen
-                offsetX = (width - contentWidth) / 2
+                offsetX = (width - contentWidth).div(2)
             } else {
                 if (offsetX > 0) { // left visible
                     offsetX = 0f
@@ -708,7 +709,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (isInEditMode) {
             return
         }
-        
+
         canvas?.let { drawBackground(it) }
 
 
@@ -758,13 +759,13 @@ open class DocumentRenderView @JvmOverloads constructor(
         ) {
             pageIndex = index + 1
         } else if (document.swipeVertical) {
-            pageIndex = if (pageBounds.top < (height / 2F)) {
+            pageIndex = if (pageBounds.top < (height.div(2F))) {
                 index + 1
             } else {
                 currentPage
             }
         } else {
-            pageIndex = if (pageBounds.left < (width / 2F)) {
+            pageIndex = if (pageBounds.left < (width.div(2F))) {
                 index + 1
             } else {
                 currentPage
@@ -834,7 +835,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (document.swipeVertical) {
             // page x
             scaledPageStart =
-                (toCurrentScale(document.getMaxPageWidth() - page.size.width) / 2)
+                (toCurrentScale(document.getMaxPageWidth() - page.size.width).div(2))
             pageX =
                 contentDrawOffsetX + scaledPageStart + document.pageMargins.left;
 
@@ -862,7 +863,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             pageX =
                 contentDrawOffsetX + scaledPageStart + document.pageMargins.left
             // pageY
-            scaledPageY = toCurrentScale((document.getMaxPageHeight() - page.size.height) / 2)
+            scaledPageY = toCurrentScale((document.getMaxPageHeight() - page.size.height).div(2))
             pageY =
                 (contentDrawOffsetY + scaledPageY) + document.pageMargins.top
 
@@ -919,8 +920,8 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     override fun zoomWithAnimation(scale: Float) {
         animationManager.startZoomAnimation(
-            (width / 2).toFloat(),
-            (height / 2).toFloat(), zoom, scale
+            (width.div(2)).toFloat(),
+            (height.div(2)).toFloat(), zoom, scale
         )
     }
 

@@ -18,6 +18,14 @@ fun Resources.dpToPx(dp: Int): Float {
     )
 }
 
+fun Resources.spToPx(sp: Int): Float {
+    return TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_SP,
+        sp.toFloat(),
+        displayMetrics
+    )
+}
+
 fun Resources.screenWidth() {
     this.displayMetrics.widthPixels
 }
