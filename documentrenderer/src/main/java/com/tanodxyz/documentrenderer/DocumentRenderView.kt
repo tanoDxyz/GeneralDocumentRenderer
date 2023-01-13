@@ -28,14 +28,12 @@ open class DocumentRenderView @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr), View.OnTouchListener,
     TouchEventsManager.TouchEventsListener, AnimationManager.AnimationListener {
 
-    private lateinit var progressBarElementForBuzyState: IElement
+    private var progressBarElementForBuzyState: IElement? = null
     private var currentPageForImmediateTouchEvent: Int = 0
     protected lateinit var document: Document
     protected var buzyTokensCounter = 0
 
-    //////////////////////////////////////////
     private var ccx: Paint = Paint()
-    //////////////////////////////////////////////////////////
 
     protected var touchEventMgr: TouchEventsManager
     protected var enableAntialiasing = true
@@ -49,22 +47,15 @@ open class DocumentRenderView @JvmOverloads constructor(
     protected var contentDrawOffsetY = 0F
 
     protected var currentPage = 1
-    //todo @remove
-/*
-    protected var drawnContentLength = 0f
-*/
+
 
 
     protected var zoom = MINIMUM_ZOOM
     protected var animationManager: AnimationManager
 
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
     private val minZoom = DEFAULT_MIN_SCALE
     private val midZoom = DEFAULT_MID_SCALE
     private val maxZoom = DEFAULT_MAX_SCALE
-
-    ///////////////////////////////////////////////////////////////////////////////////////////
 
     init {
         ccx.color = Color.MAGENTA
@@ -81,16 +72,12 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (isInEditMode) {
             return
         }
-        println("simi: size changed")
         recalculatePageSizesAndSetDefaultXYOffsets(w, h)
         gotoPageIfApplicable()
     }
 
     private fun gotoPageIfApplicable() {
-        println("simi: content Length is ${document.getTotalContentLength()}")
-        //todo remember the cache
         if (currentPage > 1) {
-            println("simi: page number is $currentPage")
             jumpToPage(currentPage - 1, false)
         }
     }
@@ -638,8 +625,6 @@ open class DocumentRenderView @JvmOverloads constructor(
     override fun moveTo(absX: Float, absY: Float) {
         if (document.swipeVertical) {
             val documentHeight = getRenderedDocLen(zoom)
-            println("Bako: document height is $documentHeight")
-            println("Bako: called with $absX , $absY")
             contentDrawOffsetY = if (documentHeight < height) {
                 (height - documentHeight) / 2
             } else {
@@ -732,10 +717,9 @@ open class DocumentRenderView @JvmOverloads constructor(
         canvas?.let { drawBackground(it) }
 
 
-        // code to display progress bar in case of buzy state ====================================================================
-        if (buzyTokensCounter > 0) {
+        if (buzyTokensCounter > 0 && progressBarElementForBuzyState != null) {
             animationManager.stopAll()
-            progressBarElementForBuzyState.draw(canvas!!)
+            progressBarElementForBuzyState!!.draw(canvas!!)
             touchEventMgr.disable()
             postInvalidateDelayed(REFRESH_RATE_IN_CASE_VIEW_BUZY)
             return
@@ -743,7 +727,6 @@ open class DocumentRenderView @JvmOverloads constructor(
             touchEventMgr.enable()
         }
 
-        //================================================================================================================================
         canvas?.apply {
             drawFilter = if (enableAntialiasing && drawFilter == null) {
                 antialiasFilter
@@ -952,6 +935,6 @@ open class DocumentRenderView @JvmOverloads constructor(
         val DEFAULT_MIN_SCALE = 1.0f
         var MAXIMUM_ZOOM = 10f
         var MINIMUM_ZOOM = 1.0F
-        var REFRESH_RATE_IN_CASE_VIEW_BUZY = 500L
+        var REFRESH_RATE_IN_CASE_VIEW_BUZY = 10L
     }
 }

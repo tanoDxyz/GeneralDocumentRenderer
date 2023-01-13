@@ -28,20 +28,7 @@ class MainActivity : AppCompatActivity() {
         getseesa[Document.PROPERTY_DOCUMENT_PAGE_FLING] = false
         findViewById.loadDocument(getseesa)
         findViewById.setProgressBarForBuzyState(DefaultCircularProgressBarElement(this))
-        Handler().postDelayed({
-                              findViewById.buzy()
-                              findViewById.buzy()
-                              findViewById.buzy()
-            Handler().postDelayed({
-                                  findViewById.free()
-            },10000)
-            Handler().postDelayed({
-                findViewById.free()
-            },10000)
-            Handler().postDelayed({
-                findViewById.free()
-            },10000)
-        },10000)
+        findViewById.buzy()
         //todo test to get current page.
 //        val handler = Handler()
 //        thread(start = true) {
