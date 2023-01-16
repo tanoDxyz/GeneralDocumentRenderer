@@ -30,6 +30,23 @@ fun Resources.screenWidth() {
     this.displayMetrics.widthPixels
 }
 
+/**
+ * Limits the given **number** between the other values
+ * @param number  The number to limit.
+ * @param between The smallest value the number can take.
+ * @param and     The biggest value the number can take.
+ * @return The limited number.
+ */
+fun limit(number: kotlin.Float, between: kotlin.Float, and: kotlin.Float): kotlin.Float {
+    if (number <= between) {
+        return between
+    }
+    return if (number >= and) {
+        and
+    } else number
+}
+
+
 infix fun IntRange.getPagesViaPageIndexes(pageData: MutableList<DocumentPage>): MutableList<DocumentPage> {
     val pages = mutableListOf<DocumentPage>()
     this.forEach { pageIndex ->

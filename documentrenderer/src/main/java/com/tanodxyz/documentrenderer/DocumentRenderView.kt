@@ -7,6 +7,7 @@ import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.widget.FrameLayout
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.elements.IElement
 import com.tanodxyz.documentrenderer.page.DocumentPage
@@ -20,9 +21,10 @@ import kotlin.math.roundToInt
 //todo save index and data on view destruction
 open class DocumentRenderView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
-) : View(context, attrs, defStyleAttr), View.OnTouchListener,
+) : FrameLayout(context, attrs, defStyleAttr), View.OnTouchListener,
     TouchEventsManager.TouchEventsListener, AnimationManager.AnimationListener {
 
+    protected var scrollHandle: ScrollHandle? = null
     private var buzyStateIndicator: IElement? = null
     private var currentPageForImmediateTouchEvent: Int = 0
     protected lateinit var document: Document
@@ -56,9 +58,9 @@ open class DocumentRenderView @JvmOverloads constructor(
     private val maxZoom = DEFAULT_MAX_SCALE
 
     init {
-
+        this.setWillNotDraw(false)
         animationManager = AnimationManager(this.context, this)
-        setOnTouchListener(this)
+        this.setOnTouchListener(this)
         touchEventMgr = TouchEventsManager(this.context)
         touchEventMgr.registerListener(this)
     }
@@ -90,8 +92,45 @@ open class DocumentRenderView @JvmOverloads constructor(
         }
     }
 
+    fun isFree(): Boolean {
+        return buzyTokensCounter <= 0
+    }
+
+    fun stopFling() {
+        animationManager.stopFling()
+    }
+
+    /**
+     * @param progress   must be between 0 and 1
+     * @param moveHandle whether to move scroll handle
+     * @see PDFView.getPositionOffset
+     */
+    open fun setPositionOffset(progress: Float, moveHandle: Boolean) {
+        val docLen = document.getDocLen(zoom)
+        if (document.swipeVertical) {
+            val totalViewHeight = document.toCurrentScale(height, zoom)
+            val rationBetweenContentLengthAndMaxScroll = docLen.div(totalViewHeight)
+            val contentDrawOffsetY =
+                rationBetweenContentLengthAndMaxScroll * -1 * toCurrentScale(progress)
+            moveTo(contentDrawOffsetX, contentDrawOffsetY, moveHandle)
+        } else {
+            val totalViewWidth = document.toCurrentScale(width, zoom)
+            val rationBetweenContentLengthAndMaxScroll = docLen.div(totalViewWidth)
+            val contentDrawOffsetX =
+                rationBetweenContentLengthAndMaxScroll * -1 * toCurrentScale(progress)
+            moveTo(contentDrawOffsetX, contentDrawOffsetY, moveHandle)
+        }
+    }
+
+    fun addScrollHandle(scrollHandle: ScrollHandle) {
+        if (this.scrollHandle != null) {
+            this.scrollHandle?.detach()
+        }
+        scrollHandle.attachTo(this)
+        this.scrollHandle = scrollHandle
+    }
+
     private fun recalculatePageSizesAndSetDefaultXYOffsets(width: Int, height: Int) {
-        println("Bako: mimiri::")
         animationManager.stopAll()
         document.recalculatePageSizes(Size(width, height))
         setDefaultContentDrawOffsets()
@@ -618,7 +657,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         return document.getTotalContentLength() * zoom
     }
 
-    override fun moveTo(absX: Float, absY: Float) {
+    override fun moveTo(absX: Float, absY: Float, moveHandle: Boolean) {
         if (document.swipeVertical) {
             val documentHeight = getRenderedDocLen(zoom)
             contentDrawOffsetY = if (documentHeight < height) {
@@ -705,7 +744,6 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
-
         if (isInEditMode) {
             return
         }

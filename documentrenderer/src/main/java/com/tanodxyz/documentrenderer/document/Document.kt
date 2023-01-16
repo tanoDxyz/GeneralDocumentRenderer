@@ -17,10 +17,10 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
     protected var originalMaxPageHeight = Size(0, 0)
     protected var contentLength = 0F
     var pageMargins: RectF = RectF(
-        context.resources.dpToPx(8), // left margin
-        context.resources.dpToPx(8), // top margin
-        context.resources.dpToPx(8), // right margin
-        context.resources.dpToPx(8) // bottom margin
+        context.resources.dpToPx(2), // left margin
+        context.resources.dpToPx(2), // top margin
+        context.resources.dpToPx(2), // right margin
+        context.resources.dpToPx(2) // bottom margin
     )
     var pageCorners: Float = 0.0F
 

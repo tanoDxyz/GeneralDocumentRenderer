@@ -3,7 +3,10 @@ package com.tanodxyz.generaldocumentrenderer
 import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import android.view.View
+import android.widget.TextView
+import com.tanodxyz.documentrenderer.DefaultScrollHandle
 import com.tanodxyz.documentrenderer.DocumentRenderView
 import com.tanodxyz.documentrenderer.FixPageSizeCalculator
 import com.tanodxyz.documentrenderer.Size
@@ -25,7 +28,8 @@ class MainActivity : AppCompatActivity() {
         getseesa[Document.PROPERTY_DOCUMENT_PAGE_FLING] = false
         findViewById.loadDocument(getseesa)
         findViewById.setBuzyStateIndicator(DefaultCircularProgressBarElement(this))
-        findViewById.buzy()
+        findViewById.addScrollHandle(DefaultScrollHandle(this))
+//        findViewById.buzy()
         //todo test to get current page.
 //        val handler = Handler()
 //        thread(start = true) {
