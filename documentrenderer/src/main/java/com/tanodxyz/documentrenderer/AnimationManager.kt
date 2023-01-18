@@ -177,7 +177,7 @@ class AnimationManager(context: Context, private val animationListener: Animatio
     }
 
     interface AnimationListener {
-        fun moveTo(absX: Float, absY: Float, moveHandle: Boolean = false)
+        fun moveTo(absX: Float, absY: Float, moveHandle: Boolean = true)
         fun getCurrentX(): Float
         fun getCurrentY(): Float
         fun zoomCenteredTo(zoom: Float, pivot: PointF)

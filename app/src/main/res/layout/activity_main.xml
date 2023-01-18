@@ -7,16 +7,9 @@
     android:background="#cff"
     tools:context=".MainActivity">
 
-    <Button
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:id="@+id/sanjo"
-        android:text="switch Swipe Mode"
-        android:onClick="switchSwipeModeClicked"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+
     <com.tanodxyz.documentrenderer.DocumentRenderView
-        app:layout_constraintTop_toBottomOf="@id/sanjo"
+        app:layout_constraintTop_toTopOf="parent"
         android:id="@+id/cvxd"
         android:visibility="visible"
         android:layout_width="0dp"

@@ -12,6 +12,7 @@ import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.elements.IElement
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.page.PageViewState
+import java.security.SecureRandom
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -101,7 +102,6 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     /**
-     * @param progress   must be between 0 and 1
      * @param moveHandle whether to move scroll handle
      * @see PDFView.getPositionOffset
      */
@@ -119,6 +119,23 @@ open class DocumentRenderView @JvmOverloads constructor(
             val contentDrawOffsetX =
                 rationBetweenContentLengthAndMaxScroll * -1 * toCurrentScale(progress)
             moveTo(contentDrawOffsetX, contentDrawOffsetY, moveHandle)
+        }
+    }
+
+    fun getPositionOffset(): Float {
+        val docLen = document.getDocLen(zoom)
+        return if (document.swipeVertical) {
+            val totalViewHeight = document.toCurrentScale(height - scrollHandle!!.getScrollerHeight()
+                    - scrollHandle!!.getMarginFromParent(), zoom)
+            val contentLengthInContext = docLen - totalViewHeight
+            val ratio = totalViewHeight.div(toCurrentScale(contentLengthInContext))
+            abs(ratio * contentDrawOffsetY)
+        } else {
+            val totalViewWidth = document.toCurrentScale(width - scrollHandle!!.getScrollerWidth()
+                    - scrollHandle!!.getMarginFromParent(), zoom)
+            val contentLengthInContext = docLen - totalViewWidth
+            val ratio = totalViewWidth.div(toCurrentScale(contentLengthInContext))
+            abs(ratio * contentDrawOffsetX)
         }
     }
 
@@ -228,6 +245,19 @@ open class DocumentRenderView @JvmOverloads constructor(
         return zoom != MINIMUM_ZOOM
     }
 
+    /**
+     * Checks if whole document can be displayed on screen, doesn't include zoom
+     *
+     * @return true if whole document can displayed at once, false otherwise
+     */
+    open fun documentFitsView(): Boolean {
+        val len: Float = document.getDocLen(1F)
+        return if (document.swipeVertical) {
+            len < height
+        } else {
+            len < width
+        }
+    }
 
     fun zoomTo(zoom: Float) {
         this.zoom = zoom
@@ -236,7 +266,6 @@ open class DocumentRenderView @JvmOverloads constructor(
     fun changeSwipeMode(swipeVertical: Boolean) {
         document.swipeVertical = swipeVertical
         animationManager.stopAll()
-        println("Bako: from swipe mode ")
         recalculatePageSizesAndSetDefaultXYOffsets(width, height)
         jumpToPage(currentPage - 1, withAnimation = false)
     }
@@ -719,7 +748,9 @@ open class DocumentRenderView @JvmOverloads constructor(
             contentDrawOffsetY = offsetY
             contentDrawOffsetX = offsetX
         }
-        println("MIRINDA: Y is $contentDrawOffsetY")
+        if (moveHandle && scrollHandle != null) {
+            scrollHandle!!.scroll(getPositionOffset())
+        }
         redraw()
     }
 
@@ -926,6 +957,10 @@ open class DocumentRenderView @JvmOverloads constructor(
             top = pageY
             bottom = pageBottom
         }
+        //todo debug remvoe
+        val colors = arrayOf(Color.BLACK,Color.MAGENTA,Color.GREEN,Color.CYAN,Color.BLUE,Color.RED)
+        pagePaint.color =  colors[SecureRandom().nextInt(colors.size)]
+        //todo debug remove.
         if (document.pageCorners > 0) {
             drawRoundRect(
                 RectF(pageX, pageY, pageEnd, pageBottom),
