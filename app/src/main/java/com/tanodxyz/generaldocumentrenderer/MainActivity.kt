@@ -23,7 +23,7 @@ class MainActivity : AppCompatActivity() {
         this.findViewById = findViewById<DocumentRenderView>(R.id.cvxd)
         val getseesa = getseesa(this)
         getseesa[Document.PROPERTY_DOCUMENT_PAGE_FIT_POLICY] = Document.PageFitPolicy.BOTH
-        getseesa.swipeVertical = true
+        getseesa.swipeVertical = false
         getseesa[Document.PROPERTY_DOCUMENT_FIT_EACH_PAGE] = true
         getseesa[Document.PROPERTY_DOCUMENT_PAGE_FLING] = false
         findViewById.loadDocument(getseesa)

@@ -15,7 +15,6 @@ import android.view.MotionEvent.*
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import androidx.core.view.setMargins
 import kotlin.math.roundToInt
 
 
@@ -32,8 +31,8 @@ class DefaultScrollHandle @JvmOverloads constructor(
     var heightScroller = 0F
     var widthScroller = 0F
     private val _2dp = context.resources.dpToPx(2)
-    var margingFromParent = context.resources.dpToPx(10)
-    protected var drawOffset: Float = margingFromParent
+    var marginUsed = context.resources.dpToPx(10)
+    protected var drawOffset: Float = marginUsed
 
     var scrollerBackgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = scrollColor
@@ -83,19 +82,18 @@ class DefaultScrollHandle @JvmOverloads constructor(
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            layoutParamsForThisView.marginEnd = (margingFromParent.roundToInt())
-        } else {
-            layoutParamsForThisView.rightMargin = (margingFromParent.roundToInt())
-        }
-
-        layoutParamsForThisView.bottomMargin = (margingFromParent.roundToInt())
 
         if (view.isSwipeVertical()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                layoutParamsForThisView.marginEnd = (marginUsed.roundToInt())
+            } else {
+                layoutParamsForThisView.rightMargin = (marginUsed.roundToInt())
+            }
             widthScroller = DEFAULT_WIDTH
             heightScroller = DEFAULT_HEIGHT
             layoutParamsForThisView.gravity = Gravity.END
         } else {
+            layoutParamsForThisView.bottomMargin = (marginUsed.roundToInt())
             widthScroller = DEFAULT_HEIGHT
             heightScroller = DEFAULT_WIDTH
             layoutParamsForThisView.gravity = Gravity.BOTTOM
@@ -124,10 +122,6 @@ class DefaultScrollHandle @JvmOverloads constructor(
         }
     }
 
-    override fun setPageNumber(pageNumber: String) {
-
-    }
-
     override fun getScrollerHeight(): Float {
         return heightScroller
     }
@@ -137,7 +131,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
     }
 
     override fun getMarginFromParent(): Float {
-        return margingFromParent
+        return marginUsed
     }
 
     override fun show() {
@@ -153,12 +147,11 @@ class DefaultScrollHandle @JvmOverloads constructor(
     }
 
     private fun setPosition(pos: Float) {
-        println("sanjo: ---------------------------------------------------------------------------------------")
         val swipeVertical = documentRenderView!!.isSwipeVertical()
         if (swipeVertical) {
-            val verticalTopPosition = margingFromParent
+            val verticalTopPosition = marginUsed
             val verticalBottomPosition =
-                documentRenderView!!.height - (margingFromParent + heightScroller)
+                documentRenderView!!.height - (marginUsed + heightScroller)
             val maxHeight = (verticalBottomPosition - verticalTopPosition)
             drawOffset = if (pos <= verticalTopPosition) {
                 verticalTopPosition
@@ -167,54 +160,42 @@ class DefaultScrollHandle @JvmOverloads constructor(
             } else {
                 pos
             }
-            println("sanjo: possible height is ${verticalBottomPosition - verticalTopPosition} | viewHeight=${documentRenderView!!.height} || $verticalBottomPosition")
-            println("sanjo: y is $drawOffset | contentLength=${documentRenderView!!.document.getTotalContentLength()}")
-
         } else {
-            val horizontalLeftPosition = margingFromParent
+            val horizontalLeftPosition = marginUsed
             val horizontalRightPosition =
-                documentRenderView!!.width - (margingFromParent + widthScroller)
-
+                documentRenderView!!.width - (marginUsed + widthScroller)
+            val maxWidth = (horizontalRightPosition - horizontalLeftPosition)
             drawOffset = if (pos <= horizontalLeftPosition) {
                 horizontalLeftPosition
-            } else if (pos >= horizontalRightPosition) {
-                horizontalRightPosition
+            } else if (pos >= maxWidth) {
+                maxWidth
             } else {
                 pos
             }
         }
-        println("sanjo: --------------------------------------------------------------------------")
         invalidate()
     }
 
     fun normalizePositionForRenderView(pos: Float): Float {
-        var position = pos
+        var position = (pos - marginUsed)
         if (java.lang.Float.isInfinite(pos) || java.lang.Float.isNaN(pos)) {
             return pos
         }
-        if (documentRenderView!!.isSwipeVertical()) {
-            val verticalTopPosition = margingFromParent
+        if(documentRenderView!!.isSwipeVertical()) {
+            val verticalTopPosition = marginUsed
             val verticalBottomPosition =
-                documentRenderView!!.height - (margingFromParent + heightScroller)
+                documentRenderView!!.height - (marginUsed + heightScroller)
             val maxHeight = (verticalBottomPosition - verticalTopPosition)
-            position = if (position <= verticalTopPosition) {
-                0F
-            } else if (position >= verticalBottomPosition) {
-                documentRenderView!!.height.toFloat()
-            } else {
-                position - margingFromParent
+            if (position >= maxHeight) {
+                position = maxHeight
             }
         } else {
-            val horizontalLeftPosition = margingFromParent
+            val horizontalLeftPosition = marginUsed
             val horizontalRightPosition =
-                documentRenderView!!.width - (margingFromParent + widthScroller)
-
-            position = if (position <= horizontalLeftPosition) {
-                0F
-            } else if (position >= horizontalRightPosition) {
-                documentRenderView!!.width.toFloat()
-            } else {
-                position
+                documentRenderView!!.width - (marginUsed + widthScroller)
+            val maxWidth = (horizontalRightPosition - horizontalLeftPosition)
+            if (position >= maxWidth) {
+                position = maxWidth
             }
         }
         return position
@@ -243,15 +224,13 @@ class DefaultScrollHandle @JvmOverloads constructor(
                         } else {
                             x
                         }
-//                        val normalizePositionForRenderView = normalizePositionForRenderView(currentPos)
                         setPosition(currentPos)
-                        setPositionOffset(drawOffset, false)
+                        setPositionOffset(normalizePositionForRenderView(currentPos), false)
                     }
                     return true
                 }
                 ACTION_CANCEL, ACTION_UP, ACTION_POINTER_UP -> {
-//                    hide(delayed = true)
-//                    pdfView.performPageSnap() //todo we don't need that
+                    hide(delayed = true)
                     touched = false
                     return true
                 }
@@ -268,7 +247,6 @@ class DefaultScrollHandle @JvmOverloads constructor(
             return
         }
         canvas?.also { canvas ->
-            canvas.drawColor(Color.MAGENTA)
             documentRenderView?.apply {
                 val swipeVertical = isSwipeVertical()
                 oval.left = 0F

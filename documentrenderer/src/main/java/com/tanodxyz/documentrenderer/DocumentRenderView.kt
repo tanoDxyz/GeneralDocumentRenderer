@@ -12,7 +12,6 @@ import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.elements.IElement
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.page.PageViewState
-import java.security.SecureRandom
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -101,46 +100,39 @@ open class DocumentRenderView @JvmOverloads constructor(
         animationManager.stopFling()
     }
 
-    /**
-     * @param moveHandle whether to move scroll handle
-     * @see PDFView.getPositionOffset
-     */
     open fun setPositionOffset(progress: Float, moveHandle: Boolean) {
-        println("sanjo: ------------------------------------------------------------")
-        println("sanjo: progress = $progress")
-        val docLen = document.getDocLen(zoom)
         if (document.swipeVertical) {
-            val maximumHeight = height - ((scrollHandle!!.getScrollerHeight()) + (scrollHandle!!.getMarginFromParent() * 2))
-            val totalViewHeight = document.toCurrentScale(maximumHeight, zoom)
-            val rationBetweenContentLengthAndMaxScroll = docLen.div(totalViewHeight)
+            val docLen = document.getDocLen(zoom) - height
+            val maximumScrollbarHeight = height - ((scrollHandle!!.getScrollerHeight()) + (scrollHandle!!.getMarginFromParent() * 2))
+            val maximumScrollbarHeightScaled = document.toCurrentScale(maximumScrollbarHeight, zoom)
+            val rationBetweenContentLengthAndMaxScroll = docLen.div(maximumScrollbarHeightScaled)
             val contentDrawOffsetY =
                 rationBetweenContentLengthAndMaxScroll * -1 * toCurrentScale(progress)
-            println("sanjo: y=$contentDrawOffsetY")
             moveTo(contentDrawOffsetX, contentDrawOffsetY, moveHandle)
         } else {
-            val marginToAccountForScrollHandle = (scrollHandle!!.getScrollerWidth()) + (scrollHandle!!.getMarginFromParent() * 2)
-            val totalViewWidth = document.toCurrentScale(width, zoom)
-            val rationBetweenContentLengthAndMaxScroll = docLen.div(totalViewWidth)
+            val docLen = document.getDocLen(zoom) - width
+            val maximumScrollbarWidth = width - ((scrollHandle!!.getScrollerWidth()) + (scrollHandle!!.getMarginFromParent() * 2))
+            val maximumScrollbarWidthScaled = document.toCurrentScale(maximumScrollbarWidth, zoom)
+            val rationBetweenContentLengthAndMaxScroll = docLen.div(maximumScrollbarWidthScaled)
             val contentDrawOffsetX =
                 rationBetweenContentLengthAndMaxScroll * -1 * toCurrentScale(progress)
             moveTo(contentDrawOffsetX, contentDrawOffsetY, moveHandle)
         }
-        println("sanjo: -----------------------------------------------------------")
     }
 
     fun getPositionOffset(): Float {
         val docLen = document.getDocLen(zoom)
         return if (document.swipeVertical) {
-            val totalViewHeight = document.toCurrentScale(height - scrollHandle!!.getScrollerHeight()
-                    - scrollHandle!!.getMarginFromParent(), zoom)
-            val contentLengthInContext = docLen - totalViewHeight
-            val ratio = totalViewHeight.div(toCurrentScale(contentLengthInContext))
-            abs(ratio * contentDrawOffsetY)
+            val maximumScrollBarHeight = height - ((scrollHandle!!.getScrollerHeight()) + scrollHandle!!.getMarginFromParent())
+            val maximumScrollBarHeightScaled = document.toCurrentScale(maximumScrollBarHeight, zoom)
+            val contentLengthInContext = docLen - maximumScrollBarHeightScaled
+            val ratio = maximumScrollBarHeightScaled.div(toCurrentScale(contentLengthInContext))
+            abs(ratio * (contentDrawOffsetY))
         } else {
-            val totalViewWidth = document.toCurrentScale(width - scrollHandle!!.getScrollerWidth()
-                    - scrollHandle!!.getMarginFromParent(), zoom)
-            val contentLengthInContext = docLen - totalViewWidth
-            val ratio = totalViewWidth.div(toCurrentScale(contentLengthInContext))
+            val maximumScrollBarWidth = width - ((scrollHandle!!.getScrollerWidth()) + scrollHandle!!.getMarginFromParent())
+            val maximumScrollBarWidthScaled = document.toCurrentScale(maximumScrollBarWidth, zoom)
+            val contentLengthInContext = docLen - maximumScrollBarWidthScaled
+            val ratio = maximumScrollBarWidthScaled.div(toCurrentScale(contentLengthInContext))
             abs(ratio * contentDrawOffsetX)
         }
     }
@@ -273,6 +265,10 @@ open class DocumentRenderView @JvmOverloads constructor(
         document.swipeVertical = swipeVertical
         animationManager.stopAll()
         recalculatePageSizesAndSetDefaultXYOffsets(width, height)
+        scrollHandle?.apply {
+            detach()
+            attachTo(this@DocumentRenderView)
+        }
         jumpToPage(currentPage - 1, withAnimation = false)
     }
 
