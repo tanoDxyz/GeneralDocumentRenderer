@@ -61,7 +61,10 @@ class DefaultScrollHandle @JvmOverloads constructor(
         if (swipeVertical) {
             setMeasuredDimension(
                 MeasureSpec.makeMeasureSpec(widthScroller.toInt(), MeasureSpec.EXACTLY),
-                MeasureSpec.makeMeasureSpec(parentHeight, MeasureSpec.EXACTLY)
+                MeasureSpec.makeMeasureSpec(
+                    parentHeight,
+                    MeasureSpec.EXACTLY
+                )
             )
         } else {
             setMeasuredDimension(
@@ -85,6 +88,8 @@ class DefaultScrollHandle @JvmOverloads constructor(
         } else {
             layoutParamsForThisView.rightMargin = (margingFromParent.roundToInt())
         }
+
+        layoutParamsForThisView.bottomMargin = (margingFromParent.roundToInt())
 
         if (view.isSwipeVertical()) {
             widthScroller = DEFAULT_WIDTH
@@ -148,31 +153,37 @@ class DefaultScrollHandle @JvmOverloads constructor(
     }
 
     private fun setPosition(pos: Float) {
+        println("sanjo: ---------------------------------------------------------------------------------------")
         val swipeVertical = documentRenderView!!.isSwipeVertical()
-        if(swipeVertical) {
+        if (swipeVertical) {
             val verticalTopPosition = margingFromParent
             val verticalBottomPosition =
                 documentRenderView!!.height - (margingFromParent + heightScroller)
-            drawOffset = if(pos <= verticalTopPosition) {
+            val maxHeight = (verticalBottomPosition - verticalTopPosition)
+            drawOffset = if (pos <= verticalTopPosition) {
                 verticalTopPosition
-            } else if(pos >= verticalBottomPosition) {
-                verticalBottomPosition
+            } else if ((pos) >= maxHeight) {
+                maxHeight
             } else {
                 pos
             }
+            println("sanjo: possible height is ${verticalBottomPosition - verticalTopPosition} | viewHeight=${documentRenderView!!.height} || $verticalBottomPosition")
+            println("sanjo: y is $drawOffset | contentLength=${documentRenderView!!.document.getTotalContentLength()}")
+
         } else {
             val horizontalLeftPosition = margingFromParent
             val horizontalRightPosition =
                 documentRenderView!!.width - (margingFromParent + widthScroller)
 
-            drawOffset = if(pos <= horizontalLeftPosition) {
+            drawOffset = if (pos <= horizontalLeftPosition) {
                 horizontalLeftPosition
-            } else if(pos >= horizontalRightPosition) {
+            } else if (pos >= horizontalRightPosition) {
                 horizontalRightPosition
             } else {
                 pos
             }
         }
+        println("sanjo: --------------------------------------------------------------------------")
         invalidate()
     }
 
@@ -185,13 +196,13 @@ class DefaultScrollHandle @JvmOverloads constructor(
             val verticalTopPosition = margingFromParent
             val verticalBottomPosition =
                 documentRenderView!!.height - (margingFromParent + heightScroller)
-
+            val maxHeight = (verticalBottomPosition - verticalTopPosition)
             position = if (position <= verticalTopPosition) {
                 0F
             } else if (position >= verticalBottomPosition) {
                 documentRenderView!!.height.toFloat()
             } else {
-                position
+                position - margingFromParent
             }
         } else {
             val horizontalLeftPosition = margingFromParent
@@ -234,7 +245,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
                         }
 //                        val normalizePositionForRenderView = normalizePositionForRenderView(currentPos)
                         setPosition(currentPos)
-                        setPositionOffset(currentPos, false)
+                        setPositionOffset(drawOffset, false)
                     }
                     return true
                 }
@@ -264,24 +275,24 @@ class DefaultScrollHandle @JvmOverloads constructor(
                 oval.top = 0F
                 oval.right = widthScroller
                 oval.bottom = heightScroller
-                if(swipeVertical) {
+                if (swipeVertical) {
                     oval.top = drawOffset
                     oval.bottom += drawOffset
                 } else {
                     oval.left = drawOffset
-                    oval.right+=drawOffset
+                    oval.right += drawOffset
                 }
                 canvas.drawRoundRect(oval, ovalRX, ovalRY, scrollerBackgroundPaint)
                 val halfHeightScroller = heightScroller.div(2)
                 val lineContentDraw = resources.dpToPx(7)
                 var lineDrawY = halfHeightScroller - (lineContentDraw.div(2))
-                if(swipeVertical) {
+                if (swipeVertical) {
                     lineDrawY += drawOffset
                 }
                 val lineLength = _2dp * 5
                 val halfWidth = widthScroller.div(2)
                 var lineDrawX = halfWidth - (lineLength.div(2))
-                if(!swipeVertical) {
+                if (!swipeVertical) {
                     lineDrawX += drawOffset
                 }
                 canvas.drawLine(

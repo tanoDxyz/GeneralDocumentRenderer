@@ -28,7 +28,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     protected var scrollHandle: ScrollHandle? = null
     private var buzyStateIndicator: IElement? = null
     private var currentPageForImmediateTouchEvent: Int = 0
-    protected lateinit var document: Document
+    /*protected*/ lateinit var document: Document
     protected var buzyTokensCounter = 0
 
     private var ccx: Paint = Paint().apply {
@@ -106,20 +106,26 @@ open class DocumentRenderView @JvmOverloads constructor(
      * @see PDFView.getPositionOffset
      */
     open fun setPositionOffset(progress: Float, moveHandle: Boolean) {
+        println("sanjo: ------------------------------------------------------------")
+        println("sanjo: progress = $progress")
         val docLen = document.getDocLen(zoom)
         if (document.swipeVertical) {
-            val totalViewHeight = document.toCurrentScale(height, zoom)
+            val maximumHeight = height - ((scrollHandle!!.getScrollerHeight()) + (scrollHandle!!.getMarginFromParent() * 2))
+            val totalViewHeight = document.toCurrentScale(maximumHeight, zoom)
             val rationBetweenContentLengthAndMaxScroll = docLen.div(totalViewHeight)
             val contentDrawOffsetY =
                 rationBetweenContentLengthAndMaxScroll * -1 * toCurrentScale(progress)
+            println("sanjo: y=$contentDrawOffsetY")
             moveTo(contentDrawOffsetX, contentDrawOffsetY, moveHandle)
         } else {
+            val marginToAccountForScrollHandle = (scrollHandle!!.getScrollerWidth()) + (scrollHandle!!.getMarginFromParent() * 2)
             val totalViewWidth = document.toCurrentScale(width, zoom)
             val rationBetweenContentLengthAndMaxScroll = docLen.div(totalViewWidth)
             val contentDrawOffsetX =
                 rationBetweenContentLengthAndMaxScroll * -1 * toCurrentScale(progress)
             moveTo(contentDrawOffsetX, contentDrawOffsetY, moveHandle)
         }
+        println("sanjo: -----------------------------------------------------------")
     }
 
     fun getPositionOffset(): Float {
@@ -957,10 +963,6 @@ open class DocumentRenderView @JvmOverloads constructor(
             top = pageY
             bottom = pageBottom
         }
-        //todo debug remvoe
-        val colors = arrayOf(Color.BLACK,Color.MAGENTA,Color.GREEN,Color.CYAN,Color.BLUE,Color.RED)
-        pagePaint.color =  colors[SecureRandom().nextInt(colors.size)]
-        //todo debug remove.
         if (document.pageCorners > 0) {
             drawRoundRect(
                 RectF(pageX, pageY, pageEnd, pageBottom),
