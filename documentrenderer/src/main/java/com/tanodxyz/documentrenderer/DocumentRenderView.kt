@@ -101,7 +101,6 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     open fun setPositionOffset(progress: Float, moveHandle: Boolean) {
-        println("enau: setPoOffset = $progress")
         if (document.swipeVertical) {
             val docLen = document.getDocLen(zoom) - height
             val maximumScrollbarHeight = scrollHandle!!.getScrollerTotalLength()
@@ -117,11 +116,9 @@ open class DocumentRenderView @JvmOverloads constructor(
             val rationBetweenContentLengthAndMaxScroll = docLen.div(maximumScrollbarWidthScaled)
             val contentDrawOffsetX =
                 rationBetweenContentLengthAndMaxScroll * -1 * toCurrentScale(progress)
-            println("enau: X $contentDrawOffsetX")
             moveTo(contentDrawOffsetX, contentDrawOffsetY, moveHandle)
         }
 
-        println("enau: ------------------------------------------------------")
     }
 
     fun getPositionOffset(): Float {
@@ -198,7 +195,6 @@ open class DocumentRenderView @JvmOverloads constructor(
         }
         super.onRestoreInstanceState(superState)
         viewState?.apply {
-            println("simi: onrestore instance state called on ")
             this@DocumentRenderView.zoom = this.zoomLevel
             this@DocumentRenderView.currentPage = currentPage
         }
@@ -271,11 +267,18 @@ open class DocumentRenderView @JvmOverloads constructor(
         document.swipeVertical = swipeVertical
         animationManager.stopAll()
         recalculatePageSizesAndSetDefaultXYOffsets(width, height)
+        val jumpToPage = {
+            jumpToPage(currentPage - 1, withAnimation = false)
+        }
+        if(scrollHandle == null) {
+            jumpToPage.invoke()
+        }
         scrollHandle?.apply {
             detach()
-            attachTo(this@DocumentRenderView)
+            attachTo(this@DocumentRenderView) {
+                jumpToPage.invoke()
+            }
         }
-        jumpToPage(currentPage - 1, withAnimation = false)
     }
 
     fun jumpToPage(pageNumber: Int, withAnimation: Boolean = false) {
@@ -756,7 +759,6 @@ open class DocumentRenderView @JvmOverloads constructor(
             contentDrawOffsetX = offsetX
         }
         if (moveHandle && scrollHandle != null) {
-            println("IUI: yes ")
             scrollHandle!!.scroll(getPositionOffset())
         }
         redraw()

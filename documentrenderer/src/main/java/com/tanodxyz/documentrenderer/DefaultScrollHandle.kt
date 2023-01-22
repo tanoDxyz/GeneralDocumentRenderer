@@ -15,10 +15,8 @@ import android.view.MotionEvent.*
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import android.widget.RelativeLayout
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.constraintlayout.widget.ConstraintSet
-import androidx.core.view.marginLeft
+import androidx.core.view.doOnLayout
+import androidx.core.view.doOnNextLayout
 import kotlin.math.roundToInt
 
 
@@ -61,8 +59,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
 
 
 
-    override fun attachTo(view: DocumentRenderView) {
-        println("IUI: attach ")
+    override fun attachTo(view: DocumentRenderView, onLayout: (() -> Unit)?) {
         view.removeView(this)
         val margins = marginUsed.roundToInt()
         val layoutParamsForThisView =
@@ -104,6 +101,11 @@ class DefaultScrollHandle @JvmOverloads constructor(
             }
         }
         layoutParams = layoutParamsForThisView
+        onLayout?.apply {
+            doOnLayout {
+                this.invoke()
+            }
+        }
         view.addView(this)
         this.documentRenderView = view
         alpha = 0.6F
@@ -111,6 +113,10 @@ class DefaultScrollHandle @JvmOverloads constructor(
 
     override fun detach() {
         this.documentRenderView?.removeView(this)
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
     }
 
     fun isScrollHandleShown(): Boolean = visibility == VISIBLE
@@ -131,9 +137,9 @@ class DefaultScrollHandle @JvmOverloads constructor(
 
     override fun getScrollerTotalLength(): Int {
         return if(documentRenderView!!.isSwipeVertical()) {
-            (height - heightScroller).roundToInt()
+            (measuredHeight - heightScroller).roundToInt()
         } else {
-            (width - widthScroller).roundToInt()
+            (measuredWidth - widthScroller).roundToInt()
         }
     }
 
@@ -155,7 +161,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
         if (swipeVertical) {
             val verticalTopPosition = 0F
             val verticalBottomPosition =
-                this@DefaultScrollHandle.height - (heightScroller)
+                this@DefaultScrollHandle.measuredHeight - (heightScroller)
             val maxHeight = (verticalBottomPosition - verticalTopPosition)
             drawOffset = if (pos <= verticalTopPosition) {
                 verticalTopPosition
@@ -167,7 +173,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
         } else {
             val horizontalLeftPosition = 0F
             val horizontalRightPosition =
-                this@DefaultScrollHandle.width - (widthScroller)
+                this@DefaultScrollHandle.measuredWidth - (widthScroller)
             val maxWidth = (horizontalRightPosition - horizontalLeftPosition)
             drawOffset = if (pos <= horizontalLeftPosition) {
                 horizontalLeftPosition
@@ -251,7 +257,6 @@ class DefaultScrollHandle @JvmOverloads constructor(
             return
         }
         canvas?.also { canvas ->
-            println("simi: ${width} ${height}")
             canvas.drawColor(Color.MAGENTA)
             documentRenderView?.apply {
                 val swipeVertical = isSwipeVertical()
