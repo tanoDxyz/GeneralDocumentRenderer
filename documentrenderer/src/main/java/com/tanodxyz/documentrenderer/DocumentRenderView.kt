@@ -13,12 +13,10 @@ import com.tanodxyz.documentrenderer.elements.IElement
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.page.PageViewState
 import kotlin.math.abs
+import kotlin.math.max
 import kotlin.math.roundToInt
 
-//todo we need logic for correctly defining page sizes.
-//todo there must be a page with varialbe length
-//todo an executor with lifecycle of View and at this instant set view to loading stuff.
-//todo save index and data on view destruction
+
 open class DocumentRenderView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr), View.OnTouchListener,
@@ -30,11 +28,6 @@ open class DocumentRenderView @JvmOverloads constructor(
     /*protected*/ lateinit var document: Document
     protected var buzyTokensCounter = 0
 
-    private var ccx: Paint = Paint().apply {
-        color = Color.MAGENTA
-        style = Paint.Style.FILL_AND_STROKE
-        textSize = 30F
-    }
 
     protected var touchEventMgr: TouchEventsManager
     protected var enableAntialiasing = true
@@ -53,6 +46,17 @@ open class DocumentRenderView @JvmOverloads constructor(
     protected var zoom = MINIMUM_ZOOM
     protected var animationManager: AnimationManager
 
+    var pageNumberDisplayBoxTextColor = Color.WHITE
+    var pageNumberDisplayBoxBackgroundColor = Color.parseColor("#343434")
+    var pageNumberDisplayBoxTextSize = resources.spToPx(12)
+    var pageNumberDisplayBoxPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textSize = pageNumberDisplayBoxTextSize
+        style = Paint.Style.FILL
+        strokeCap = Paint.Cap.ROUND
+    }
+    var pageNumberDisplayBoxXAndYMargin = resources.dpToPx(16)
+    var _16Dp = resources.dpToPx(16)
+    private var pageNumberBoxBackgroundRectangle = RectF(0F, 0F, 0F, 0F)
     private val minZoom = DEFAULT_MIN_SCALE
     private val midZoom = DEFAULT_MID_SCALE
     private val maxZoom = DEFAULT_MAX_SCALE
@@ -270,7 +274,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         val jumpToPage = {
             jumpToPage(currentPage - 1, withAnimation = false)
         }
-        if(scrollHandle == null) {
+        if (scrollHandle == null) {
             jumpToPage.invoke()
         }
         scrollHandle?.apply {
@@ -283,7 +287,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     fun jumpToPage(pageNumber: Int, withAnimation: Boolean = false) {
         if (document.swipeVertical) {
-            var yOffset = findYForVisiblePage(pageNumber - 1)
+            var yOffset = findYForVisiblePage(pageNumber)
             if (yOffset > 0) {
                 yOffset *= -1
             }
@@ -293,7 +297,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                 moveTo(contentDrawOffsetX, yOffset)
             }
         } else {
-            var xOffset = findXForVisiblePage(pageNumber -1)
+            var xOffset = findXForVisiblePage(pageNumber)
             if (xOffset > 0) {
                 xOffset *= -1
             }
@@ -824,9 +828,41 @@ open class DocumentRenderView @JvmOverloads constructor(
                     page.size.width
                 }
             }
-            // drawPageNumber //todo debug
-            drawText("PageNO #$currentPage", 50F, height - 100F, ccx)
+            this.drawPageNumber()
         }
+    }
+
+    open fun Canvas.drawPageNumber() {
+
+        val textToDisplay = "$currentPage / ${document.getPagesCount()}"
+        val textBounds = Rect()
+        pageNumberDisplayBoxPaint.getTextBounds(textToDisplay, 0, textToDisplay.count(), textBounds)
+        val drawX = pageNumberDisplayBoxXAndYMargin
+        val drawY = if (scrollHandle == null || document.swipeVertical) {
+            height - (pageNumberDisplayBoxXAndYMargin + textBounds.height())
+        } else {
+            height - (scrollHandle!!.scrollBarHeight + scrollHandle!!.marginUsed + pageNumberDisplayBoxXAndYMargin + textBounds.height())
+        }
+
+        pageNumberDisplayBoxPaint.color = pageNumberDisplayBoxBackgroundColor
+        pageNumberDisplayBoxPaint.alpha = 127
+
+        pageNumberBoxBackgroundRectangle.apply {
+            left = drawX
+            top = drawY - _16Dp.div(2)
+            right = left + textBounds.width() + _16Dp
+            bottom = top + textBounds.height() + _16Dp
+        }
+
+        drawRoundRect(pageNumberBoxBackgroundRectangle,100F,100F,pageNumberDisplayBoxPaint)
+
+
+        pageNumberDisplayBoxPaint.color = pageNumberDisplayBoxTextColor
+        pageNumberDisplayBoxPaint.alpha = 255
+
+        val textDrawX = pageNumberBoxBackgroundRectangle.left + _16Dp.div(2)
+        val textDrawY = pageNumberBoxBackgroundRectangle.top + _16Dp
+        drawText(textToDisplay, textDrawX, textDrawY, pageNumberDisplayBoxPaint)
     }
 
     fun calculateCurrentPage(index: Int, pageBounds: RectF): Int {

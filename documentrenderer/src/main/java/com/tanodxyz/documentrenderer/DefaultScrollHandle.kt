@@ -32,7 +32,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
     var heightScroller = 0F
     var widthScroller = 0F
     private val _2dp = context.resources.dpToPx(2)
-    var marginUsed = context.resources.dpToPx(24)
+    override var marginUsed = context.resources.dpToPx(16)
     protected var drawOffset: Float = 0F
 
     val scrollerBackgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -54,50 +54,47 @@ class DefaultScrollHandle @JvmOverloads constructor(
     private val hidePageScrollerRunnable = Runnable { hide(delayed = false) }
 
 
-
-
-
     override fun attachTo(view: DocumentRenderView, onLayout: (() -> Unit)?) {
         view.removeView(this)
         val margins = marginUsed.roundToInt()
         val layoutParamsForThisView =
-        if(view.isSwipeVertical()) {
-            widthScroller = DEFAULT_WIDTH
-            heightScroller = DEFAULT_HEIGHT
-            FrameLayout.LayoutParams(
-                widthScroller.roundToInt(),
-                ViewGroup.LayoutParams.MATCH_PARENT
-            ).apply {
-                gravity = Gravity.END
-                topMargin = margins
-                bottomMargin = margins
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                    marginEnd = margins
-                } else {
-                    rightMargin = margins
+            if (view.isSwipeVertical()) {
+                widthScroller = DEFAULT_WIDTH
+                heightScroller = DEFAULT_HEIGHT
+                FrameLayout.LayoutParams(
+                    widthScroller.roundToInt(),
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                ).apply {
+                    gravity = Gravity.END
+                    topMargin = margins
+                    bottomMargin = margins
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                        marginEnd = margins
+                    } else {
+                        rightMargin = margins
+                    }
+                }
+            } else {
+                widthScroller = DEFAULT_HEIGHT
+                heightScroller = DEFAULT_WIDTH
+                FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    heightScroller.roundToInt()
+                ).apply {
+                    gravity = Gravity.BOTTOM
+                    bottomMargin = margins
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                        marginEnd = margins
+                    } else {
+                        rightMargin = margins
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                        marginStart = margins
+                    } else {
+                        leftMargin = margins
+                    }
                 }
             }
-        } else {
-            widthScroller = DEFAULT_HEIGHT
-            heightScroller = DEFAULT_WIDTH
-            FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                heightScroller.roundToInt()
-            ).apply {
-                gravity = Gravity.BOTTOM
-                bottomMargin = margins
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                    marginEnd = margins
-                } else {
-                    rightMargin = margins
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                    marginStart = margins
-                } else {
-                    leftMargin = margins
-                }
-            }
-        }
         layoutParams = layoutParamsForThisView
         onLayout?.apply {
             doOnLayout {
@@ -128,14 +125,19 @@ class DefaultScrollHandle @JvmOverloads constructor(
     }
 
 
-
     override fun getScrollerTotalLength(): Int {
-        return if(documentRenderView!!.isSwipeVertical()) {
+        return if (documentRenderView!!.isSwipeVertical()) {
             (measuredHeight - heightScroller).roundToInt()
         } else {
             (measuredWidth - widthScroller).roundToInt()
         }
     }
+
+    override val scrollBarWidth: Float
+        get() = widthScroller
+
+    override val scrollBarHeight: Float
+        get() = heightScroller
 
 
     override fun show() {
