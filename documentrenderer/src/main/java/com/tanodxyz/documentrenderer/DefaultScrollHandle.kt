@@ -32,7 +32,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
     var heightScroller = 0F
     var widthScroller = 0F
     private val _2dp = context.resources.dpToPx(2)
-    var marginUsed = context.resources.dpToPx(24)
+    var marginUsed = context.resources.dpToPx(16)
     protected var drawOffset: Float = 0F
 
     val scrollerBackgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -51,7 +51,10 @@ class DefaultScrollHandle @JvmOverloads constructor(
     var ovalRX = context.resources.dpToPx(100)
     var ovalRY = context.resources.dpToPx(100)
     private val handler_ = Handler(Looper.getMainLooper())
-    private val hidePageScrollerRunnable = Runnable { hide(delayed = false) }
+    private val hidePageScrollerRunnable = Runnable {
+        println("BAKO: inside delay")
+        hide(delayed = false)
+    }
 
 
 
@@ -118,9 +121,8 @@ class DefaultScrollHandle @JvmOverloads constructor(
     override fun scroll(position: Float) {
 
         if (!isScrollHandleShown()) {
+            handler_.removeCallbacksAndMessages(null)
             show()
-        } else {
-            handler_.removeCallbacks(hidePageScrollerRunnable)
         }
         if (documentRenderView != null) {
             setPosition(position)
@@ -146,7 +148,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
         if (delayed) {
             handler_.postDelayed(hidePageScrollerRunnable, 1000)
         } else {
-            visibility = View.INVISIBLE
+            visibility = View.GONE
         }
     }
 
