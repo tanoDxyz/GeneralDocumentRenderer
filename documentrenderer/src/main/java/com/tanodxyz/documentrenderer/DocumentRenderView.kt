@@ -283,7 +283,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     fun jumpToPage(pageNumber: Int, withAnimation: Boolean = false) {
         if (document.swipeVertical) {
-            var yOffset = findYForVisiblePage(pageNumber)
+            var yOffset = findYForVisiblePage(pageNumber - 1)
             if (yOffset > 0) {
                 yOffset *= -1
             }
@@ -293,7 +293,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                 moveTo(contentDrawOffsetX, yOffset)
             }
         } else {
-            var xOffset = findXForVisiblePage(pageNumber)
+            var xOffset = findXForVisiblePage(pageNumber -1)
             if (xOffset > 0) {
                 xOffset *= -1
             }
@@ -480,7 +480,6 @@ open class DocumentRenderView @JvmOverloads constructor(
         var pageVisibilityOffsetY = 0F
         var previousPageVisibilityOffset = 0F
         for (i: Int in 0..pageNo) {
-            println("poi: --------------------------------------------------")
             val page = documentPages[i]
             val previousPage: DocumentPage? = if (i == 0) null else documentPages[i]
             scaledPageStart =

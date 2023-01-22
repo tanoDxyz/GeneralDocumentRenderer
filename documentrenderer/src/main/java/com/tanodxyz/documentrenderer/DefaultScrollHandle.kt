@@ -16,7 +16,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.core.view.doOnLayout
-import androidx.core.view.doOnNextLayout
 import kotlin.math.roundToInt
 
 
@@ -33,11 +32,10 @@ class DefaultScrollHandle @JvmOverloads constructor(
     var heightScroller = 0F
     var widthScroller = 0F
     private val _2dp = context.resources.dpToPx(2)
-
     var marginUsed = context.resources.dpToPx(24)
     protected var drawOffset: Float = 0F
 
-    var scrollerBackgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    val scrollerBackgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = scrollColor
         style = Paint.Style.FILL_AND_STROKE
         strokeCap = Paint.Cap.ROUND
@@ -115,10 +113,6 @@ class DefaultScrollHandle @JvmOverloads constructor(
         this.documentRenderView?.removeView(this)
     }
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        super.onSizeChanged(w, h, oldw, oldh)
-    }
-
     fun isScrollHandleShown(): Boolean = visibility == VISIBLE
 
     override fun scroll(position: Float) {
@@ -186,32 +180,6 @@ class DefaultScrollHandle @JvmOverloads constructor(
         invalidate()
     }
 
-    fun normalizePositionForRenderView(pos: Float): Float {
-        var position = (pos - marginUsed)
-        if (java.lang.Float.isInfinite(pos) || java.lang.Float.isNaN(pos)) {
-            return pos
-        }
-        if(documentRenderView!!.isSwipeVertical()) {
-            val verticalTopPosition = marginUsed
-            val verticalBottomPosition =
-                documentRenderView!!.height - (marginUsed + heightScroller)
-            val maxHeight = (verticalBottomPosition - verticalTopPosition)
-            if (position >= maxHeight) {
-                position = maxHeight
-            }
-        } else {
-            val horizontalLeftPosition = marginUsed
-            val horizontalRightPosition =
-                documentRenderView!!.width - (marginUsed + widthScroller)
-            val maxWidth = (horizontalRightPosition - horizontalLeftPosition)
-            if (position >= maxWidth) {
-                position = maxWidth
-            }
-        }
-        return position
-    }
-
-
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if (!documentRenderView!!.isFree() || documentRenderView!!.documentFitsView()) {
             return super.onTouchEvent(event)
@@ -257,7 +225,6 @@ class DefaultScrollHandle @JvmOverloads constructor(
             return
         }
         canvas?.also { canvas ->
-            canvas.drawColor(Color.MAGENTA)
             documentRenderView?.apply {
                 val swipeVertical = isSwipeVertical()
                 oval.left = 0F
