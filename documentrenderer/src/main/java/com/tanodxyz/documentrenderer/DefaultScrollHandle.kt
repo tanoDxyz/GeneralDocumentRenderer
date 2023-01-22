@@ -15,6 +15,10 @@ import android.view.MotionEvent.*
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.RelativeLayout
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintSet
+import androidx.core.view.marginLeft
 import kotlin.math.roundToInt
 
 
@@ -31,8 +35,9 @@ class DefaultScrollHandle @JvmOverloads constructor(
     var heightScroller = 0F
     var widthScroller = 0F
     private val _2dp = context.resources.dpToPx(2)
-    var marginUsed = context.resources.dpToPx(10)
-    protected var drawOffset: Float = marginUsed
+
+    var marginUsed = context.resources.dpToPx(24)
+    protected var drawOffset: Float = 0F
 
     var scrollerBackgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = scrollColor
@@ -52,54 +57,54 @@ class DefaultScrollHandle @JvmOverloads constructor(
     private val handler_ = Handler(Looper.getMainLooper())
     private val hidePageScrollerRunnable = Runnable { hide(delayed = false) }
 
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val parentWidth = documentRenderView!!.measuredWidth
-        val parentHeight = documentRenderView!!.measuredHeight
-        val swipeVertical = (documentRenderView!!.isSwipeVertical())
 
-        if (swipeVertical) {
-            setMeasuredDimension(
-                MeasureSpec.makeMeasureSpec(widthScroller.toInt(), MeasureSpec.EXACTLY),
-                MeasureSpec.makeMeasureSpec(
-                    parentHeight,
-                    MeasureSpec.EXACTLY
-                )
-            )
-        } else {
-            setMeasuredDimension(
-                MeasureSpec.makeMeasureSpec(parentWidth, MeasureSpec.EXACTLY),
-                MeasureSpec.makeMeasureSpec(heightScroller.toInt(), MeasureSpec.EXACTLY)
-            )
-        }
 
-    }
+
 
     override fun attachTo(view: DocumentRenderView) {
+        println("IUI: attach ")
         view.removeView(this)
-        val frameLayout = view as FrameLayout
-
-        val layoutParamsForThisView = FrameLayout.LayoutParams(
-            ViewGroup.LayoutParams.WRAP_CONTENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-
-        if (view.isSwipeVertical()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                layoutParamsForThisView.marginEnd = (marginUsed.roundToInt())
-            } else {
-                layoutParamsForThisView.rightMargin = (marginUsed.roundToInt())
-            }
+        val margins = marginUsed.roundToInt()
+        val layoutParamsForThisView =
+        if(view.isSwipeVertical()) {
             widthScroller = DEFAULT_WIDTH
             heightScroller = DEFAULT_HEIGHT
-            layoutParamsForThisView.gravity = Gravity.END
+            FrameLayout.LayoutParams(
+                widthScroller.roundToInt(),
+                ViewGroup.LayoutParams.MATCH_PARENT
+            ).apply {
+                gravity = Gravity.END
+                topMargin = margins
+                bottomMargin = margins
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    marginEnd = margins
+                } else {
+                    rightMargin = margins
+                }
+            }
         } else {
-            layoutParamsForThisView.bottomMargin = (marginUsed.roundToInt())
             widthScroller = DEFAULT_HEIGHT
             heightScroller = DEFAULT_WIDTH
-            layoutParamsForThisView.gravity = Gravity.BOTTOM
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                heightScroller.roundToInt()
+            ).apply {
+                gravity = Gravity.BOTTOM
+                bottomMargin = margins
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    marginEnd = margins
+                } else {
+                    rightMargin = margins
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    marginStart = margins
+                } else {
+                    leftMargin = margins
+                }
+            }
         }
         layoutParams = layoutParamsForThisView
-        frameLayout.addView(this)
+        view.addView(this)
         this.documentRenderView = view
         alpha = 0.6F
     }
@@ -122,17 +127,16 @@ class DefaultScrollHandle @JvmOverloads constructor(
         }
     }
 
-    override fun getScrollerHeight(): Float {
-        return heightScroller
+
+
+    override fun getScrollerTotalLength(): Int {
+        return if(documentRenderView!!.isSwipeVertical()) {
+            (height - heightScroller).roundToInt()
+        } else {
+            (width - widthScroller).roundToInt()
+        }
     }
 
-    override fun getScrollerWidth(): Float {
-        return widthScroller
-    }
-
-    override fun getMarginFromParent(): Float {
-        return marginUsed
-    }
 
     override fun show() {
         visibility = View.VISIBLE
@@ -149,9 +153,9 @@ class DefaultScrollHandle @JvmOverloads constructor(
     private fun setPosition(pos: Float) {
         val swipeVertical = documentRenderView!!.isSwipeVertical()
         if (swipeVertical) {
-            val verticalTopPosition = marginUsed
+            val verticalTopPosition = 0F
             val verticalBottomPosition =
-                documentRenderView!!.height - (marginUsed + heightScroller)
+                this@DefaultScrollHandle.height - (heightScroller)
             val maxHeight = (verticalBottomPosition - verticalTopPosition)
             drawOffset = if (pos <= verticalTopPosition) {
                 verticalTopPosition
@@ -161,9 +165,9 @@ class DefaultScrollHandle @JvmOverloads constructor(
                 pos
             }
         } else {
-            val horizontalLeftPosition = marginUsed
+            val horizontalLeftPosition = 0F
             val horizontalRightPosition =
-                documentRenderView!!.width - (marginUsed + widthScroller)
+                this@DefaultScrollHandle.width - (widthScroller)
             val maxWidth = (horizontalRightPosition - horizontalLeftPosition)
             drawOffset = if (pos <= horizontalLeftPosition) {
                 horizontalLeftPosition
@@ -225,7 +229,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
                             x
                         }
                         setPosition(currentPos)
-                        setPositionOffset(normalizePositionForRenderView(currentPos), false)
+                        setPositionOffset(drawOffset, false)
                     }
                     return true
                 }
@@ -247,6 +251,8 @@ class DefaultScrollHandle @JvmOverloads constructor(
             return
         }
         canvas?.also { canvas ->
+            println("simi: ${width} ${height}")
+            canvas.drawColor(Color.MAGENTA)
             documentRenderView?.apply {
                 val swipeVertical = isSwipeVertical()
                 oval.left = 0F
