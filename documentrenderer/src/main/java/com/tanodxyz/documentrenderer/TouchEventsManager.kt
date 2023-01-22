@@ -35,7 +35,6 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
             if (scrolling) {
                 finishScroll()
             }
-            dispatchUpEvent()
         }
         return retVal
     }
@@ -43,11 +42,6 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
     private fun finishScroll() {
         scrolling = false
         eventsListener?.onScrollEnd()
-    }
-
-    private fun dispatchUpEvent() {
-        println("BAKO: UP EVENT ")
-        eventsListener?.onUpEvent()
     }
 
     override fun onScroll(
@@ -202,7 +196,6 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
         fun resetZoomWithAnimation()
         fun zoomWithAnimation(centerX: Float, centerY: Float, scale: Float)
         fun zoomWithAnimation(scale: Float)
-        fun onUpEvent()
     }
 
     data class MovementDirections(

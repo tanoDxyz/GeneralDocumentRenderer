@@ -214,10 +214,6 @@ open class DocumentRenderView @JvmOverloads constructor(
         return contentDrawOffsetY
     }
 
-    fun goFullScreen() {
-
-    }
-
     override fun zoomCenteredTo(zoom: Float, pivot: PointF) {
         val dzoom = zoom / this.zoom
         zoomTo(zoom)
@@ -274,7 +270,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         val jumpToPage = {
             jumpToPage(currentPage - 1, withAnimation = false)
         }
-        if (scrollHandle == null) {
+        if(scrollHandle == null) {
             jumpToPage.invoke()
         }
         scrollHandle?.apply {
@@ -297,7 +293,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                 moveTo(contentDrawOffsetX, yOffset)
             }
         } else {
-            var xOffset = findXForVisiblePage(pageNumber - 1)
+            var xOffset = findXForVisiblePage(pageNumber -1)
             if (xOffset > 0) {
                 xOffset *= -1
             }
@@ -1005,14 +1001,6 @@ open class DocumentRenderView @JvmOverloads constructor(
             (width.div(2)).toFloat(),
             (height.div(2)).toFloat(), zoom, scale
         )
-    }
-
-    override fun onUpEvent() {
-        println("BAKO: UP YEYEYEYYEY")
-        scrollHandle?.apply {
-            println("BAKO: HIDE TRIGGERED")
-            hide(delayed = true)
-        }
     }
 
     companion object {
