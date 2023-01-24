@@ -794,7 +794,6 @@ open class DocumentRenderView @JvmOverloads constructor(
 
         canvas?.let { drawBackground(it) }
 
-
         if (buzyTokensCounter > 0 && buzyStateIndicator != null) {
             animationManager.stopAll()
             buzyStateIndicator!!.draw(canvas!!)
@@ -820,8 +819,6 @@ open class DocumentRenderView @JvmOverloads constructor(
                     i,
                     page.pageBounds
                 )
-                //todo it will slow down the app....
-                someDebugDrawings(i, page)
                 drawnContentLength += if (document.swipeVertical) {
                     page.size.height
                 } else {
@@ -839,9 +836,9 @@ open class DocumentRenderView @JvmOverloads constructor(
         pageNumberDisplayBoxPaint.getTextBounds(textToDisplay, 0, textToDisplay.count(), textBounds)
         val drawX = pageNumberDisplayBoxXAndYMargin
         val drawY = if (scrollHandle == null || document.swipeVertical) {
-            height - (pageNumberDisplayBoxXAndYMargin + textBounds.height())
+            height - (pageNumberDisplayBoxXAndYMargin + textBounds.height() + _16Dp)
         } else {
-            height - (scrollHandle!!.scrollBarHeight + scrollHandle!!.marginUsed + pageNumberDisplayBoxXAndYMargin + textBounds.height())
+            height - (scrollHandle!!.scrollBarHeight + scrollHandle!!.marginUsed + pageNumberDisplayBoxXAndYMargin + textBounds.height() + _16Dp)
         }
 
         pageNumberDisplayBoxPaint.color = pageNumberDisplayBoxBackgroundColor
@@ -849,7 +846,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 
         pageNumberBoxBackgroundRectangle.apply {
             left = drawX
-            top = drawY - _16Dp.div(2)
+            top = drawY
             right = left + textBounds.width() + _16Dp
             bottom = top + textBounds.height() + _16Dp
         }
@@ -888,47 +885,6 @@ open class DocumentRenderView @JvmOverloads constructor(
         return pageIndex
     }
 
-    fun Canvas.someDebugDrawings(index: Int, page: DocumentPage) {
-//        drawText(
-//            "P#No ${index + 1} | b= ${page.pageBounds}",
-//            page.pageBounds.left,
-//            page.pageBounds.top + 100,
-//            ccx
-//        )
-//        drawCircle(page.pageBounds.right, page.pageBounds.top + 100, 30F, ccx)
-//        // centered line // horizontal
-//        drawLine(0F, (height / 2F), width.toFloat(), (height / 2F), ccx)
-//        drawText("X= $contentDrawOffsetX ", 100F, 200F, ccx)
-//        drawText("y= $contentDrawOffsetY ", 100F, 250F, ccx)
-//
-//        drawLine(
-//            page.pageBounds.left,
-//            page.pageBounds.bottom,
-//            page.pageBounds.right,
-//            page.pageBounds.bottom,
-//            ccx
-//        )
-//        drawLine(
-//            page.pageBounds.left,
-//            page.pageBounds.top,
-//            page.pageBounds.right,
-//            page.pageBounds.top,
-//            ccx
-//        )
-
-//        Bitmap.createBitmap(page.size.width,page.size.height,Bitmap.Config.ARGB_8888).apply {
-//            drawBitmap(this,page.pageBounds.left,page.pageBounds.top,ccx)
-//        }
-
-//        drawText(
-//            "This is the long text for page No $index and we \n" +
-//                    "should know that it is dangerous totally",
-//            page.pageBounds.left,
-//            page.pageBounds.top + 100,
-//            ccx
-//        )
-
-    }
 
     open fun Canvas.drawPageBackground(
         page: DocumentPage,
