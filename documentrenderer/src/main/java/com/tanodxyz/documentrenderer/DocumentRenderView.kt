@@ -999,7 +999,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         val DEFAULT_MAX_SCALE = 3.0f // todo change this
         val DEFAULT_MID_SCALE = 1.75f //todo and this to change the double tap zoom levels
         val DEFAULT_MIN_SCALE = 1.0f
-        var MAXIMUM_ZOOM = 10f
+        var MAXIMUM_ZOOM = 3.0f
         var MINIMUM_ZOOM = 1.0F
         var REFRESH_RATE_IN_CASE_VIEW_BUZY = 10L
     }
