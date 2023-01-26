@@ -51,10 +51,8 @@ data class DocumentPage(
         }
     }
 
-    /**
-     * all the events will be received here.
-     */
     override fun onEvent(event: IEvent?) {
+        println("UYT: event recieved for ${uniquieID} | is $event")
     }
 
     fun resetPageBounds() {

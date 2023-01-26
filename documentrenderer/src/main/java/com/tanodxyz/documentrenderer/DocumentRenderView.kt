@@ -352,7 +352,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-//        dispatchEventToThePagesInFocus(GenericMotionEvent(event)) //todo TOUCH_EVENT
+        dispatchEventToThePagesInFocus(GenericMotionEvent(event)) //todo TOUCH_EVENT
         return touchEventMgr.onTouchEvent(event)
     }
 
