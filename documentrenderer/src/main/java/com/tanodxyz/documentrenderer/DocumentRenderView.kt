@@ -10,10 +10,10 @@ import android.view.View
 import android.widget.FrameLayout
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.elements.IElement
+import com.tanodxyz.documentrenderer.events.*
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.page.PageViewState
 import kotlin.math.abs
-import kotlin.math.max
 import kotlin.math.roundToInt
 
 
@@ -22,12 +22,12 @@ open class DocumentRenderView @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyleAttr), View.OnTouchListener,
     TouchEventsManager.TouchEventsListener, AnimationManager.AnimationListener {
 
+    protected var canShowPageCountBox: Boolean = true
     protected var scrollHandle: ScrollHandle? = null
     private var buzyStateIndicator: IElement? = null
     private var currentPageForImmediateTouchEvent: Int = 0
     /*protected*/ lateinit var document: Document
     protected var buzyTokensCounter = 0
-
 
     protected var touchEventMgr: TouchEventsManager
     protected var enableAntialiasing = true
@@ -67,6 +67,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         this.setOnTouchListener(this)
         touchEventMgr = TouchEventsManager(this.context)
         touchEventMgr.registerListener(this)
+
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -205,11 +206,6 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
 
-    override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-        return touchEventMgr.onTouchEvent(event)
-    }
-
-
     override fun getCurrentX(): Float {
         return contentDrawOffsetX
     }
@@ -313,27 +309,127 @@ open class DocumentRenderView @JvmOverloads constructor(
         changeSwipeMode(!document.swipeVertical)
     }
 
+    fun dispatchEventToThePagesInFocus(iEvent: IEvent) {
+        findAllVisiblePagesOnScreen().forEach { visiblePage ->
+            visiblePage.apply {
+                if (pageBounds.contains(iEvent.getX(), iEvent.getY())) {
+                    onEvent(iEvent)
+                }
+            }
+        }
+    }
+
+    fun findAllVisiblePagesOnScreen(): List<DocumentPage> {
+        val visiblePages = mutableListOf<DocumentPage>()
+        val documentPages = document.getDocumentPages()
+        var forwardPagesScanIndex = (currentPage - 1)
+        while (forwardPagesScanIndex < documentPages.count()) {
+            val documentPage = documentPages[forwardPagesScanIndex]
+            val pageViewState = getPageViewState(documentPage.pageBounds)
+            if (pageViewState == PageViewState.VISIBLE
+                || pageViewState == PageViewState.PARTIALLY_VISIBLE
+            ) {
+                visiblePages.add(documentPage)
+                ++forwardPagesScanIndex
+            } else {
+                break
+            }
+        }
+        var backwardPagesScanIndex = (currentPage - 2)
+        while (backwardPagesScanIndex >= 0) {
+            val documentPage = documentPages[backwardPagesScanIndex]
+            val pageViewState = getPageViewState(documentPage.pageBounds)
+            if (pageViewState == PageViewState.VISIBLE
+                || pageViewState == PageViewState.PARTIALLY_VISIBLE
+            ) {
+                visiblePages.add(documentPage)
+                --backwardPagesScanIndex
+            } else {
+                break
+            }
+        }
+        return visiblePages
+    }
+
+    override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+//        dispatchEventToThePagesInFocus(GenericMotionEvent(event)) //todo TOUCH_EVENT
+        return touchEventMgr.onTouchEvent(event)
+    }
+
     override fun onScrollStart(
+        downEvent: MotionEvent?, moveEvent: MotionEvent?,
         movementDirections: TouchEventsManager.MovementDirections?,
         distanceX: Float,
         distanceY: Float,
         absoluteX: Float,
         absoluteY: Float
     ) {
-//        if (pdfView.isZooming() || pdfView.isSwipeEnabled()) {
-//            pdfView.moveRelativeTo(-distanceX, -distanceY)
-//        }
-//        if (!scaling || pdfView.doRenderDuringScale()) {
-//            pdfView.loadPageByOffset()
-//        }
+        dispatchEventToThePagesInFocus(
+            ScrollStartEvent(
+                downEvent,
+                moveEvent,
+                movementDirections,
+                distanceX,
+                distanceY,
+                absoluteX,
+                absoluteY
+            )
+        )
         moveTo(absoluteX, absoluteY)
     }
 
-    override fun onScrollEnd() {
-//        pdfView.loadPages()
-//        hideHandle()
+    override fun onScrollEnd(motionEvent: MotionEvent?) {
+        dispatchEventToThePagesInFocus(ScrollEndEvent(motionEvent))
+        hideScrollHandleAndPageCountBox()
     }
 
+    override fun flingFinished(motionEvent: MotionEvent?) {
+        dispatchEventToThePagesInFocus(FlingEndEvent(motionEvent))
+        hideScrollHandleAndPageCountBox()
+    }
+
+    override fun onDoubleTap(e: MotionEvent?) {
+        dispatchEventToThePagesInFocus(DoubleTapEvent(e))
+    }
+
+    override fun onDoubleTapEvent(e: MotionEvent?) {
+        dispatchEventToThePagesInFocus(DoubleTapCompleteEvent(e))
+    }
+
+    override fun onScaleBegin() {
+        dispatchEventToThePagesInFocus(ScaleBeginEvent(null))
+    }
+
+    override fun onLongPress(e: MotionEvent?) {
+        dispatchEventToThePagesInFocus(LongPressEvent(e))
+    }
+
+    override fun onScaleEnd() {
+        dispatchEventToThePagesInFocus(ScaleEndEvent(null))
+    }
+
+    override fun onShowPress(e: MotionEvent?) {
+        dispatchEventToThePagesInFocus(ShowPressEvent(e))
+    }
+
+    override fun onSingleTapConfirmed(e: MotionEvent?) {
+        dispatchEventToThePagesInFocus(SingleTapConfirmedEvent(e))
+    }
+
+    override fun onSingleTapUp(e: MotionEvent?) {
+        dispatchEventToThePagesInFocus(SingleTapUpEvent(e))
+    }
+
+    open fun hideScrollHandleAndPageCountBox() {
+        if (!animationManager.isFlinging()) {
+            scrollHandle?.apply {
+                postDelayed({
+                    canShowPageCountBox = false
+                    hide()
+                }, SCROLL_HANDLE_AND_PAGE_DISPLAY_BOX_HIDE_DELAY_MILLISECS)
+            }
+        }
+    }
 
     override fun computeScroll() {
         super.computeScroll()
@@ -343,6 +439,49 @@ open class DocumentRenderView @JvmOverloads constructor(
         animationManager.computeScrollOffset()
     }
 
+    override fun onFling(
+        downEvent: MotionEvent?,
+        moveEvent: MotionEvent?,
+        velocityX: Float,
+        velocityY: Float
+    ): Boolean {
+        if (document.pageFling && !document.swipeVertical) {
+            pageFling(velocityX, velocityY)
+            return true
+        }
+        val minY: Float
+        val minX: Float
+        if (document.swipeVertical) {
+            minY = -(getRenderedDocLen(zoom))
+            minX = -(toCurrentScale(document.getMaxPageWidth()))
+        } else {
+            minX = -(document.getDocLen(getCurrentZoom()) - width)
+            minY = -(toCurrentScale(document.getMaxPageHeight()) - height)
+        }
+        dispatchEventToThePagesInFocus(FlingStartEvent(downEvent,moveEvent,velocityX,velocityY))
+        animationManager.startFlingAnimation(
+            contentDrawOffsetX.toInt(),
+            contentDrawOffsetY.toInt(),
+            velocityX.toInt(),
+            velocityY.toInt(),
+            minX.toInt(),
+            0,
+            minY.toInt(),
+            0
+        )
+
+        return true
+    }
+
+    override fun onDownEvent() {
+        animationManager.stopFling()
+        currentPageForImmediateTouchEvent = currentPage
+    }
+
+
+    override fun zoomCenteredRelativeTo(dr: Float, pointF: PointF) {
+        zoomCenteredTo(zoom * dr, pointF)
+    }
 
     fun getPageViewState(pageBounds: RectF): PageViewState {
         val viewBounds = RectF(0F, 0F, width.toFloat(), height.toFloat())
@@ -644,49 +783,6 @@ open class DocumentRenderView @JvmOverloads constructor(
         )
     }
 
-    override fun onFling(
-        downEvent: MotionEvent?,
-        moveEvent: MotionEvent?,
-        velocityX: Float,
-        velocityY: Float
-    ): Boolean {
-        if (document.pageFling && !document.swipeVertical) {
-            pageFling(velocityX, velocityY)
-            return true
-        }
-        val minY: Float
-        val minX: Float
-        if (document.swipeVertical) {
-            minY = -(getRenderedDocLen(zoom))
-            minX = -(toCurrentScale(document.getMaxPageWidth()))
-        } else {
-            minX = -(document.getDocLen(getCurrentZoom()) - width)
-            minY = -(toCurrentScale(document.getMaxPageHeight()) - height)
-        }
-        animationManager.startFlingAnimation(
-            contentDrawOffsetX.toInt(),
-            contentDrawOffsetY.toInt(),
-            velocityX.toInt(),
-            velocityY.toInt(),
-            minX.toInt(),
-            0,
-            minY.toInt(),
-            0
-        )
-
-        return true
-    }
-
-    override fun onDownEvent() {
-        animationManager.stopFling()
-        currentPageForImmediateTouchEvent = currentPage.toInt()
-    }
-
-
-    override fun zoomCenteredRelativeTo(dr: Float, pointF: PointF) {
-        zoomCenteredTo(zoom * dr, pointF)
-    }
-
     open fun toCurrentScale(size: Number): Float {
         return size.toFloat() * zoom
     }
@@ -764,6 +860,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (moveHandle && scrollHandle != null) {
             scrollHandle!!.scroll(getPositionOffset())
         }
+        canShowPageCountBox = true
         redraw()
     }
 
@@ -824,8 +921,18 @@ open class DocumentRenderView @JvmOverloads constructor(
                 } else {
                     page.size.width
                 }
+                val shouldDrawPage = page.shouldDrawPage(i)
+                if (shouldDrawPage) {
+                    // draw page.
+//                    visiblePagesOnScreen.add(i)
+                } else {
+                    // recycle page
+                }
+                page.draw(this, shouldDrawPage)
             }
-            this.drawPageNumber()
+            if (canShowPageCountBox) {
+                this.drawPageNumber()
+            }
         }
     }
 
@@ -851,7 +958,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             bottom = top + textBounds.height() + _16Dp
         }
 
-        drawRoundRect(pageNumberBoxBackgroundRectangle,100F,100F,pageNumberDisplayBoxPaint)
+        drawRoundRect(pageNumberBoxBackgroundRectangle, 100F, 100F, pageNumberDisplayBoxPaint)
 
 
         pageNumberDisplayBoxPaint.color = pageNumberDisplayBoxTextColor
@@ -885,6 +992,15 @@ open class DocumentRenderView @JvmOverloads constructor(
         return pageIndex
     }
 
+    /**
+     * whether to draw or recycle page.
+     * pageIndex = position in the list starting from 0
+     */
+    open fun DocumentPage.shouldDrawPage(pageIndex: Int): Boolean {
+        val pageViewState = getPageViewState(this.pageBounds)
+        return (pageViewState == PageViewState.VISIBLE
+                || pageViewState == PageViewState.PARTIALLY_VISIBLE)
+    }
 
     open fun Canvas.drawPageBackground(
         page: DocumentPage,
@@ -1002,5 +1118,6 @@ open class DocumentRenderView @JvmOverloads constructor(
         var MAXIMUM_ZOOM = 3.0f
         var MINIMUM_ZOOM = 1.0F
         var REFRESH_RATE_IN_CASE_VIEW_BUZY = 10L
+        var SCROLL_HANDLE_AND_PAGE_DISPLAY_BOX_HIDE_DELAY_MILLISECS = 1000L
     }
 }

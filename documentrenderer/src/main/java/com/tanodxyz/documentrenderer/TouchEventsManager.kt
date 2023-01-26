@@ -7,15 +7,15 @@ import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.MAXIMUM_ZOOM
 import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.MINIMUM_ZOOM
+import com.tanodxyz.documentrenderer.events.EventManager
 
-class TouchEventsManager(val context: Context, val settings: Settings = Settings()) :
+class TouchEventsManager(val context: Context) :
     GestureDetector.SimpleOnGestureListener(),
     ScaleGestureDetector.OnScaleGestureListener {
     private var scaling: Boolean = false
     private var eventsListener: TouchEventsListener? = null
     private val scaleGestureDetector = ScaleGestureDetector(context, this)
     private val gestureDetector = GestureDetector(context, this)
-
     private var enabled = true
     private var scrolling = false
     fun registerListener(eventsListener: TouchEventsListener) {
@@ -33,15 +33,15 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
 
         if (motionEvent!!.action == MotionEvent.ACTION_UP) {
             if (scrolling) {
-                finishScroll()
+                finishScroll(motionEvent)
             }
         }
         return retVal
     }
 
-    private fun finishScroll() {
+    private fun finishScroll(motionEvent: MotionEvent?) {
         scrolling = false
-        eventsListener?.onScrollEnd()
+        eventsListener?.onScrollEnd(motionEvent)
     }
 
     override fun onScroll(
@@ -50,6 +50,7 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
         distanceX: Float,
         distanceY: Float
     ): Boolean {
+        super.onScroll(e1, e2, distanceX, distanceY)
         // determine scroll direction
         return if (eventsListener == null) {
             false
@@ -62,6 +63,7 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
                 calculateScrollDirections(previousX, previousY, currentX, currentY)
             scrolling = true
             eventsListener?.onScrollStart(
+                e1,e2,
                 movementDirections,
                 -distanceX,
                 -distanceY,
@@ -112,16 +114,29 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
         return true
     }
 
+    override fun onSingleTapUp(e: MotionEvent?): Boolean {
+        eventsListener?.onSingleTapUp(e)
+        return false
+    }
+
+    override fun onDoubleTapEvent(e: MotionEvent?): Boolean {
+        eventsListener?.onDoubleTapEvent(e)
+        return false
+    }
+
+    override fun onLongPress(e: MotionEvent?) {
+        eventsListener?.onLongPress(e)
+    }
 
     override fun onDown(e: MotionEvent?): Boolean {
         eventsListener?.onDownEvent()
         return true
     }
 
+    override fun onShowPress(e: MotionEvent?) {
+        eventsListener?.onShowPress(e)
+    }
     override fun onDoubleTap(e: MotionEvent?): Boolean {
-//        if (!pdfView.isDoubletapEnabled()) {
-//            return false
-//        }
         eventsListener?.apply {
             if (getCurrentZoom() < getMidZoom()) {
                 // zoom with animation
@@ -132,11 +147,13 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
             } else {
                 resetZoomWithAnimation()
             }
+            this.onDoubleTap(e)
         }
         return true
     }
 
     override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+        eventsListener?.onSingleTapConfirmed(e)
         return true
     }
 
@@ -151,16 +168,19 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
 
     override fun onScaleBegin(detector: ScaleGestureDetector?): Boolean {
         scaling = true
+        eventsListener?.onScaleBegin()
         return true
     }
 
     override fun onScaleEnd(detector: ScaleGestureDetector?) {
         scaling = false
+        eventsListener?.onScaleEnd()
     }
 
     fun disable() {
         enabled = false
     }
+
     fun enable() {
         enabled = true
     }
@@ -174,6 +194,8 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
         fun getMaxZoom(): Float
         fun isZooming(): Boolean
         fun onScrollStart(
+            downEvent: MotionEvent?,
+            moveEvent: MotionEvent?,
             movementDirections: MovementDirections? = null,
             distanceX: Float,
             distanceY: Float,
@@ -181,7 +203,7 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
             absoluteY: Float
         )
 
-        fun onScrollEnd()
+        fun onScrollEnd(motionEvent: MotionEvent?)
 
         fun onFling(
             downEvent: MotionEvent?,
@@ -196,6 +218,14 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
         fun resetZoomWithAnimation()
         fun zoomWithAnimation(centerX: Float, centerY: Float, scale: Float)
         fun zoomWithAnimation(scale: Float)
+        fun onDoubleTap(e: MotionEvent?)
+        fun onScaleEnd()
+        fun onScaleBegin()
+        fun onSingleTapConfirmed(e: MotionEvent?)
+        fun onLongPress(e: MotionEvent?)
+        fun onDoubleTapEvent(e: MotionEvent?)
+        fun onSingleTapUp(e: MotionEvent?)
+        fun onShowPress(e: MotionEvent?)
     }
 
     data class MovementDirections(
@@ -210,4 +240,5 @@ class TouchEventsManager(val context: Context, val settings: Settings = Settings
         val midZoom: Float = DocumentRenderView.DEFAULT_MID_SCALE,
         val maxZoom: Float = DocumentRenderView.DEFAULT_MAX_SCALE
     )
+
 }

@@ -6,8 +6,10 @@ import android.animation.ValueAnimator
 import android.animation.ValueAnimator.AnimatorUpdateListener
 import android.content.Context
 import android.graphics.PointF
+import android.view.MotionEvent
 import android.view.animation.DecelerateInterpolator
 import android.widget.OverScroller
+import androidx.core.view.MotionEventCompat
 
 
 class AnimationManager(context: Context, private val animationListener: AnimationListener) {
@@ -96,6 +98,16 @@ class AnimationManager(context: Context, private val animationListener: Animatio
         } else if (flinging) {
             flinging = false
             animationListener.redraw()
+            animationListener.flingFinished(
+                MotionEvent.obtain(
+                    System.nanoTime(),
+                    System.nanoTime(),
+                    MotionEvent.ACTION_UP,
+                    scroller!!.currX.toFloat(),
+                    scroller!!.currY.toFloat(),
+                    -1
+                )
+            )
         }
     }
 
@@ -183,5 +195,6 @@ class AnimationManager(context: Context, private val animationListener: Animatio
         fun zoomCenteredTo(zoom: Float, pivot: PointF)
         fun redraw()
         fun isSwipeVertical(): Boolean
+        fun flingFinished(motionEvent: MotionEvent?)
     }
 }

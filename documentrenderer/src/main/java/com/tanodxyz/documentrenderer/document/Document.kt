@@ -169,7 +169,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
 
     fun getPageViaIndex(pageIndex: Int): DocumentPage? {
         return try {
-            originalDocumentPageData.first { documentPage -> documentPage.index == pageIndex }
+            originalDocumentPageData.first { documentPage -> documentPage.uniquieID == pageIndex }
         } catch (ex: Exception) {
             null
         }
@@ -183,7 +183,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
     fun getPageListIndex(pageIndex: Int): Int {
         for (i: Int in originalDocumentPageData.indices) {
             val documentPage = originalDocumentPageData[i]
-            if (documentPage.index == pageIndex) {
+            if (documentPage.uniquieID == pageIndex) {
                 return i
             }
         }
@@ -204,9 +204,9 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
 
     fun deletePage(deletePageIndex: Int) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            originalDocumentPageData.removeIf { documentPage -> documentPage.index == deletePageIndex }
+            originalDocumentPageData.removeIf { documentPage -> documentPage.uniquieID == deletePageIndex }
         } else {
-            originalDocumentPageData.filter { documentPage -> documentPage.index == deletePageIndex }
+            originalDocumentPageData.filter { documentPage -> documentPage.uniquieID == deletePageIndex }
                 .apply {
                     if (this.isNotEmpty()) {
                         originalDocumentPageData.removeAll(this)

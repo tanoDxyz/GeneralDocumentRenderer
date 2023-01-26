@@ -16,6 +16,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.core.view.doOnLayout
+import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.SCROLL_HANDLE_AND_PAGE_DISPLAY_BOX_HIDE_DELAY_MILLISECS
 import kotlin.math.roundToInt
 
 
@@ -146,7 +147,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
 
     override fun hide(delayed: Boolean) {
         if (delayed) {
-            handler_.postDelayed(hidePageScrollerRunnable, 1000)
+            handler_.postDelayed(hidePageScrollerRunnable, SCROLL_HANDLE_AND_PAGE_DISPLAY_BOX_HIDE_DELAY_MILLISECS)
         } else {
             visibility = View.INVISIBLE
         }
@@ -210,7 +211,6 @@ class DefaultScrollHandle @JvmOverloads constructor(
                     return true
                 }
                 ACTION_CANCEL, ACTION_UP, ACTION_POINTER_UP -> {
-                    hide(delayed = true)
                     touched = false
                     return true
                 }

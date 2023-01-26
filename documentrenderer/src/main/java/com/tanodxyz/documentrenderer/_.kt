@@ -72,7 +72,7 @@ object ViewIdGenerator {
 infix fun IntRange.getPagesViaPageIndexes(pageData: MutableList<DocumentPage>): MutableList<DocumentPage> {
     val pages = mutableListOf<DocumentPage>()
     this.forEach { pageIndex ->
-        pages.addAll(pageData.filter { page -> page.index == pageIndex })
+        pages.addAll(pageData.filter { page -> page.uniquieID == pageIndex })
     }
     return pages
 }
