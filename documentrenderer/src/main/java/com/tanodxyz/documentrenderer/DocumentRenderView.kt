@@ -60,7 +60,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     private val minZoom = DEFAULT_MIN_SCALE
     private val midZoom = DEFAULT_MID_SCALE
     private val maxZoom = DEFAULT_MAX_SCALE
-
+    val documentPageRequestHandler = DocumentPageRequestHandler()
     init {
         this.setWillNotDraw(false)
         animationManager = AnimationManager(this.context, this)
@@ -127,7 +127,6 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     fun getPositionOffset(): Float {
-
         return if (document.swipeVertical) {
             val docLen = document.getDocLen(zoom) - height
             val maximumScrollBarHeight = scrollHandle!!.getScrollerTotalLength()
@@ -282,6 +281,8 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     fun jumpToPage(pageNumber: Int, withAnimation: Boolean = false) {
+        println("oiu: finding it for $pageNumber")
+
         if (document.swipeVertical) {
             var yOffset = findYForVisiblePage(pageNumber)
             if (yOffset > 0) {
@@ -312,7 +313,11 @@ open class DocumentRenderView @JvmOverloads constructor(
     fun dispatchEventToThePagesInFocus(iEvent: IEvent) {
         findAllVisiblePagesOnScreen().forEach { visiblePage ->
             visiblePage.apply {
-                if (pageBounds.contains(iEvent.getX(), iEvent.getY())) {
+                if (pageBounds.contains(
+                        iEvent.getX(),
+                        iEvent.getY()
+                    ) || iEvent.hasNoMotionEvent()
+                ) {
                     onEvent(iEvent)
                 }
             }
@@ -352,7 +357,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-        dispatchEventToThePagesInFocus(GenericMotionEvent(event)) //todo TOUCH_EVENT
+        dispatchEventToThePagesInFocus(GenericMotionEvent(event))
         return touchEventMgr.onTouchEvent(event)
     }
 
@@ -458,7 +463,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             minX = -(document.getDocLen(getCurrentZoom()) - width)
             minY = -(toCurrentScale(document.getMaxPageHeight()) - height)
         }
-        dispatchEventToThePagesInFocus(FlingStartEvent(downEvent,moveEvent,velocityX,velocityY))
+        dispatchEventToThePagesInFocus(FlingStartEvent(downEvent, moveEvent, velocityX, velocityY))
         animationManager.startFlingAnimation(
             contentDrawOffsetX.toInt(),
             contentDrawOffsetY.toInt(),
@@ -894,11 +899,11 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (buzyTokensCounter > 0 && buzyStateIndicator != null) {
             animationManager.stopAll()
             buzyStateIndicator!!.draw(canvas!!)
-            touchEventMgr.disable()
+            touchEventMgr.enabled = false
             postInvalidateDelayed(REFRESH_RATE_IN_CASE_VIEW_BUZY)
             return
         } else {
-            touchEventMgr.enable()
+            touchEventMgr.enabled = true
         }
 
         canvas?.apply {
@@ -922,6 +927,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                     page.size.width
                 }
                 val shouldDrawPage = page.shouldDrawPage(i)
+                println("sanjo: should draw $shouldDrawPage $i")
                 if (shouldDrawPage) {
                     // draw page.
 //                    visiblePagesOnScreen.add(i)
@@ -1109,6 +1115,52 @@ open class DocumentRenderView @JvmOverloads constructor(
             (width.div(2)).toFloat(),
             (height.div(2)).toFloat(), zoom, scale
         )
+    }
+
+    inner class DocumentPageRequestHandler : PageRequests {
+        override fun redraw() {
+            redraw()
+        }
+
+        override fun enableDisableScroll(enable: Boolean) {
+            touchEventMgr.scrollingEnabled = enable
+        }
+
+        override fun stopFling() {
+            stopFling()
+        }
+
+        override fun enableDisableFling(enable: Boolean) {
+            touchEventMgr.flingingEnabled = enable
+        }
+
+        override fun enableDisableScale(enable: Boolean) {
+            touchEventMgr.scalingEnabled = enable
+        }
+
+        override fun getCurrentX(): Float {
+            return contentDrawOffsetX
+        }
+
+        override fun getCurrentY(): Float {
+            return contentDrawOffsetY
+        }
+
+        override fun setCurrentX(x: Float) {
+            contentDrawOffsetX = x
+        }
+
+        override fun setCurrentY(y: Float) {
+            contentDrawOffsetY = y
+        }
+
+        override fun getPageCount(): Int {
+            return document.getPagesCount()
+        }
+
+        override fun jumpToPage(pageNumber: Int,withAnimation: Boolean) {
+            this@DocumentRenderView.jumpToPage(pageNumber,withAnimation)
+        }
     }
 
     companion object {

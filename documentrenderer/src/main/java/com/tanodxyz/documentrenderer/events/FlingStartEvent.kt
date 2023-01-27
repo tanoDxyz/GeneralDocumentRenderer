@@ -16,6 +16,10 @@ open class FlingStartEvent(
         return moveEvent?.y ?: -1F
     }
 
+    override fun hasNoMotionEvent(): Boolean {
+        return moveEvent == null
+    }
+
     override fun toString(): String {
         return "FlingStartEvent: x=${getX()} | y=${getY()}"
     }

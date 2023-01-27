@@ -6,8 +6,11 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
+import android.widget.Toast
+import com.tanodxyz.documentrenderer.DocumentRenderView
 import com.tanodxyz.documentrenderer.Size
 import com.tanodxyz.documentrenderer.elements.IElement
+import com.tanodxyz.documentrenderer.events.FlingEndEvent
 import com.tanodxyz.documentrenderer.events.IEvent
 import com.tanodxyz.documentrenderer.events.IEventHandler
 import com.tanodxyz.documentrenderer.getHeight
@@ -25,6 +28,7 @@ data class DocumentPage(
         2666
     ),
     val pageBounds: RectF = RectF(0F, 0F, 0F, 0F),
+    val documentPageRequestHandler: DocumentRenderView.DocumentPageRequestHandler
 ) : Serializable,IEventHandler {
 
     val pagePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -46,8 +50,11 @@ data class DocumentPage(
             val rectF = RectF(pageBounds.left + 100,pageBounds.top + 100,pageBounds.right - 100,pageBounds.bottom - 100)
             pagePaint.color = color
             canvas.drawRect(rectF, pagePaint)
+            pagePaint.color = Color.RED
+            pagePaint.textSize = 23F
+            canvas.drawText("page No ${uniquieID +1}",pageBounds.left + 30,pageBounds.top + 30,pagePaint)
         } else {
-            //todo recycle page .
+            // .TODO RECYCLE PAGE.
         }
     }
 
@@ -63,16 +70,16 @@ data class DocumentPage(
     }
 
 
-    companion object {
-        fun newPageWithWidthEqualsScreenWidth(context: Context, height: Int): DocumentPage {
-            val widthPixels = context.resources.displayMetrics.widthPixels
-            return DocumentPage(originalSize = Size(widthPixels, height))
-        }
-
-        fun newPageWithHeightEqualsScreenHeight(context: Context, width: Int): DocumentPage {
-            val heightPixels = context.resources.displayMetrics.heightPixels
-            return DocumentPage(originalSize = Size(width, heightPixels))
-        }
-    }
+//    companion object {
+//        fun newPageWithWidthEqualsScreenWidth(context: Context, height: Int): DocumentPage {
+//            val widthPixels = context.resources.displayMetrics.widthPixels
+//            return DocumentPage(originalSize = Size(widthPixels, height))
+//        }
+//
+//        fun newPageWithHeightEqualsScreenHeight(context: Context, width: Int): DocumentPage {
+//            val heightPixels = context.resources.displayMetrics.heightPixels
+//            return DocumentPage(originalSize = Size(width, heightPixels))
+//        }
+//    }
 
 }

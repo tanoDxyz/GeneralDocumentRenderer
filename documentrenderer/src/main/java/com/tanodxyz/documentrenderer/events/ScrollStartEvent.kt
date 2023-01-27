@@ -20,6 +20,10 @@ open class ScrollStartEvent(
         return moveEvent?.y ?: -1F
     }
 
+    override fun hasNoMotionEvent(): Boolean {
+        return moveEvent == null
+    }
+
     override fun toString(): String {
         return "ScrollStartEvent: x=${getX()} | y=${getY()} | distanceTraveledX=$distanceTraveledX | distanceTraveledY=$distanceTraveledY"
     }

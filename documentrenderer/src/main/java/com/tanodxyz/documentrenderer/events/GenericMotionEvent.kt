@@ -10,6 +10,11 @@ open class GenericMotionEvent(var motionEvent: MotionEvent? = null) : IEvent {
     override fun getY(): Float {
         return motionEvent?.y?:-1F
     }
+
+    override fun hasNoMotionEvent(): Boolean {
+        return motionEvent == null
+    }
+
     override fun toString(): String {
         return "GenericMotionEvent: x=${getX()} | y=${getY()}"
     }

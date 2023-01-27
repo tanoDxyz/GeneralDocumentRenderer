@@ -99,14 +99,7 @@ class AnimationManager(context: Context, private val animationListener: Animatio
             flinging = false
             animationListener.redraw()
             animationListener.flingFinished(
-                MotionEvent.obtain(
-                    System.nanoTime(),
-                    System.nanoTime(),
-                    MotionEvent.ACTION_UP,
-                    scroller!!.currX.toFloat(),
-                    scroller!!.currY.toFloat(),
-                    -1
-                )
+                null
             )
         }
     }

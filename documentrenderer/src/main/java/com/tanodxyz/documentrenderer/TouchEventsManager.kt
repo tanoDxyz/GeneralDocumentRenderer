@@ -16,7 +16,11 @@ class TouchEventsManager(val context: Context) :
     private var eventsListener: TouchEventsListener? = null
     private val scaleGestureDetector = ScaleGestureDetector(context, this)
     private val gestureDetector = GestureDetector(context, this)
-    private var enabled = true
+    var enabled = true
+    var scrollingEnabled = true
+    var flingingEnabled = true
+    var scalingEnabled = true
+
     private var scrolling = false
     fun registerListener(eventsListener: TouchEventsListener) {
         this.eventsListener = eventsListener
@@ -32,7 +36,7 @@ class TouchEventsManager(val context: Context) :
         retVal = gestureDetector.onTouchEvent(motionEvent) || retVal
 
         if (motionEvent!!.action == MotionEvent.ACTION_UP) {
-            if (scrolling) {
+            if (scrolling && scrollingEnabled) {
                 finishScroll(motionEvent)
             }
         }
@@ -50,29 +54,30 @@ class TouchEventsManager(val context: Context) :
         distanceX: Float,
         distanceY: Float
     ): Boolean {
-        super.onScroll(e1, e2, distanceX, distanceY)
-        // determine scroll direction
-        return if (eventsListener == null) {
-            false
-        } else {
-            val previousY = eventsListener!!.getCurrentY()
-            val previousX = eventsListener!!.getCurrentX()
-            val currentY = previousY + (-distanceY)
-            val currentX = previousX + (-distanceX)
-            val movementDirections =
-                calculateScrollDirections(previousX, previousY, currentX, currentY)
-            scrolling = true
-            eventsListener?.onScrollStart(
-                e1,e2,
-                movementDirections,
-                -distanceX,
-                -distanceY,
-                currentX,
-                currentY
-            )
-            true
+        if (scrollingEnabled) {
+            // determine scroll direction
+            return if (eventsListener == null) {
+                false
+            } else {
+                val previousY = eventsListener!!.getCurrentY()
+                val previousX = eventsListener!!.getCurrentX()
+                val currentY = previousY + (-distanceY)
+                val currentX = previousX + (-distanceX)
+                val movementDirections =
+                    calculateScrollDirections(previousX, previousY, currentX, currentY)
+                scrolling = true
+                eventsListener?.onScrollStart(
+                    e1, e2,
+                    movementDirections,
+                    -distanceX,
+                    -distanceY,
+                    currentX,
+                    currentY
+                )
+                true
+            }
         }
-
+        return false
     }
 
     fun calculateScrollDirections(
@@ -100,18 +105,24 @@ class TouchEventsManager(val context: Context) :
     }
 
     override fun onScale(detector: ScaleGestureDetector?): Boolean {
-        var dr = detector!!.scaleFactor
-        val wantedZoom: Float = (eventsListener?.getCurrentZoom() ?: 1F) * dr
-        val minZoom: Float = Math.min(MINIMUM_ZOOM, eventsListener?.getMinZoom() ?: MINIMUM_ZOOM)
-        val maxZoom: Float = Math.min(MAXIMUM_ZOOM, eventsListener?.getMaxZoom() ?: MAXIMUM_ZOOM)
-        val currentZoom = eventsListener?.getCurrentZoom() ?: MINIMUM_ZOOM
-        if (wantedZoom < minZoom) {
-            dr = minZoom / currentZoom
-        } else if (wantedZoom > maxZoom) {
-            dr = maxZoom / currentZoom
+        if (scalingEnabled) {
+            var dr = detector!!.scaleFactor
+            val wantedZoom: Float = (eventsListener?.getCurrentZoom() ?: 1F) * dr
+            val minZoom: Float =
+                Math.min(MINIMUM_ZOOM, eventsListener?.getMinZoom() ?: MINIMUM_ZOOM)
+            val maxZoom: Float =
+                Math.min(MAXIMUM_ZOOM, eventsListener?.getMaxZoom() ?: MAXIMUM_ZOOM)
+            val currentZoom = eventsListener?.getCurrentZoom() ?: MINIMUM_ZOOM
+            if (wantedZoom < minZoom) {
+                dr = minZoom / currentZoom
+            } else if (wantedZoom > maxZoom) {
+                dr = maxZoom / currentZoom
+            }
+            eventsListener?.zoomCenteredRelativeTo(dr, PointF(detector!!.focusX, detector!!.focusY))
+            return true
+        } else {
+            return false
         }
-        eventsListener?.zoomCenteredRelativeTo(dr, PointF(detector!!.focusX, detector!!.focusY))
-        return true
     }
 
     override fun onSingleTapUp(e: MotionEvent?): Boolean {
@@ -136,20 +147,26 @@ class TouchEventsManager(val context: Context) :
     override fun onShowPress(e: MotionEvent?) {
         eventsListener?.onShowPress(e)
     }
+
     override fun onDoubleTap(e: MotionEvent?): Boolean {
-        eventsListener?.apply {
-            if (getCurrentZoom() < getMidZoom()) {
-                // zoom with animation
-                zoomWithAnimation(e!!.x, e.y, getMidZoom())
-            } else if (getCurrentZoom() < getMaxZoom()) {
-                // zoom with animation
-                zoomWithAnimation(e!!.x, e.y, getMaxZoom())
-            } else {
-                resetZoomWithAnimation()
+        if (scalingEnabled) {
+            eventsListener?.apply {
+                if (getCurrentZoom() < getMidZoom()) {
+                    // zoom with animation
+                    zoomWithAnimation(e!!.x, e.y, getMidZoom())
+                } else if (getCurrentZoom() < getMaxZoom()) {
+                    // zoom with animation
+                    zoomWithAnimation(e!!.x, e.y, getMaxZoom())
+                } else {
+                    resetZoomWithAnimation()
+                }
+                this.onDoubleTap(e)
             }
-            this.onDoubleTap(e)
+            return true
+        } else {
+            eventsListener?.onDoubleTap(e)
+            return false
         }
-        return true
     }
 
     override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
@@ -163,26 +180,26 @@ class TouchEventsManager(val context: Context) :
         velocityX: Float,
         velocityY: Float
     ): Boolean {
-        return eventsListener?.onFling(e1, e2, velocityX, velocityY) ?: false
+        return if (flingingEnabled) {
+            return eventsListener?.onFling(e1, e2, velocityX, velocityY) ?: false
+        } else {
+            false
+        }
     }
 
     override fun onScaleBegin(detector: ScaleGestureDetector?): Boolean {
-        scaling = true
-        eventsListener?.onScaleBegin()
-        return true
+        return if (scalingEnabled) {
+            scaling = true
+            eventsListener?.onScaleBegin()
+            true
+        } else {
+            false
+        }
     }
 
     override fun onScaleEnd(detector: ScaleGestureDetector?) {
         scaling = false
         eventsListener?.onScaleEnd()
-    }
-
-    fun disable() {
-        enabled = false
-    }
-
-    fun enable() {
-        enabled = true
     }
 
     interface TouchEventsListener {
