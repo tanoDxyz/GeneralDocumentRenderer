@@ -61,6 +61,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     private val midZoom = DEFAULT_MID_SCALE
     private val maxZoom = DEFAULT_MAX_SCALE
     val documentPageRequestHandler = DocumentPageRequestHandler()
+
     init {
         this.setWillNotDraw(false)
         animationManager = AnimationManager(this.context, this)
@@ -942,6 +943,25 @@ open class DocumentRenderView @JvmOverloads constructor(
         }
     }
 
+    fun calculateCurrentPage(page: DocumentPage): Int {
+        val pageViewState = getPageViewState(page.pageBounds)
+        return if (pageViewState == PageViewState.VISIBLE) {
+            page.uniquieID + 1
+        } else if (document.swipeVertical) {
+            if (page.pageBounds.top < (height.div(2F)) /*&& page.pageBounds.bottom > 0*/) {
+                page.uniquieID + 1
+            } else {
+                currentPage
+            }
+        } else {
+            if (page.pageBounds.left < (width.div(2F)) /*&& page.pageBounds.right > 0*/) {
+                page.uniquieID + 1
+            } else {
+                currentPage
+            }
+        }
+    }
+
     open fun Canvas.drawPageNumber() {
 
         val textToDisplay = "$currentPage / ${document.getPagesCount()}"
@@ -1158,8 +1178,8 @@ open class DocumentRenderView @JvmOverloads constructor(
             return document.getPagesCount()
         }
 
-        override fun jumpToPage(pageNumber: Int,withAnimation: Boolean) {
-            this@DocumentRenderView.jumpToPage(pageNumber,withAnimation)
+        override fun jumpToPage(pageNumber: Int, withAnimation: Boolean) {
+            this@DocumentRenderView.jumpToPage(pageNumber, withAnimation)
         }
     }
 
