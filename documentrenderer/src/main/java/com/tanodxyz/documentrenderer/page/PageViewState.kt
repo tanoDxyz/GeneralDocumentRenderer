@@ -18,4 +18,8 @@ enum class PageViewState {
     fun isPagePartiallyVisible(): Boolean {
         return this == PARTIALLY_VISIBLE
     }
+
+    fun isPagePartiallyOrCompletelyVisible():Boolean {
+        return this == VISIBLE || this == PARTIALLY_VISIBLE
+    }
 }

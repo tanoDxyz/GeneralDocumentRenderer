@@ -3,6 +3,8 @@ package com.tanodxyz.documentrenderer
 import android.content.Context
 import android.graphics.*
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -13,15 +15,26 @@ import com.tanodxyz.documentrenderer.elements.IElement
 import com.tanodxyz.documentrenderer.events.*
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.page.PageViewState
+import java.util.concurrent.Executors
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-
+/**
+ * when pass first is completed
+ * check for refactoring of the view.
+ *
+ * //todo when on size is called off
+ * // and document is loaded some time later let's say after 10 secs.
+ * // if document has one page.
+ * // it will be placed at the top of the screen which is an error.
+ * // so go for it.
+ */
 open class DocumentRenderView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr), View.OnTouchListener,
     TouchEventsManager.TouchEventsListener, AnimationManager.AnimationListener {
 
+    private lateinit var viewSize: Size
     protected var canShowPageCountBox: Boolean = true
     protected var scrollHandle: ScrollHandle? = null
     private var buzyStateIndicator: IElement? = null
@@ -45,7 +58,8 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     protected var zoom = MINIMUM_ZOOM
     protected var animationManager: AnimationManager
-
+    protected var executor = Executors.newCachedThreadPool()
+    protected var _handler = Handler(Looper.getMainLooper())
     var pageNumberDisplayBoxTextColor = Color.WHITE
     var pageNumberDisplayBoxBackgroundColor = Color.parseColor("#343434")
     var pageNumberDisplayBoxTextSize = resources.spToPx(12)
@@ -73,11 +87,13 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        if (isInEditMode) {
+        viewSize = Size(w, h)
+        if (isInEditMode || !isInitalized()) {
             return
         }
-        recalculatePageSizesAndSetDefaultXYOffsets(w, h)
-        gotoPageIfApplicable()
+        recalculatePageSizesAndSetDefaultXYOffsets(w, h) {
+            gotoPageIfApplicable()
+        }
     }
 
     private fun gotoPageIfApplicable() {
@@ -86,16 +102,20 @@ open class DocumentRenderView @JvmOverloads constructor(
         }
     }
 
+    @Synchronized
     fun buzy() {
+        println("b98u: buz called off ")
         ++buzyTokensCounter
         redraw()
     }
 
+    @Synchronized
     fun free() {
         if (buzyTokensCounter > 0) {
             --buzyTokensCounter
             redraw()
         }
+        println("b98u: free called off is $buzyTokensCounter")
     }
 
     fun isFree(): Boolean {
@@ -153,10 +173,24 @@ open class DocumentRenderView @JvmOverloads constructor(
         this.scrollHandle = scrollHandle
     }
 
-    private fun recalculatePageSizesAndSetDefaultXYOffsets(width: Int, height: Int) {
+    private fun recalculatePageSizesAndSetDefaultXYOffsets(
+        width: Int,
+        height: Int,
+        callback: (() -> Unit)? = null
+    ) {
+        println("b98u: onSIAZE")
         animationManager.stopAll()
-        document.recalculatePageSizes(Size(width, height))
-        setDefaultContentDrawOffsets()
+        buzy()
+        executor.submit {
+            println("b98u: exe in size")
+            document.recalculatePageSizesAndIndexes(Size(width, height))
+            println("b98u: yes reclaimed")
+            _handler.post {
+                free()
+                setDefaultContentDrawOffsets()
+                callback?.invoke()
+            }
+        }
     }
 
     private fun setDefaultContentDrawOffsets() {
@@ -266,17 +300,18 @@ open class DocumentRenderView @JvmOverloads constructor(
     fun changeSwipeMode(swipeVertical: Boolean) {
         document.swipeVertical = swipeVertical
         animationManager.stopAll()
-        recalculatePageSizesAndSetDefaultXYOffsets(width, height)
-        val jumpToPage = {
-            jumpToPage(currentPage - 1, withAnimation = false)
-        }
-        if (scrollHandle == null) {
-            jumpToPage.invoke()
-        }
-        scrollHandle?.apply {
-            detach()
-            attachTo(this@DocumentRenderView) {
+        recalculatePageSizesAndSetDefaultXYOffsets(width, height) {
+            val jumpToPage = {
+                jumpToPage(currentPage - 1, withAnimation = false)
+            }
+            if (scrollHandle == null) {
                 jumpToPage.invoke()
+            }
+            scrollHandle?.apply {
+                detach()
+                attachTo(this@DocumentRenderView) {
+                    jumpToPage.invoke()
+                }
             }
         }
     }
@@ -879,19 +914,32 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
 
-    fun loadDocument(document: Document) {
+    fun loadDocument(document: Document, callback: (() -> Unit)? = null) {
         this.document = document
-        this.document.setup(Size(width, height))
         pagePaint.apply {
             style = Paint.Style.FILL_AND_STROKE
             color = if (document.nightMode) Color.BLACK else document.pageBackColor
         }
-        redraw()
+        buzy()
+        executor.submit {
+            println("b98u: yes one ")
+            this.document.setup(Size(width, height))
+            _handler.post {
+                println("b98u: yew two")
+                free()
+                redraw()
+                callback?.invoke()
+            }
+        }
+    }
+
+    fun isInitalized(): Boolean {
+        return this::document.isInitialized
     }
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
-        if (isInEditMode) {
+        if (isInEditMode || !isInitalized()) {
             return
         }
 
@@ -914,29 +962,73 @@ open class DocumentRenderView @JvmOverloads constructor(
                 null
             }
             var drawnContentLength = 0F
-            val documentPages = document.getDocumentPages()
-            for (i: Int in documentPages.indices) {
-                val page = documentPages[i]
-                drawPageBackground(page, drawnContentLength)
-                currentPage = calculateCurrentPage(
-                    i,
-                    page.pageBounds
-                )
-                drawnContentLength += if (document.swipeVertical) {
-                    page.size.height
-                } else {
-                    page.size.width
-                }
-                val shouldDrawPage = page.shouldDrawPage(i)
-                println("sanjo: should draw $shouldDrawPage $i")
-                if (shouldDrawPage) {
-                    // draw page.
-//                    visiblePagesOnScreen.add(i)
-                } else {
-                    // recycle page
-                }
-                page.draw(this, shouldDrawPage)
+            val documentPages = document.getPagesToBeDrawn(currentPage, viewSize)
+
+//            if(currentPage == 0 || currentPage == 1) {
+//            for (i: Int in 0 until 12) {
+//                val page = documentPages[i]
+//                drawPageBackground(page, drawnContentLength)
+//                currentPage = calculateCurrentPage(page)
+//                val shouldDrawPage = page.shouldDrawPage(i)
+//                println("sanjo: should draw $shouldDrawPage $i")
+//                if (shouldDrawPage) {
+//                    // draw page.
+////                    visiblePagesOnScreen.add(i)
+//                } else {
+//                    // recycle page
+//                }
+//                page.draw(this, shouldDrawPage)
+//            }
+
+//            documentPages. {
+//                val documentPage = documentPages[i]
+//                val pageViewState = getPageViewState(documentPage.pageBounds)
+//                drawPageBackground(documentPage,0F)
+//                documentPage.draw(canvas,true)
+//                currentPage = calculateCurrentPage(documentPage)
+//            }
+            println("9ui: -------------------")
+            println("9ui: count is ${documentPages.count()}")
+            documentPages.forEach { documentPage ->
+                println("9ui: got ${documentPage.uniquieID}")
+                val pageViewState = getPageViewState(documentPage.pageBounds)
+                drawPageBackground(documentPage, 0F)
+                documentPage.draw(canvas, pageViewState.isPagePartiallyOrCompletelyVisible())
+                currentPage = calculateCurrentPage(documentPage)
             }
+            println("9ui: --------------------")
+//                if(backwardPageScan) {
+//                    val documentPage = documentPages[backwardIndex]
+//                    drawPageBackground(documentPage,0F)
+////                    currentPage = calculateCurrentPage(documentPage)
+//                    --backwardIndex
+//                    backwardPageScan = getPageViewState(documentPage.pageBounds).isPagePartiallyOrCompletelyVisible() && backwardIndex > -1
+//                }
+//            }
+
+//            }
+//            for (i: Int in documentPages.indices) {
+//                val page = documentPages[i]
+//                drawPageBackground(page, drawnContentLength)
+//                currentPage = calculateCurrentPage(
+//                    i,
+//                    page.pageBounds
+//                )
+//                drawnContentLength += if (document.swipeVertical) {
+//                    page.size.height
+//                } else {
+//                    page.size.width
+//                }
+//                val shouldDrawPage = page.shouldDrawPage(i)
+//                println("sanjo: should draw $shouldDrawPage $i")
+//                if (shouldDrawPage) {
+//                    // draw page.
+////                    visiblePagesOnScreen.add(i)
+//                } else {
+//                    // recycle page
+//                }
+//                page.draw(this, shouldDrawPage)
+//            }
             if (canShowPageCountBox) {
                 this.drawPageNumber()
             }
@@ -1018,14 +1110,9 @@ open class DocumentRenderView @JvmOverloads constructor(
         return pageIndex
     }
 
-    /**
-     * whether to draw or recycle page.
-     * pageIndex = position in the list starting from 0
-     */
-    open fun DocumentPage.shouldDrawPage(pageIndex: Int): Boolean {
-        val pageViewState = getPageViewState(this.pageBounds)
-        return (pageViewState == PageViewState.VISIBLE
-                || pageViewState == PageViewState.PARTIALLY_VISIBLE)
+
+    open fun DocumentPage.shouldDrawPage(): Boolean {
+        return getPageViewState(this.pageBounds).isPagePartiallyOrCompletelyVisible()
     }
 
     open fun Canvas.drawPageBackground(
@@ -1060,8 +1147,10 @@ open class DocumentRenderView @JvmOverloads constructor(
             scaledPageY = (toCurrentScale(
                 totalPagesDrawnLength
             ))
-            pageY =
-                contentDrawOffsetY + document.pageMargins.top + scaledPageY
+            pageY = contentDrawOffsetY + document.pageMargins.top + toCurrentScale(
+                document.pageIndexes.get(page.uniquieID).y
+            )
+//                contentDrawOffsetY + document.pageMargins.top + scaledPageY
             // page bottom
             bottomMarginToSubtract =
                 document.pageMargins.top + document.pageMargins.bottom

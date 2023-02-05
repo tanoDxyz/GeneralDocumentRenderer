@@ -12,6 +12,7 @@ import com.tanodxyz.documentrenderer.elements.DefaultCircularProgressBarElement
 
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import java.security.SecureRandom
+import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
     private lateinit var findViewById: DocumentRenderView
@@ -19,14 +20,16 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         this.findViewById = findViewById<DocumentRenderView>(R.id.cvxd)
-        val getseesa = getseesa(this)
-        getseesa[Document.PROPERTY_DOCUMENT_PAGE_FIT_POLICY] = Document.PageFitPolicy.BOTH
-        getseesa.swipeVertical = true
-        getseesa[Document.PROPERTY_DOCUMENT_FIT_EACH_PAGE] = true
-        getseesa[Document.PROPERTY_DOCUMENT_PAGE_FLING] = false
-        findViewById.loadDocument(getseesa)
-        findViewById.setBuzyStateIndicator(DefaultCircularProgressBarElement(this))
-        findViewById.addScrollHandle(DefaultScrollHandle(this))
+        getseesa(this, findViewById.documentPageRequestHandler) {getseesa ->
+            getseesa[Document.PROPERTY_DOCUMENT_PAGE_FIT_POLICY] = Document.PageFitPolicy.BOTH
+            getseesa.swipeVertical = true
+            getseesa[Document.PROPERTY_DOCUMENT_FIT_EACH_PAGE] = true
+            getseesa[Document.PROPERTY_DOCUMENT_PAGE_FLING] = false
+            findViewById.loadDocument(getseesa)
+            findViewById.setBuzyStateIndicator(DefaultCircularProgressBarElement(this))
+            findViewById.addScrollHandle(DefaultScrollHandle(this))
+        }
+
 //        findViewById.buzy()
         //todo test to get current page.
 //        val handler = Handler()
@@ -55,23 +58,63 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         var document: Document? = null
-        fun getseesa(context: Context): Document {
+        fun getseesa(
+            context: Context,
+            documentPageRequestHandler: DocumentRenderView.DocumentPageRequestHandler,
+            callback: (Document) -> Unit
+        ) {
             if (document != null) {
-                return document!!
+                callback(document!!)
             } else {
-                document = Document(context,DefaultPageSizeCalculator())
-
-                for(i:Int in 0 until 1000) {
-                    document!!.addPage(DocumentPage(uniquieID = i))
+                document = Document(context, DefaultPageSizeCalculator())
+                val handler = Handler()
+                thread(start = true) {
+                    Thread.sleep(10_000)
+                    for (i: Int in 0 until 9999) {
+                        println("89d: ${9999 - i}")
+                        document!!.addPage(
+                            DocumentPage(
+                                uniquieID = i,
+                                documentPageRequestHandler = documentPageRequestHandler
+                            )
+                        )
+                    }
+                    handler.post {
+                        callback(document!!)
+                    }
                 }
-                val rnd = SecureRandom()
-                document!!.addPage(DocumentPage(uniquieID = rnd.nextInt()+1000, originalSize = Size(10000, 10000)))
-                document!!.addPage(DocumentPage(uniquieID = rnd.nextInt()+1001,originalSize = Size(2342, 420)))
-                document!!.addPage(DocumentPage(uniquieID = rnd.nextInt()+1002,originalSize = Size(320, 420)))
-                document!!.addPage(DocumentPage(uniquieID = rnd.nextInt()+1003,originalSize = Size(32, 42)))
+
+//                val rnd = SecureRandom()
+//                document!!.addPage(
+//                    DocumentPage(
+//                        uniquieID = rnd.nextInt() + 1000,
+//                        originalSize = Size(10000, 10000),
+//                        documentPageRequestHandler = documentPageRequestHandler
+//                    )
+//                )
+//                document!!.addPage(
+//                    DocumentPage(
+//                        uniquieID = rnd.nextInt() + 1001,
+//                        originalSize = Size(2342, 420),
+//                        documentPageRequestHandler = documentPageRequestHandler
+//                    )
+//                )
+//                document!!.addPage(
+//                    DocumentPage(
+//                        uniquieID = rnd.nextInt() + 1002,
+//                        originalSize = Size(320, 420),
+//                        documentPageRequestHandler = documentPageRequestHandler
+//                    )
+//                )
+//                document!!.addPage(
+//                    DocumentPage(
+//                        uniquieID = rnd.nextInt() + 1003,
+//                        originalSize = Size(32, 42),
+//                        documentPageRequestHandler = documentPageRequestHandler
+//                    )
+//                )
             }
 
-            return document!!
         }
     }
 

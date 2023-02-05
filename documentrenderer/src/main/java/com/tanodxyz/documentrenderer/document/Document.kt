@@ -1,12 +1,15 @@
 package com.tanodxyz.documentrenderer.document
 
 import android.content.Context
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.PointF
 import android.graphics.RectF
 import com.tanodxyz.documentrenderer.*
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import java.lang.Exception
 import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -18,7 +21,8 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
     protected var originalMaxPageWidth = Size(0, 0)
     protected var originalMaxPageHeight = Size(0, 0)
     protected var contentLength = 0F
-    private var pagesToBeDrawn: MutableList<DocumentPage> = mutableListOf()
+    protected var pagesToBeDrawn = mutableListOf<DocumentPage>()
+    lateinit var pageIndexes: MutableList<PointF>
 
     var pageMargins: RectF = RectF(
         context.resources.dpToPx(2), // left margin
@@ -206,7 +210,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
                 originalMaxPageHeight = pageSize
             }
         }
-        recalculatePageSizes(viewSize)
+        recalculatePageSizesAndIndexes(viewSize)
     }
 
     open fun getMaxPageSize(): Size {
@@ -221,7 +225,10 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         return getMaxPageSize().height
     }
 
-    open fun recalculatePageSizes(viewSize: Size) {
+    open fun recalculatePageSizesAndIndexes(viewSize: Size) {
+        if(originalDocumentPageData.isEmpty()) {
+            return
+        }
         if (pageSizeCalculator == null) {
             pageSizeCalculator = DefaultPageSizeCalculator()
         }
@@ -241,7 +248,11 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         maxHeightPageSize = pageSizeCalculator!!.optimalMaxHeightPageSize
 
         contentLength = 0F
-        originalDocumentPageData.forEach { documentPage ->
+        var indexX = 0F
+        var indexY = 0F
+        pageIndexes = ArrayList<PointF>(originalDocumentPageData.count())
+        for (i: Int in originalDocumentPageData.indices) {
+            val documentPage = originalDocumentPageData[i]
             documentPage.size = pageSizeCalculator!!.calculate(documentPage.originalSize)
             if (documentPage.size.width > maxWidthPageSize.width) {
                 maxWidthPageSize.width = documentPage.size.width
@@ -255,8 +266,14 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
                 documentPage.size.width
             }
             documentPage.resetPageBounds()
+            if (swipeVertical) {
+                pageIndexes.add(PointF(0F, indexY))
+                indexY += documentPage.size.height
+            } else {
+                pageIndexes.add(PointF(indexX, 0F))
+                indexX += documentPage.size.width
+            }
         }
-
     }
 
     open fun toCurrentScale(size: Number, zoom: Float): Float {
@@ -298,6 +315,98 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
             null
         } else {
             originalDocumentPageData[pageNumber]
+        }
+    }
+
+//    fun getPagesThatFitsScreenSize(
+//        start: Int,
+//        viewSize: Size,
+//        forward: Boolean
+//    ): List<DocumentPage> {
+//        val pagesList = mutableListOf<DocumentPage>()
+//
+//        for(i:Int in start until )
+//        return pagesList
+//    }
+
+    private fun Int.isPageInExistingDrawingList(differenceFromBoundsByPageCount: Int = 0): Boolean {
+        if (pagesToBeDrawn.isEmpty()) {
+            return false
+        }
+        val st = pagesToBeDrawn.first().uniquieID
+        val end = pagesToBeDrawn.last().uniquieID
+        println("seni: start id is $st end is $end | st+diff= ${st + differenceFromBoundsByPageCount} | end+diff = ${end - differenceFromBoundsByPageCount}")
+        return st != end && this >= (st + differenceFromBoundsByPageCount) && this <= (end - differenceFromBoundsByPageCount)
+    }
+
+    private fun removePagesFromDrawingListThatAreNotVisibleAndGet(
+        fromStart: Boolean,
+        viewSize: Size
+    ) {
+        val pagesToBeRemoved = mutableListOf<DocumentPage>()
+        var increment = 1
+        var i: Int = if (fromStart) 0 else {
+            increment = -1;pagesToBeDrawn.count() - 1
+        }
+        while (i >= 0 && i < pagesToBeDrawn.count()) {
+            val page = pagesToBeDrawn[i]
+            val pageInvisible =
+                getPageViewState(page.pageBounds, viewSize, swipeVertical).isPageInvisible()
+            if (pageInvisible) {
+                pagesToBeRemoved.add(page)
+            } else {
+                break
+            }
+            i += increment
+        }
+        pagesToBeDrawn.removeAll(pagesToBeRemoved)
+    }
+
+    fun getPagesToBeDrawn(currentPage: Int, viewSize: Size): List<DocumentPage> {
+        return try {
+            val pageIndex = currentPage - 1
+            if (pageIndex == 0) {
+                if (!pageIndex.isPageInExistingDrawingList()) {
+                    pagesToBeDrawn.clear()
+                    pagesToBeDrawn.addAll(
+                        originalDocumentPageData.subList(
+                            0,
+                            min(MAX_PAGES_DRAWN, getPagesCount())
+                        )
+                    )
+                }
+            } else {
+                if (!pageIndex.isPageInExistingDrawingList(1)) {
+                    if (pageIndex == pagesToBeDrawn[pagesToBeDrawn.count() - 1].uniquieID) {
+                        removePagesFromDrawingListThatAreNotVisibleAndGet(
+                            fromStart = true,
+                            viewSize
+                        )
+                        val listStart = pagesToBeDrawn.last().uniquieID + 1
+                        pagesToBeDrawn.addAll(
+                            originalDocumentPageData.subList(
+                                listStart, //watch for index out of bounds exception.
+                                min(MAX_PAGES_DRAWN + listStart, getPagesCount())
+                            )
+                        )
+                    } else if (pageIndex == pagesToBeDrawn[0].uniquieID) {
+                        removePagesFromDrawingListThatAreNotVisibleAndGet(
+                            fromStart = false,
+                            viewSize
+                        )
+                        pagesToBeDrawn.addAll(
+                            0,
+                            originalDocumentPageData.subList(
+                                0,
+                                pagesToBeDrawn.first().uniquieID + 1
+                            )
+                        )
+                    }
+                }
+            }
+            pagesToBeDrawn
+        } catch (ex: Exception) {
+            mutableListOf<DocumentPage>()
         }
     }
 }

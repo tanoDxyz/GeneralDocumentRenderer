@@ -7,6 +7,7 @@ import android.os.Build
 import android.util.TypedValue
 import android.view.View
 import com.tanodxyz.documentrenderer.page.DocumentPage
+import com.tanodxyz.documentrenderer.page.PageViewState
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
 
@@ -50,6 +51,7 @@ fun limit(number: kotlin.Float, between: kotlin.Float, and: kotlin.Float): kotli
 
 object ViewIdGenerator {
     private val sNextGeneratedId: AtomicInteger = AtomicInteger(1)
+
     @SuppressLint("NewApi")
     fun generateViewId(): Int {
         if (Build.VERSION.SDK_INT < 17) {
@@ -68,6 +70,42 @@ object ViewIdGenerator {
     }
 }
 
+fun getPageViewState(pageBounds: RectF, viewSize: Size, swipeVertical: Boolean): PageViewState {
+    val viewBounds = RectF(0F, 0F, viewSize.width.toFloat(), viewSize.height.toFloat())
+    val viewBoundsRelativeToPageBounds =
+        RectF(pageBounds.left, pageBounds.top, viewSize.width.toFloat(), viewSize.height.toFloat())
+    val pageIsTotallyVisible = viewBounds.contains(pageBounds)
+    var pageIsPartiallyVisible = false
+    if (!pageIsTotallyVisible) {
+        val pageAndViewIntersected = viewBoundsRelativeToPageBounds.intersects(
+            pageBounds.left,
+            pageBounds.top,
+            pageBounds.right,
+            pageBounds.bottom
+        )
+        pageIsPartiallyVisible = if (pageAndViewIntersected) {
+            if (swipeVertical) {
+                if (pageBounds.top < viewBounds.top) {
+                    pageBounds.bottom >= viewBounds.top
+                } else {
+                    pageBounds.top <= viewBounds.bottom
+                }
+            } else {
+                if (pageBounds.left < viewBounds.left) {
+                    pageBounds.right >= viewBounds.left
+                } else {
+                    pageBounds.left <= viewBounds.right
+                }
+            }
+        } else {
+            false
+        }
+    }
+    val pageViewState =
+        if (pageIsTotallyVisible) PageViewState.VISIBLE
+        else if (pageIsPartiallyVisible) PageViewState.PARTIALLY_VISIBLE else PageViewState.INVISIBLE
+    return pageViewState
+}
 
 infix fun IntRange.getPagesViaPageIndexes(pageData: MutableList<DocumentPage>): MutableList<DocumentPage> {
     val pages = mutableListOf<DocumentPage>()
