@@ -44,9 +44,9 @@ data class DocumentPage(
         return pageBounds.getHeight()
     }
 
-    fun draw(canvas: Canvas, draw: Boolean) {
-        if(draw) {
-            val color = if(draw) Color.GREEN else Color.RED // green indicates drawing // red is against green
+    fun draw(canvas: Canvas, pageViewState: PageViewState) {
+        if(pageViewState.isPagePartiallyOrCompletelyVisible()) {
+            val color = Color.CYAN // green indicates drawing // red is against green
             val rectF = RectF(pageBounds.left + 100,pageBounds.top + 100,pageBounds.right - 100,pageBounds.bottom - 100)
             pagePaint.color = color
             canvas.drawRect(rectF, pagePaint)
@@ -68,18 +68,4 @@ data class DocumentPage(
         pageBounds.right = 0F
         pageBounds.bottom = 0F
     }
-
-
-//    companion object {
-//        fun newPageWithWidthEqualsScreenWidth(context: Context, height: Int): DocumentPage {
-//            val widthPixels = context.resources.displayMetrics.widthPixels
-//            return DocumentPage(originalSize = Size(widthPixels, height))
-//        }
-//
-//        fun newPageWithHeightEqualsScreenHeight(context: Context, width: Int): DocumentPage {
-//            val heightPixels = context.resources.displayMetrics.heightPixels
-//            return DocumentPage(originalSize = Size(width, heightPixels))
-//        }
-//    }
-
 }

@@ -187,10 +187,12 @@ class DefaultScrollHandle @JvmOverloads constructor(
         if (!documentRenderView!!.isFree() || documentRenderView!!.documentFitsView()) {
             return super.onTouchEvent(event)
         }
+        println("8uy: ${event!!.action}")
         documentRenderView?.apply {
 
             val x = event!!.x
             val y = event.y
+
             when (event!!.action) {
                 ACTION_DOWN, ACTION_POINTER_DOWN -> {
                     stopFling()
@@ -212,10 +214,10 @@ class DefaultScrollHandle @JvmOverloads constructor(
                 }
                 ACTION_CANCEL, ACTION_UP, ACTION_POINTER_UP -> {
                     touched = false
+                    redraw()
                     return true
                 }
             }
-
         }
         return super.onTouchEvent(event)
     }

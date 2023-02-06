@@ -24,7 +24,7 @@ class MainActivity : AppCompatActivity() {
             getseesa[Document.PROPERTY_DOCUMENT_PAGE_FIT_POLICY] = Document.PageFitPolicy.BOTH
             getseesa.swipeVertical = true
             getseesa[Document.PROPERTY_DOCUMENT_FIT_EACH_PAGE] = true
-            getseesa[Document.PROPERTY_DOCUMENT_PAGE_FLING] = false
+            getseesa[Document.PROPERTY_DOCUMENT_PAGE_FLING] = true
             findViewById.loadDocument(getseesa)
             findViewById.setBuzyStateIndicator(DefaultCircularProgressBarElement(this))
             findViewById.addScrollHandle(DefaultScrollHandle(this))
@@ -69,8 +69,7 @@ class MainActivity : AppCompatActivity() {
                 document = Document(context, DefaultPageSizeCalculator())
                 val handler = Handler()
                 thread(start = true) {
-                    Thread.sleep(10_000)
-                    for (i: Int in 0 until 9999) {
+                    for (i: Int in 0 until 1400) {
                         println("89d: ${9999 - i}")
                         document!!.addPage(
                             DocumentPage(
