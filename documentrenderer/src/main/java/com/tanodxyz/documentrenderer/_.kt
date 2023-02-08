@@ -134,7 +134,6 @@ fun RectF.getWidth(): Float {
 }
 
 fun RectF.getHeight(): Float {
-    println("poi: pageBounds are $this")
     val pageBounds = this
     return if (pageBounds.top > 0 && pageBounds.bottom >= pageBounds.top) {
         pageBounds.height()

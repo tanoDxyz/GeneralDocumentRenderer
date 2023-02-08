@@ -9,7 +9,7 @@ class EventManager {
      *
      * @param event to handle
      */
-    fun onEvent(event: IEvent) {
+    fun onEvent(event: IMotionEventMarker) {
         val caughtExceptions: MutableList<RuntimeException> = ArrayList()
         for (handler in handlers) {
             try {

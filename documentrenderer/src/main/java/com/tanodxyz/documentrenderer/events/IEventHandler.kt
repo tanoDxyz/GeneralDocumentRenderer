@@ -6,5 +6,5 @@ interface IEventHandler {
      *
      * @param event to handle
      */
-    fun onEvent(event: IEvent?)
+    fun onEvent(event: IMotionEventMarker?)
 }

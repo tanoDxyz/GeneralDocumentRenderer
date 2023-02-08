@@ -1,17 +1,15 @@
 package com.tanodxyz.documentrenderer.document
 
 import android.content.Context
-import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.PointF
 import android.graphics.RectF
 import com.tanodxyz.documentrenderer.*
 import com.tanodxyz.documentrenderer.page.DocumentPage
-import java.lang.Exception
+import com.tanodxyz.documentrenderer.pagesizecalculator.DefaultPageSizeCalculator
+import com.tanodxyz.documentrenderer.pagesizecalculator.PageSizeCalculator
 import java.util.*
 import kotlin.collections.ArrayList
-import kotlin.math.min
-import kotlin.math.roundToInt
 
 open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator? = null) {
     protected var maxHeightPageSize = Size(0, 0)
@@ -21,8 +19,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
     protected var originalMaxPageWidth = Size(0, 0)
     protected var originalMaxPageHeight = Size(0, 0)
     protected var contentLength = 0F
-    protected var pagesToBeDrawn = mutableListOf<DocumentPage>()
-    lateinit var pageIndexes: MutableList<PointF>
+    internal lateinit var pageIndexes: MutableList<PointF>
 
     var pageMargins: RectF = RectF(
         context.resources.dpToPx(2), // left margin
@@ -102,8 +99,6 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         const val PROPERTY_NIGHT_MODE = "com.night.mode"
         const val PROPERTY_PAGE_BACK_COLOR = "com.page.back.color"
         const val DOCUMENT_NAME = "document-"
-
-        const val MAX_PAGES_DRAWN = 10
     }
 
 
@@ -162,11 +157,13 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
 //        return -1
 //    }
 //
-    fun addPage(documentPage: DocumentPage) {
+    @Synchronized
+    open fun addPage(documentPage: DocumentPage) {
         originalDocumentPageData.add(documentPage)
     }
 
-    fun addPages(documentPages: List<DocumentPage>) {
+    @Synchronized
+    open fun addPages(documentPages: List<DocumentPage>) {
         originalDocumentPageData.addAll(documentPages)
     }
 //
@@ -200,7 +197,8 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
 //        return pageExistsForGivenIndex
 //    }
 
-    fun setup(viewSize: Size) {
+    @Synchronized
+    open fun setup(viewSize: Size) {
         originalDocumentPageData.forEach { documentPage ->
             val pageSize = documentPage.originalSize
             if (pageSize.width > originalMaxPageWidth.width) {
@@ -213,18 +211,19 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         recalculatePageSizesAndIndexes(viewSize)
     }
 
+    @Synchronized
     open fun getMaxPageSize(): Size {
         return if (swipeVertical) maxWidthPageSize else maxHeightPageSize
     }
-
+    @Synchronized
     open fun getMaxPageWidth(): Int {
         return getMaxPageSize().width
     }
-
+    @Synchronized
     open fun getMaxPageHeight(): Int {
         return getMaxPageSize().height
     }
-
+    @Synchronized
     open fun recalculatePageSizesAndIndexes(viewSize: Size) {
         if (originalDocumentPageData.isEmpty()) {
             return
@@ -253,7 +252,6 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         pageIndexes = ArrayList<PointF>(originalDocumentPageData.count())
         for (i: Int in originalDocumentPageData.indices) {
             val documentPage = originalDocumentPageData[i]
-            val previousPage: DocumentPage? = if (i == 0) null else documentPage
 
             // calculate x & y bounds
             documentPage.size = pageSizeCalculator!!.calculate(documentPage.originalSize)
@@ -276,14 +274,15 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
                 pageIndexes.add(PointF(indexX, 0F))
                 indexX += documentPage.size.width
             }
+
         }
     }
-
+    @Synchronized
     open fun toCurrentScale(size: Number, zoom: Float): Float {
         return size.toFloat() * zoom
     }
 
-
+    @Synchronized
     fun getDocLen(zoom: Float): Float {
         return getTotalContentLength() * zoom
     }
@@ -308,12 +307,16 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
 //        }
 //    }
 
-
-    fun getTotalContentLength(): Float = contentLength
-    fun getDocumentPages(): List<DocumentPage> = originalDocumentPageData
-    fun haveNoPages(): Boolean = getDocumentPages().isEmpty()
-    fun getPagesCount(): Int = getDocumentPages().count()
-    fun getPage(pageNumber: Int): DocumentPage? {
+    @Synchronized
+    open fun getTotalContentLength(): Float = contentLength
+    @Synchronized
+    open fun getDocumentPages(): List<DocumentPage> = originalDocumentPageData
+    @Synchronized
+    open fun haveNoPages(): Boolean = getDocumentPages().isEmpty()
+    @Synchronized
+    open fun getPagesCount(): Int = getDocumentPages().count()
+    @Synchronized
+    open fun getPage(pageNumber: Int): DocumentPage? {
         return if (pageNumber < 0 || pageNumber >= getPagesCount()) {
             null
         } else {
@@ -331,8 +334,8 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
 //        for(i:Int in start until )
 //        return pagesList
 //    }
-
-    fun getPagesToBeDrawn(currentPage: Int, viewSize: Int):List<DocumentPage> {
+    @Synchronized
+    open fun getPagesToBeDrawn(currentPage: Int, viewSize: Int):List<DocumentPage> {
         val page = currentPage - 1
         val pagesToBeDrawn = mutableListOf<DocumentPage>()
         if(page == 0) {

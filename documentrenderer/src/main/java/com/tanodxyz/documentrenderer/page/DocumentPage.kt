@@ -1,24 +1,17 @@
 package com.tanodxyz.documentrenderer.page
 
-import android.content.Context
-import android.content.res.Resources
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
-import android.widget.Toast
 import com.tanodxyz.documentrenderer.DocumentRenderView
 import com.tanodxyz.documentrenderer.Size
 import com.tanodxyz.documentrenderer.elements.IElement
-import com.tanodxyz.documentrenderer.events.FlingEndEvent
-import com.tanodxyz.documentrenderer.events.IEvent
+import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 import com.tanodxyz.documentrenderer.events.IEventHandler
 import com.tanodxyz.documentrenderer.getHeight
 import com.tanodxyz.documentrenderer.getWidth
 import java.io.Serializable
-import java.security.SecureRandom
-import java.util.*
-import kotlin.math.abs
 
 data class DocumentPage(
     val uniquieID: Int = -1,
@@ -45,7 +38,7 @@ data class DocumentPage(
     }
 
     fun draw(canvas: Canvas, pageViewState: PageViewState) {
-        if(pageViewState.isPagePartiallyOrCompletelyVisible()) {
+//        if(pageViewState.isPagePartiallyOrCompletelyVisible()) {
             val color = Color.CYAN // green indicates drawing // red is against green
             val rectF = RectF(pageBounds.left + 100,pageBounds.top + 100,pageBounds.right - 100,pageBounds.bottom - 100)
             pagePaint.color = color
@@ -53,12 +46,12 @@ data class DocumentPage(
             pagePaint.color = Color.RED
             pagePaint.textSize = 23F
             canvas.drawText("page No ${uniquieID +1}",pageBounds.left + 30,pageBounds.top + 30,pagePaint)
-        } else {
-            // .TODO RECYCLE PAGE.
-        }
+//        } else {
+//            // .TODO RECYCLE PAGE.
+//        }
     }
 
-    override fun onEvent(event: IEvent?) {
+    override fun onEvent(event: IMotionEventMarker?) {
         println("UYT: event recieved for ${uniquieID} | is $event")
     }
 

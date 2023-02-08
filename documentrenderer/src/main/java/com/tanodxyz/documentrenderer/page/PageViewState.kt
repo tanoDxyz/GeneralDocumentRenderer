@@ -1,8 +1,5 @@
 package com.tanodxyz.documentrenderer.page
 
-import com.tanodxyz.documentrenderer.DragPinchManager
-import com.tanodxyz.documentrenderer.TouchEventsManager
-
 enum class PageViewState {
     VISIBLE, PARTIALLY_VISIBLE, INVISIBLE;
 

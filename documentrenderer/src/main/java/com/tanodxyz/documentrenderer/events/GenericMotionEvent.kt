@@ -2,7 +2,7 @@ package com.tanodxyz.documentrenderer.events
 
 import android.view.MotionEvent
 
-open class GenericMotionEvent(var motionEvent: MotionEvent? = null) : IEvent {
+open class GenericMotionEvent(var motionEvent: MotionEvent? = null) : IMotionEventMarker {
     override fun getX(): Float {
         return motionEvent?.x?:-1F
     }

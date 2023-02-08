@@ -7,7 +7,7 @@ open class FlingStartEvent(
     val moveEvent: MotionEvent?,
     val velocityX: Float,
     val velocityY: Float
-) : IEvent {
+) : IMotionEventMarker {
     override fun getX(): Float {
         return moveEvent?.x ?: -1F
     }

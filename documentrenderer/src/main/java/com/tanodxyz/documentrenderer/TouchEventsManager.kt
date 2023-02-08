@@ -26,7 +26,7 @@ class TouchEventsManager(val context: Context) :
         this.eventsListener = eventsListener
     }
 
-    fun onTouchEvent(motionEvent: MotionEvent?): Boolean {
+    fun onTouchEvent(motionEvent: MotionEvent): Boolean {
 
         if (!enabled) {
             return false
@@ -35,7 +35,7 @@ class TouchEventsManager(val context: Context) :
         var retVal = scaleGestureDetector.onTouchEvent(motionEvent)
         retVal = gestureDetector.onTouchEvent(motionEvent) || retVal
 
-        if (motionEvent!!.action == MotionEvent.ACTION_UP) {
+        if (motionEvent.action == MotionEvent.ACTION_UP) {
             if (scrolling && scrollingEnabled) {
                 finishScroll(motionEvent)
             }
@@ -43,18 +43,24 @@ class TouchEventsManager(val context: Context) :
         return retVal
     }
 
+    private fun hostCanRecieveTouchEvents(): Boolean {
+        return this.eventsListener?.canViewRecieveTouchEvents() == true
+    }
+
     private fun finishScroll(motionEvent: MotionEvent?) {
         scrolling = false
-        eventsListener?.onScrollEnd(motionEvent)
+        if (hostCanRecieveTouchEvents()) {
+            eventsListener?.onScrollEnd(motionEvent)
+        }
     }
 
     override fun onScroll(
-        e1: MotionEvent?,
-        e2: MotionEvent?,
+        e1: MotionEvent,
+        e2: MotionEvent,
         distanceX: Float,
         distanceY: Float
     ): Boolean {
-        if (scrollingEnabled) {
+        if (scrollingEnabled && hostCanRecieveTouchEvents()) {
             // determine scroll direction
             return if (eventsListener == null) {
                 false
@@ -104,8 +110,8 @@ class TouchEventsManager(val context: Context) :
         return movementDirections
     }
 
-    override fun onScale(detector: ScaleGestureDetector?): Boolean {
-        if (scalingEnabled) {
+    override fun onScale(detector: ScaleGestureDetector): Boolean {
+        if (scalingEnabled && hostCanRecieveTouchEvents()) {
             var dr = detector!!.scaleFactor
             val wantedZoom: Float = (eventsListener?.getCurrentZoom() ?: 1F) * dr
             val minZoom: Float =
@@ -125,30 +131,43 @@ class TouchEventsManager(val context: Context) :
         }
     }
 
-    override fun onSingleTapUp(e: MotionEvent?): Boolean {
-        eventsListener?.onSingleTapUp(e)
+    override fun onSingleTapUp(e: MotionEvent): Boolean {
+        if(hostCanRecieveTouchEvents()) {
+            eventsListener?.onSingleTapUp(e)
+        }
         return false
     }
 
-    override fun onDoubleTapEvent(e: MotionEvent?): Boolean {
-        eventsListener?.onDoubleTapEvent(e)
+    override fun onDoubleTapEvent(e: MotionEvent): Boolean {
+        if(hostCanRecieveTouchEvents()) {
+            eventsListener?.onDoubleTapEvent(e)
+        }
         return false
     }
 
-    override fun onLongPress(e: MotionEvent?) {
-        eventsListener?.onLongPress(e)
+    override fun onLongPress(e: MotionEvent) {
+        if(hostCanRecieveTouchEvents()) {
+            eventsListener?.onLongPress(e)
+        }
     }
 
-    override fun onDown(e: MotionEvent?): Boolean {
-        eventsListener?.onDownEvent()
+    override fun onDown(e: MotionEvent): Boolean {
+        if(hostCanRecieveTouchEvents()) {
+            eventsListener?.onDownEvent()
+        }
         return true
     }
 
-    override fun onShowPress(e: MotionEvent?) {
-        eventsListener?.onShowPress(e)
+    override fun onShowPress(e: MotionEvent) {
+        if(hostCanRecieveTouchEvents()) {
+            eventsListener?.onShowPress(e)
+        }
     }
 
-    override fun onDoubleTap(e: MotionEvent?): Boolean {
+    override fun onDoubleTap(e: MotionEvent): Boolean {
+        if(!hostCanRecieveTouchEvents()) {
+            return false
+        }
         if (scalingEnabled) {
             eventsListener?.apply {
                 if (getCurrentZoom() < getMidZoom()) {
@@ -169,26 +188,29 @@ class TouchEventsManager(val context: Context) :
         }
     }
 
-    override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+    override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+        if(!hostCanRecieveTouchEvents()) {
+            return false
+        }
         eventsListener?.onSingleTapConfirmed(e)
         return true
     }
 
     override fun onFling(
-        e1: MotionEvent?,
-        e2: MotionEvent?,
+        e1: MotionEvent,
+        e2: MotionEvent,
         velocityX: Float,
         velocityY: Float
     ): Boolean {
-        return if (flingingEnabled) {
+        return if (flingingEnabled && hostCanRecieveTouchEvents()) {
             return eventsListener?.onFling(e1, e2, velocityX, velocityY) ?: false
         } else {
             false
         }
     }
 
-    override fun onScaleBegin(detector: ScaleGestureDetector?): Boolean {
-        return if (scalingEnabled) {
+    override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
+        return if (scalingEnabled && hostCanRecieveTouchEvents()) {
             scaling = true
             eventsListener?.onScaleBegin()
             true
@@ -197,9 +219,11 @@ class TouchEventsManager(val context: Context) :
         }
     }
 
-    override fun onScaleEnd(detector: ScaleGestureDetector?) {
-        scaling = false
-        eventsListener?.onScaleEnd()
+    override fun onScaleEnd(detector: ScaleGestureDetector) {
+        if(hostCanRecieveTouchEvents()) {
+            scaling = false
+            eventsListener?.onScaleEnd()
+        }
     }
 
     interface TouchEventsListener {
@@ -243,6 +267,8 @@ class TouchEventsManager(val context: Context) :
         fun onDoubleTapEvent(e: MotionEvent?)
         fun onSingleTapUp(e: MotionEvent?)
         fun onShowPress(e: MotionEvent?)
+
+        fun canViewRecieveTouchEvents(): Boolean
     }
 
     data class MovementDirections(
@@ -257,5 +283,4 @@ class TouchEventsManager(val context: Context) :
         val midZoom: Float = DocumentRenderView.DEFAULT_MID_SCALE,
         val maxZoom: Float = DocumentRenderView.DEFAULT_MAX_SCALE
     )
-
 }

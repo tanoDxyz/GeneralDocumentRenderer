@@ -5,13 +5,13 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.view.View
-import android.widget.TextView
 import com.tanodxyz.documentrenderer.*
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.elements.DefaultCircularProgressBarElement
+import com.tanodxyz.documentrenderer.extensions.DefaultScrollHandle
 
 import com.tanodxyz.documentrenderer.page.DocumentPage
-import java.security.SecureRandom
+import com.tanodxyz.documentrenderer.pagesizecalculator.DefaultPageSizeCalculator
 import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
@@ -69,8 +69,7 @@ class MainActivity : AppCompatActivity() {
                 document = Document(context, DefaultPageSizeCalculator())
                 val handler = Handler()
                 thread(start = true) {
-                    for (i: Int in 0 until 1400) {
-                        println("89d: ${9999 - i}")
+                    for (i: Int in 0 until 9999) {
                         document!!.addPage(
                             DocumentPage(
                                 uniquieID = i,

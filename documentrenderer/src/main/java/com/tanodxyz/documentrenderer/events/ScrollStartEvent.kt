@@ -11,7 +11,7 @@ open class ScrollStartEvent(
     val distanceTraveledY: Float,
     val absoluteX: Float,
     val absoluteY: Float
-) : IEvent {
+) : IMotionEventMarker {
     override fun getX(): Float {
         return moveEvent?.x ?: -1F
     }
