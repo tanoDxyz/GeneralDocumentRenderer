@@ -1,7 +1,9 @@
 package com.tanodxyz.documentrenderer.elements
 
 import android.graphics.Canvas
-//todo this will be updated later
+import android.graphics.RectF
+import com.tanodxyz.documentrenderer.events.IMotionEventMarker
+
 interface IElement {
-    fun draw(canvas: Canvas)
+    fun draw(canvas: Canvas){}
 }

@@ -19,7 +19,7 @@ import java.security.SecureRandom
  * subject to change
  */
 class DefaultCircularProgressBarElement(val context: Context) : IElement {
-    var textToDisplay:String = context.getString(R.string.loading)
+    var textToDisplay: String = context.getString(R.string.loading)
     var parentArcColor = Color.WHITE
     var textColor = Color.WHITE
     var textSize = context.resources.spToPx(18)
@@ -55,7 +55,7 @@ class DefaultCircularProgressBarElement(val context: Context) : IElement {
         setSpace(canvas.width.toFloat(), canvas.height.toFloat())
         ++currentPercentage
         --startAngle
-        if(getCurrentPercentageToFill() > 360) {
+        if (getCurrentPercentageToFill() > 360) {
             currentPercentage = DEFAULT_PERCENTAGE_VALUE
         }
 
@@ -72,9 +72,9 @@ class DefaultCircularProgressBarElement(val context: Context) : IElement {
     private fun drawText(canvas: Canvas) {
         val textWidth = textPaint.measureText(textToDisplay)
         val halfWidth = canvas.width.div(2)
-        val textDrawX = halfWidth-(textWidth.div(2))
+        val textDrawX = halfWidth - (textWidth.div(2))
         val textDrawY = ovalSpace.bottom + context.resources.dpToPx(24)
-        canvas.drawText(textToDisplay,textDrawX,textDrawY,textPaint)
+        canvas.drawText(textToDisplay, textDrawX, textDrawY, textPaint)
     }
 
     private fun getCurrentPercentageToFill() =
@@ -102,7 +102,6 @@ class DefaultCircularProgressBarElement(val context: Context) : IElement {
             verticalCenter + ovalSize
         )
     }
-
 
     companion object {
         const val DEFAULT_PERCENTAGE_VALUE = 10F

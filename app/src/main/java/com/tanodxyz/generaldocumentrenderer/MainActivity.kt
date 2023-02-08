@@ -72,7 +72,7 @@ class MainActivity : AppCompatActivity() {
                     for (i: Int in 0 until 9999) {
                         document!!.addPage(
                             DocumentPage(
-                                uniquieID = i,
+                                uniqueId = i,
                                 documentPageRequestHandler = documentPageRequestHandler
                             )
                         )
@@ -85,28 +85,28 @@ class MainActivity : AppCompatActivity() {
 //                val rnd = SecureRandom()
 //                document!!.addPage(
 //                    DocumentPage(
-//                        uniquieID = rnd.nextInt() + 1000,
+//                        uniqueId = rnd.nextInt() + 1000,
 //                        originalSize = Size(10000, 10000),
 //                        documentPageRequestHandler = documentPageRequestHandler
 //                    )
 //                )
 //                document!!.addPage(
 //                    DocumentPage(
-//                        uniquieID = rnd.nextInt() + 1001,
+//                        uniqueId = rnd.nextInt() + 1001,
 //                        originalSize = Size(2342, 420),
 //                        documentPageRequestHandler = documentPageRequestHandler
 //                    )
 //                )
 //                document!!.addPage(
 //                    DocumentPage(
-//                        uniquieID = rnd.nextInt() + 1002,
+//                        uniqueId = rnd.nextInt() + 1002,
 //                        originalSize = Size(320, 420),
 //                        documentPageRequestHandler = documentPageRequestHandler
 //                    )
 //                )
 //                document!!.addPage(
 //                    DocumentPage(
-//                        uniquieID = rnd.nextInt() + 1003,
+//                        uniqueId = rnd.nextInt() + 1003,
 //                        originalSize = Size(32, 42),
 //                        documentPageRequestHandler = documentPageRequestHandler
 //                    )

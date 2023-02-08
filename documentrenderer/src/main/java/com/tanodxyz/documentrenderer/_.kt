@@ -110,7 +110,7 @@ fun getPageViewState(pageBounds: RectF, viewSize: Size, swipeVertical: Boolean):
 infix fun IntRange.getPagesViaPageIndexes(pageData: MutableList<DocumentPage>): MutableList<DocumentPage> {
     val pages = mutableListOf<DocumentPage>()
     this.forEach { pageIndex ->
-        pages.addAll(pageData.filter { page -> page.uniquieID == pageIndex })
+        pages.addAll(pageData.filter { page -> page.uniqueId == pageIndex })
     }
     return pages
 }

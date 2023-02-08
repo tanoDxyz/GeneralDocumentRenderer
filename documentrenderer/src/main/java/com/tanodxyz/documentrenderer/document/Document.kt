@@ -139,7 +139,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
 
     //    fun getPageViaIndex(pageIndex: Int): DocumentPage? {
 //        return try {
-//            originalDocumentPageData.first { documentPage -> documentPage.uniquieID == pageIndex }
+//            originalDocumentPageData.first { documentPage -> documentPage.uniqueId == pageIndex }
 //        } catch (ex: Exception) {
 //            null
 //        }
@@ -150,7 +150,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
 //    fun getPageListIndex(pageIndex: Int): Int {
 //        for (i: Int in originalDocumentPageData.indices) {
 //            val documentPage = originalDocumentPageData[i]
-//            if (documentPage.uniquieID == pageIndex) {
+//            if (documentPage.uniqueId == pageIndex) {
 //                return i
 //            }
 //        }
@@ -173,9 +173,9 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
 //
 //    fun deletePage(deletePageIndex: Int) {
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-//            originalDocumentPageData.removeIf { documentPage -> documentPage.uniquieID == deletePageIndex }
+//            originalDocumentPageData.removeIf { documentPage -> documentPage.uniqueId == deletePageIndex }
 //        } else {
-//            originalDocumentPageData.filter { documentPage -> documentPage.uniquieID == deletePageIndex }
+//            originalDocumentPageData.filter { documentPage -> documentPage.uniqueId == deletePageIndex }
 //                .apply {
 //                    if (this.isNotEmpty()) {
 //                        originalDocumentPageData.removeAll(this)
@@ -254,25 +254,25 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
             val documentPage = originalDocumentPageData[i]
 
             // calculate x & y bounds
-            documentPage.size = pageSizeCalculator!!.calculate(documentPage.originalSize)
-            if (documentPage.size.width > maxWidthPageSize.width) {
-                maxWidthPageSize.width = documentPage.size.width
+            documentPage.modifiedSize = pageSizeCalculator!!.calculate(documentPage.originalSize)
+            if (documentPage.modifiedSize.width > maxWidthPageSize.width) {
+                maxWidthPageSize.width = documentPage.modifiedSize.width
             }
-            if (documentPage.size.height > maxHeightPageSize.height) {
-                maxHeightPageSize.height = documentPage.size.height
+            if (documentPage.modifiedSize.height > maxHeightPageSize.height) {
+                maxHeightPageSize.height = documentPage.modifiedSize.height
             }
             contentLength += if (this.swipeVertical) {
-                documentPage.size.height
+                documentPage.modifiedSize.height
             } else {
-                documentPage.size.width
+                documentPage.modifiedSize.width
             }
             documentPage.resetPageBounds()
             if (swipeVertical) {
                 pageIndexes.add(PointF(0F, indexY))
-                indexY += documentPage.size.height
+                indexY += documentPage.modifiedSize.height
             } else {
                 pageIndexes.add(PointF(indexX, 0F))
-                indexX += documentPage.size.width
+                indexX += documentPage.modifiedSize.width
             }
 
         }
@@ -347,9 +347,9 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
                 }
                 pagesToBeDrawn.add(documentPage)
                 pagesAddedToListSize += if(swipeVertical) {
-                    documentPage.size.height
+                    documentPage.modifiedSize.height
                 } else {
-                    documentPage.size.width
+                    documentPage.modifiedSize.width
                 }
             }
         } else {
@@ -361,9 +361,9 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
                 }
                 pagesToBeDrawn.add(documentPage)
                 pagesAddedToListForwardSize += if(swipeVertical) {
-                    documentPage.size.height
+                    documentPage.modifiedSize.height
                 } else {
-                    documentPage.size.width
+                    documentPage.modifiedSize.width
                 }
             }
 
@@ -375,9 +375,9 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
                 }
                 pagesToBeDrawn.add(0,documentPage)
                 pagesAddedToListBackwardSize += if(swipeVertical) {
-                    documentPage.size.height
+                    documentPage.modifiedSize.height
                 } else {
-                    documentPage.size.width
+                    documentPage.modifiedSize.width
                 }
             }
         }

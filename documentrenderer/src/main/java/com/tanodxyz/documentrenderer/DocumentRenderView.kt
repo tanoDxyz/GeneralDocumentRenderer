@@ -204,12 +204,12 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     protected fun setDefaultContentDrawOffsets() {
         if (document.swipeVertical) {
-            // whenever size changes set X
+            // whenever modifiedSize changes set X
             val scaledPageWidth: Float = toCurrentScale(document.getMaxPageWidth())
             if (scaledPageWidth < width) {
                 contentDrawOffsetX = width.div(2) - scaledPageWidth.div(2)
             }
-            // whenever size changes set Y
+            // whenever modifiedSize changes set Y
             val documentHeight = document.getDocLen(zoom)
             if (documentHeight < height) {
                 contentDrawOffsetY = (height - documentHeight).div(2)
@@ -328,7 +328,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     fun jumpToPage(pageNumber: Int, withAnimation: Boolean = false) {
         if (document.swipeVertical) {
-            val pageHeight = toCurrentScale(document.getPage(pageNumber)!!.size.height)
+            val pageHeight = toCurrentScale(document.getPage(pageNumber)!!.modifiedSize.height)
             var yOffset = toCurrentScale(document.pageIndexes[pageNumber].y)
             if (pageHeight < height) {
                 val screenCenterY = (viewSize.height.div(2) - pageHeight.div(2))
@@ -343,7 +343,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                 moveTo(contentDrawOffsetX, yOffset)
             }
         } else {
-            val pageWidth = toCurrentScale(document.getPage(pageNumber)!!.size.width)
+            val pageWidth = toCurrentScale(document.getPage(pageNumber)!!.modifiedSize.width)
             var xOffset = toCurrentScale(document.pageIndexes[pageNumber].x)
             if(pageWidth < width) {
                 val screenCenterX = (viewSize.width.div(2) - pageWidth.div(2))
@@ -619,14 +619,14 @@ open class DocumentRenderView @JvmOverloads constructor(
         pageX =
             contentDrawX + scaledPageStart + document.pageMargins.left
         // pageY
-        scaledPageY = toCurrentScale((document.getMaxPageHeight() - page.size.height).div(2))
+        scaledPageY = toCurrentScale((document.getMaxPageHeight() - page.modifiedSize.height).div(2))
         pageY =
             (contentDrawOffsetY + scaledPageY) + document.pageMargins.top
 
         bottomMarginToSubtract =
             document.pageMargins.top + document.pageMargins.bottom
 
-        pageHeightToDraw = page.size.height
+        pageHeightToDraw = page.modifiedSize.height
         scaledFitPageHeight = toCurrentScale(pageHeightToDraw)
         pageBottom = (pageY + scaledFitPageHeight) - bottomMarginToSubtract
         // pageEnd
@@ -634,7 +634,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         rightMarginToSubtract =
             document.pageMargins.left + document.pageMargins.right
 
-        pageWidthToDraw = page.size.width
+        pageWidthToDraw = page.modifiedSize.width
         scaledFitPageWidth = toCurrentScale(pageWidthToDraw)
         pageEnd = (pageX + scaledFitPageWidth) - rightMarginToSubtract
 
@@ -860,16 +860,16 @@ open class DocumentRenderView @JvmOverloads constructor(
     protected fun calculateCurrentPage(page: DocumentPage): Int {
         val pageViewState = getPageViewState(page.pageBounds)
         return if (pageViewState == PageViewState.VISIBLE) {
-            page.uniquieID + 1
+            page.uniqueId + 1
         } else if (document.swipeVertical) {
             if (page.pageBounds.top < (height.div(2F)) /*&& page.pageBounds.bottom > 0*/) {
-                page.uniquieID + 1
+                page.uniqueId + 1
             } else {
                 currentPage
             }
         } else {
             if (page.pageBounds.left < (width.div(2F)) /*&& page.pageBounds.right > 0*/) {
-                page.uniquieID + 1
+                page.uniqueId + 1
             } else {
                 currentPage
             }
@@ -928,41 +928,41 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (document.swipeVertical) {
             // page x
             scaledPageStart =
-                (toCurrentScale(document.getMaxPageWidth() - page.size.width).div(2))
+                (toCurrentScale(document.getMaxPageWidth() - page.modifiedSize.width).div(2))
             pageX =
                 contentDrawOffsetX + scaledPageStart + document.pageMargins.left;
 
             rightMarginToSubtract =
                 document.pageMargins.left + document.pageMargins.right
-            pageWidthToDraw = page.size.width
+            pageWidthToDraw = page.modifiedSize.width
             scaledFitPageWidth = toCurrentScale(pageWidthToDraw)
             pageEnd = (pageX + scaledFitPageWidth) - rightMarginToSubtract
             // page Y
 
             pageY = contentDrawOffsetY + document.pageMargins.top + toCurrentScale(
-                document.pageIndexes[page.uniquieID].y
+                document.pageIndexes[page.uniqueId].y
             )
 //                contentDrawOffsetY + document.pageMargins.top + scaledPageY
             // page bottom
             bottomMarginToSubtract =
                 document.pageMargins.top + document.pageMargins.bottom
 
-            pageHeightToDraw = page.size.height
+            pageHeightToDraw = page.modifiedSize.height
             scaledFitPageHeight = toCurrentScale(pageHeightToDraw)
             pageBottom = (pageY + scaledFitPageHeight) - bottomMarginToSubtract
         } else {
             //page x
             pageX =
-                contentDrawOffsetX + toCurrentScale(document.pageIndexes[page.uniquieID].x) + document.pageMargins.left
+                contentDrawOffsetX + toCurrentScale(document.pageIndexes[page.uniqueId].x) + document.pageMargins.left
             // pageY
-            scaledPageY = toCurrentScale((document.getMaxPageHeight() - page.size.height).div(2))
+            scaledPageY = toCurrentScale((document.getMaxPageHeight() - page.modifiedSize.height).div(2))
             pageY =
                 (contentDrawOffsetY + scaledPageY) + document.pageMargins.top
 
             bottomMarginToSubtract =
                 document.pageMargins.top + document.pageMargins.bottom
 
-            pageHeightToDraw = page.size.height
+            pageHeightToDraw = page.modifiedSize.height
             scaledFitPageHeight = toCurrentScale(pageHeightToDraw)
             pageBottom = (pageY + scaledFitPageHeight) - bottomMarginToSubtract
             // pageEnd
@@ -970,7 +970,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             rightMarginToSubtract =
                 document.pageMargins.left + document.pageMargins.right
 
-            pageWidthToDraw = page.size.width
+            pageWidthToDraw = page.modifiedSize.width
             scaledFitPageWidth = toCurrentScale(pageWidthToDraw)
             pageEnd = (pageX + scaledFitPageWidth) - rightMarginToSubtract
         }
