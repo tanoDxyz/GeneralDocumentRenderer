@@ -127,8 +127,9 @@ open class DocumentRenderView @JvmOverloads constructor(
             val rationBetweenContentLengthAndMaxScroll = docLen.div(maximumScrollbarHeightScaled)
             val contentDrawOffsetY =
                 rationBetweenContentLengthAndMaxScroll * -1 * toCurrentScale(progress)
+
             val maxPages = document.getPagesCount()
-            val page = (maxPages.div(maximumScrollbarHeightScaled) * progress).roundToInt()
+            val page = (maxPages.div(maximumScrollbarHeightScaled) * toCurrentScale(progress)).roundToInt()
             currentPage = if (page <= 0) 1 else page
             moveTo(contentDrawOffsetX, contentDrawOffsetY, moveHandle)
 
@@ -140,7 +141,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             val contentDrawOffsetX =
                 rationBetweenContentLengthAndMaxScroll * -1 * toCurrentScale(progress)
             val maxPages = document.getPagesCount()
-            val page = (maxPages.div(maximumScrollbarWidthScaled) * progress).roundToInt()
+            val page = (maxPages.div(maximumScrollbarWidthScaled) * toCurrentScale(progress)).roundToInt()
             currentPage = if (page <= 0) 1 else page
             moveTo(contentDrawOffsetX, contentDrawOffsetY, moveHandle)
         }
