@@ -11,6 +11,7 @@ class FixPageSizeCalculator : PageSizeCalculator() {
 
     override fun setup(args: HashMap<String, Any>) {
         viewSize = args[VIEW_SIZE] as Size
+        viewSize.ensureValuesAreNonZero()
         optimalMaxWidthPageSize = viewSize
         optimalMaxHeightPageSize = viewSize
     }

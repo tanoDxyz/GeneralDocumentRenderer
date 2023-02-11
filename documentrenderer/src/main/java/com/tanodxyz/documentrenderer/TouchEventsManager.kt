@@ -277,10 +277,4 @@ class TouchEventsManager(val context: Context) :
         var right: Boolean = false,
         var bottom: Boolean = false
     )
-
-    data class Settings(
-        val minZoom: Float = DocumentRenderView.DEFAULT_MIN_SCALE,
-        val midZoom: Float = DocumentRenderView.DEFAULT_MID_SCALE,
-        val maxZoom: Float = DocumentRenderView.DEFAULT_MAX_SCALE
-    )
 }

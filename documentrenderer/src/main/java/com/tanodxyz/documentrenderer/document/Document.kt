@@ -81,6 +81,12 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
             this[PROPERTY_DOCUMENT_PAGE_FLING] = value
         }
 
+    var fitEachPage: Boolean
+        get() = get<Boolean>(PROPERTY_DOCUMENT_FIT_EACH_PAGE) ?: true
+        set(value) {
+            this[PROPERTY_DOCUMENT_FIT_EACH_PAGE] = value
+        }
+
     var documentViewMode: DocumentViewMode
         get() {
             return get<DocumentViewMode>(PROPERTY_DOCUMENT_VIEW_MODE) ?: DocumentViewMode.DAY
@@ -215,14 +221,17 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
     open fun getMaxPageSize(): Size {
         return if (swipeVertical) maxWidthPageSize else maxHeightPageSize
     }
+
     @Synchronized
     open fun getMaxPageWidth(): Int {
         return getMaxPageSize().width
     }
+
     @Synchronized
     open fun getMaxPageHeight(): Int {
         return getMaxPageSize().height
     }
+
     @Synchronized
     open fun recalculatePageSizesAndIndexes(viewSize: Size) {
         if (originalDocumentPageData.isEmpty()) {
@@ -277,6 +286,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
 
         }
     }
+
     @Synchronized
     open fun toCurrentScale(size: Number, zoom: Float): Float {
         return size.toFloat() * zoom
@@ -309,12 +319,16 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
 
     @Synchronized
     open fun getTotalContentLength(): Float = contentLength
+
     @Synchronized
     open fun getDocumentPages(): List<DocumentPage> = originalDocumentPageData
+
     @Synchronized
     open fun haveNoPages(): Boolean = getDocumentPages().isEmpty()
+
     @Synchronized
     open fun getPagesCount(): Int = getDocumentPages().count()
+
     @Synchronized
     open fun getPage(pageNumber: Int): DocumentPage? {
         return if (pageNumber < 0 || pageNumber >= getPagesCount()) {
@@ -324,7 +338,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         }
     }
 
-//    fun getPagesThatFitsScreenSize(
+    //    fun getPagesThatFitsScreenSize(
 //        start: Int,
 //        viewSize: Size,
 //        forward: Boolean
@@ -335,18 +349,18 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
 //        return pagesList
 //    }
     @Synchronized
-    open fun getPagesToBeDrawn(currentPage: Int, viewSize: Int):List<DocumentPage> {
+    open fun getPagesToBeDrawn(currentPage: Int, viewSize: Int): List<DocumentPage> {
         val page = currentPage - 1
         val pagesToBeDrawn = mutableListOf<DocumentPage>()
-        if(page == 0) {
+        if (page == 0) {
             var pagesAddedToListSize = 0
-            for(i:Int in originalDocumentPageData.indices) {
+            for (i: Int in originalDocumentPageData.indices) {
                 val documentPage = originalDocumentPageData[i]
-                if(viewSize < pagesAddedToListSize) {
+                if (viewSize < pagesAddedToListSize) {
                     break
                 }
                 pagesToBeDrawn.add(documentPage)
-                pagesAddedToListSize += if(swipeVertical) {
+                pagesAddedToListSize += if (swipeVertical) {
                     documentPage.modifiedSize.height
                 } else {
                     documentPage.modifiedSize.width
@@ -354,13 +368,13 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
             }
         } else {
             var pagesAddedToListForwardSize = 0
-            for(i: Int in page until originalDocumentPageData.count() ) {
+            for (i: Int in page until originalDocumentPageData.count()) {
                 val documentPage = originalDocumentPageData[i]
-                if(viewSize < pagesAddedToListForwardSize) {
+                if (viewSize < pagesAddedToListForwardSize) {
                     break
                 }
                 pagesToBeDrawn.add(documentPage)
-                pagesAddedToListForwardSize += if(swipeVertical) {
+                pagesAddedToListForwardSize += if (swipeVertical) {
                     documentPage.modifiedSize.height
                 } else {
                     documentPage.modifiedSize.width
@@ -368,13 +382,13 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
             }
 
             var pagesAddedToListBackwardSize = 0
-            for(i:Int in (page -1 ) downTo  0) {
+            for (i: Int in (page - 1) downTo 0) {
                 val documentPage = originalDocumentPageData[i]
-                if(viewSize < pagesAddedToListBackwardSize) {
+                if (viewSize < pagesAddedToListBackwardSize) {
                     break
                 }
-                pagesToBeDrawn.add(0,documentPage)
-                pagesAddedToListBackwardSize += if(swipeVertical) {
+                pagesToBeDrawn.add(0, documentPage)
+                pagesAddedToListBackwardSize += if (swipeVertical) {
                     documentPage.modifiedSize.height
                 } else {
                     documentPage.modifiedSize.width

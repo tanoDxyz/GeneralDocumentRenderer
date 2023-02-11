@@ -4,13 +4,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#cff"
     tools:context=".MainActivity">
 
 
     <com.tanodxyz.documentrenderer.DocumentRenderView
         app:layout_constraintTop_toTopOf="parent"
-        android:id="@+id/cvxd"
+        android:id="@+id/documentRenderView"
         android:visibility="visible"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -19,9 +18,5 @@
         app:layout_constraintStart_toStartOf="parent" />
 
 
-    <Button
-        android:onClick="switchSwipeModeClicked"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

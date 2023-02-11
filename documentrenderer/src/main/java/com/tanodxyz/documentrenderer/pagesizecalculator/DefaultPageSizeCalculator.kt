@@ -2,7 +2,9 @@ package com.tanodxyz.documentrenderer.pagesizecalculator
 
 
 import com.tanodxyz.documentrenderer.Size
+import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.document.Document.PageFitPolicy
+import com.tanodxyz.documentrenderer.page.DocumentPage
 
 
 class DefaultPageSizeCalculator : PageSizeCalculator() {
@@ -18,12 +20,14 @@ class DefaultPageSizeCalculator : PageSizeCalculator() {
 
 
     override fun setup(args: HashMap<String, Any>) {
+        val fitPolicy = args[FIT_POLICY] as PageFitPolicy? ?: Document.PageFitPolicy.BOTH
+        val fitEachPage: Boolean = args[FIT_EACH_PAGE] as? Boolean ?: true
         setup(
-            args[FIT_POLICY] as PageFitPolicy,
+            fitPolicy,
             args[MAX_WIDTH_PAGE_SIZE] as Size,
             args[MAX_HEIGHT_PAGE_SIZE] as Size,
             args[VIEW_SIZE] as Size,
-            args[FIT_EACH_PAGE] as Boolean
+            fitEachPage
         )
     }
 
@@ -35,6 +39,8 @@ class DefaultPageSizeCalculator : PageSizeCalculator() {
         fitEachPage: Boolean = false
     ) {
         this.fitPolicy = fitPolicy
+        originalMaxHeightSize.ensureValuesAreNonZero()
+        originalMaxWidthSize.ensureValuesAreNonZero()
         this.originalMaxWidthSize = originalMaxWidthSize
         this.originalMaxHeightSize = originalMaxHeightSize
         this.viewSize = viewSize

@@ -1,4 +1,4 @@
-package com.tanodxyz.documentrenderer.document
+package com.tanodxyz.generaldocumentrenderer.document
 
 import org.junit.Test
 

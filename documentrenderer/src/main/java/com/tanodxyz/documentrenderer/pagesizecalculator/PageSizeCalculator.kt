@@ -10,11 +10,22 @@ abstract class PageSizeCalculator {
     open lateinit var optimalMaxHeightPageSize: Size
     open lateinit var viewSize: Size
     open fun reset() {}
+
     companion object {
         const val FIT_POLICY = Document.PROPERTY_DOCUMENT_PAGE_FIT_POLICY
         const val MAX_WIDTH_PAGE_SIZE = "com.maxWidthSize"
         const val MAX_HEIGHT_PAGE_SIZE = "com.maxHeightSize"
         const val VIEW_SIZE = "com.viewSize"
         const val FIT_EACH_PAGE = Document.PROPERTY_DOCUMENT_FIT_EACH_PAGE
+    }
+
+    fun Size.ensureValuesAreNonZero(): Size {
+        if (this.width <= 0) {
+            this.width = 1
+        }
+        if (this.height <= 0) {
+            this.height = 1
+        }
+        return this
     }
 }

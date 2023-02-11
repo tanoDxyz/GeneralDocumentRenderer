@@ -3,8 +3,6 @@ package com.tanodxyz.documentrenderer
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.util.LruCache
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
 import java.util.UUID
 
 class CacheManager(memoryFactor: Int) {
