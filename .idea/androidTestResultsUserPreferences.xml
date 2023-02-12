@@ -3,6 +3,20 @@
   <component name="AndroidTestResultsUserPreferences">
     <option name="androidTestResultsTableState">
       <map>
+        <entry key="-1508986287">
+          <value>
+            <AndroidTestResultsTableState>
+              <option name="preferredColumnWidths">
+                <map>
+                  <entry key="05073259CB002082" value="120" />
+                  <entry key="Duration" value="90" />
+                  <entry key="INFINIX MOBILITY LIMITED&#10; Infinix X652A" value="120" />
+                  <entry key="Tests" value="360" />
+                </map>
+              </option>
+            </AndroidTestResultsTableState>
+          </value>
+        </entry>
         <entry key="-1262006059">
           <value>
             <AndroidTestResultsTableState>

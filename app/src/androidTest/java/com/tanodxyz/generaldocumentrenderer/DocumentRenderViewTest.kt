@@ -1,8 +1,5 @@
 package com.tanodxyz.generaldocumentrenderer
 
-import android.os.Looper
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatDelegate.NightMode
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.IdlingRegistry
@@ -11,7 +8,6 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.Assert
-import java.security.SecureRandom
 
 
 class DocumentRenderViewTest {
@@ -34,57 +30,71 @@ class DocumentRenderViewTest {
 
     @Test
     fun jumpTo___pageTest() {
-        val pageNumber = SecureRandom().nextInt(100) + 10
-        activity.renderView.apply {
-            jumpToPage(pageNumber, withAnimation = false)
-            Thread.sleep(3000)
-            Assert.assertEquals(pageNumber, getCurrentPageIndex())
-        }
+        onView(withId(R.id.documentRenderView)).perform(JumpToPageTest())
     }
 
     @Test
     fun change___Swipe__mode() {
-        Thread.sleep(5_000)
+        sleep(5)
         val changeSwipeMode = ChangeSwipeMode()
         onView(withId(R.id.documentRenderView)).perform(changeSwipeMode)
         // by default view is launched into vertical mode
         Assert.assertEquals(false, changeSwipeMode.swipeVertical)
-        Thread.sleep(5_000)
+        sleep(5)
         onView(withId(R.id.documentRenderView)).perform(changeSwipeMode)
         Assert.assertEquals(true, changeSwipeMode.swipeVertical)
-        Thread.sleep(5_000)
+        sleep(5)
     }
 
+    fun sleep(seconds: Int) {
+        Thread.sleep(seconds * 1000L)
+    }
 
     @Test
     fun nightMode__swap() {
-        Thread.sleep(5_000)
+        sleep(5)
         // by default mode is day
         val viewNightModeSwipe = ViewNightModeSwipe(night = true)
         onView(withId(R.id.documentRenderView)).perform(viewNightModeSwipe)
-        Assert.assertEquals(true,viewNightModeSwipe.isNightMode)
-        Thread.sleep(5000)
+        Assert.assertEquals(true, viewNightModeSwipe.isNightMode)
+        sleep(5)
         viewNightModeSwipe.night = false
         onView(withId(R.id.documentRenderView)).perform(viewNightModeSwipe)
-        Assert.assertEquals(true,!viewNightModeSwipe.isNightMode)
-        Thread.sleep(5000)
+        Assert.assertEquals(true, !viewNightModeSwipe.isNightMode)
+        sleep(5)
     }
 
     @Test
     fun buzy__action() {
-        Thread.sleep(3_000)
+        sleep(3)
         val buzyAction = BuzyFree(buzy = true)
         onView(withId(R.id.documentRenderView)).perform(buzyAction)
         Assert.assertEquals(true, buzyAction.stateAfterAction)
-        Thread.sleep(2_000)
+        sleep(2)
     }
 
 
-    @Test fun scroll____test() {
-        Thread.sleep(5_000)
-        activity.renderView.apply {
+    @Test
+    fun scroll____test() {
+        sleep(2)
+        val scrollTest = ScrollTest(vertical = true)
+        onView(withId(R.id.documentRenderView)).perform(scrollTest)
+        sleep(10)
+        assert(scrollTest.pageAfterScroll != scrollTest.startPageBeforeScroll)
+        onView(withId(R.id.documentRenderView)).perform(ChangeSwipeMode())
+        sleep(3)
+        val scrollTest1 = ScrollTest(vertical = false)
+        onView(withId(R.id.documentRenderView)).perform(scrollTest1)
+        sleep(10)
+        assert(scrollTest1.pageAfterScroll != scrollTest1.startPageBeforeScroll)
+    }
 
-        }
+    @Test
+    fun pageFlingTest() {
+        sleep(2)
+        onView(withId(R.id.documentRenderView)).perform(FlingTest())
+        sleep(15)
+
     }
     @After
     fun unregisterIdlingResource() {

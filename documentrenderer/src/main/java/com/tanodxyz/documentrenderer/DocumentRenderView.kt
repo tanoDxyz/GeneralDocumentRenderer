@@ -615,6 +615,7 @@ open class DocumentRenderView @JvmOverloads constructor(
      * page number starting from zero
      */
     protected fun findPageBoundsFor(pageNo: Int, contentDrawX: Float): RectF {
+        val normalizedPageNo = if(pageNo <= 0) 0 else pageNo
         var pageX = 0F
         var pageY = 0F
         var pageEnd = 0F
@@ -629,9 +630,9 @@ open class DocumentRenderView @JvmOverloads constructor(
         var scaledFitPageHeight = 0F
         val documentPages = document.getDocumentPages()
         val targetPageBounds = RectF(0F, 0F, 0F, 0F)
-        val page = documentPages[pageNo]
+        val page = documentPages[normalizedPageNo]
         //page x
-        scaledPageStart = (toCurrentScale(document.pageIndexes[pageNo].x))
+        scaledPageStart = (toCurrentScale(document.pageIndexes[normalizedPageNo].x))
         pageX =
             contentDrawX + scaledPageStart + document.pageMargins.left
         // pageY
@@ -663,6 +664,11 @@ open class DocumentRenderView @JvmOverloads constructor(
         }
 
         return targetPageBounds
+    }
+
+    @TestOnly
+    fun __pageFling(velocityX: Float, velocityY: Float) {
+        pageFling(velocityX,velocityY)
     }
 
     protected fun pageFling(velocityX: Float, velocityY: Float) {

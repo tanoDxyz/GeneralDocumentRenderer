@@ -50,16 +50,6 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
         }
     }
 
-    @TestOnly
-    fun __testAndroid__setBuzyStateIndicator() {
-        thread {
-            while (true) {
-                Thread.sleep(2000)
-                renderViewState(renderView.isFree())
-            }
-        }
-    }
-
     companion object {
         var document: Document? = null
         fun createAndAddPagesToDocument(

@@ -352,7 +352,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
     open fun getPagesToBeDrawn(currentPage: Int, viewSize: Int): List<DocumentPage> {
         val page = currentPage - 1
         val pagesToBeDrawn = mutableListOf<DocumentPage>()
-        if (page == 0) {
+        if (page <= 0) {
             var pagesAddedToListSize = 0
             for (i: Int in originalDocumentPageData.indices) {
                 val documentPage = originalDocumentPageData[i]
