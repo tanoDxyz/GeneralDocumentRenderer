@@ -346,7 +346,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             if (pageHeight < height) {
                 val screenCenterY = (viewSize.height.div(2) - pageHeight.div(2))
                 if (screenCenterY + pageHeight < height) {
-                    yOffset -= screenCenterY.toFloat()
+                    yOffset -= screenCenterY
                 }
             }
             yOffset *= -1
@@ -361,7 +361,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             if (pageWidth < width) {
                 val screenCenterX = (viewSize.width.div(2) - pageWidth.div(2))
                 if (screenCenterX + pageWidth < width) {
-                    xOffset -= screenCenterX.toFloat()
+                    xOffset -= screenCenterX
                 }
             }
             xOffset *= -1
@@ -616,11 +616,10 @@ open class DocumentRenderView @JvmOverloads constructor(
      */
     protected fun findPageBoundsFor(pageNo: Int, contentDrawX: Float): RectF {
         val normalizedPageNo = if(pageNo <= 0) 0 else pageNo
-        var pageX = 0F
-        var pageY = 0F
-        var pageEnd = 0F
-        var pageBottom = 0F
-        var scaledPageStart = 0F
+        var pageX: Float
+        var pageY: Float
+        var pageEnd: Float
+        var pageBottom: Float
         var rightMarginToSubtract = 0F
         var pageWidthToDraw = 0
         var scaledFitPageWidth = 0F
@@ -632,7 +631,8 @@ open class DocumentRenderView @JvmOverloads constructor(
         val targetPageBounds = RectF(0F, 0F, 0F, 0F)
         val page = documentPages[normalizedPageNo]
         //page x
-        scaledPageStart = (toCurrentScale(document.pageIndexes[normalizedPageNo].x))
+        val scaledPageStart
+        = (toCurrentScale(document.pageIndexes[normalizedPageNo].x))
         pageX =
             contentDrawX + scaledPageStart + document.pageMargins.left
         // pageY

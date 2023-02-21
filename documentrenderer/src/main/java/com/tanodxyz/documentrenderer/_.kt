@@ -8,6 +8,7 @@ import android.util.TypedValue
 import android.view.View
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.page.PageViewState
+import java.io.Closeable
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
 
@@ -16,6 +17,15 @@ fun Resources.dpToPx(dp: Int): Float {
     return TypedValue.applyDimension(
         TypedValue.COMPLEX_UNIT_DIP,
         dp.toFloat(),
+        displayMetrics
+    )
+}
+
+fun Resources.pdfPointToPixel(points: Int): Float {
+    val inches = points / 72F
+    return TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_IN,
+        inches,
         displayMetrics
     )
 }
@@ -152,5 +162,13 @@ fun Pair<Float, Float>.getHeight(): Float {
 
 fun Pair<Float, Float>.getWidth(): Float {
     return RectF(this.first, 0F, this.second, 0F).getWidth()
+}
+
+fun Closeable?.closeResource() {
+    try {
+        this?.close()
+    } catch (ex: java.lang.Exception) {
+        ex.printStackTrace()
+    }
 }
 

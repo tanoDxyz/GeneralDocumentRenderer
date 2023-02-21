@@ -1,10 +1,12 @@
 package com.tanodxyz.generaldocumentrenderer
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.view.View
+import androidx.appcompat.widget.AppCompatImageView
 import com.tanodxyz.documentrenderer.*
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.elements.DefaultCircularProgressBarElement
@@ -12,6 +14,8 @@ import com.tanodxyz.documentrenderer.extensions.DefaultScrollHandle
 
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.pagesizecalculator.DefaultPageSizeCalculator
+import com.tanodxyz.generaldocumentrenderer.pdfparsing.PdfParser
+import com.tanodxyz.itext722g.IText722
 import org.jetbrains.annotations.TestOnly
 import java.security.SecureRandom
 import kotlin.concurrent.thread
@@ -28,7 +32,8 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
     private fun init() {
 
         simpleIdleResource = SimpleIdlingResource()
-
+        // init android itext library 7.2.2
+        IText722.init(this)
 
         createAndAddPagesToDocument(this, renderView.documentPageRequestHandler) { document ->
 
@@ -42,11 +47,15 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
             document.pageFling = true
 
             renderView.loadDocument(document)
+
+            // for testing.
             renderView.idleStateCallback = this
 
             renderView.setBuzyStateIndicator(DefaultCircularProgressBarElement(this))
             renderView.addScrollHandle(DefaultScrollHandle(this))
 
+            val pdfParser = PdfParser(this)
+            pdfParser.openDocument("bcd.pdf")
         }
     }
 

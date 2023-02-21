@@ -10,8 +10,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://jitpack.io' }
     }
 }
 rootProject.name = "General Document Renderer"
 include ':app'
 include ':documentrenderer'
+include ':itext722g'
