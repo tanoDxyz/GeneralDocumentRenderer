@@ -262,7 +262,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         for (i: Int in originalDocumentPageData.indices) {
             val documentPage = originalDocumentPageData[i]
 
-            // calculate x & y bounds
+            // calculate x & y pageRelativeBounds
             documentPage.modifiedSize = pageSizeCalculator!!.calculate(documentPage.originalSize)
             if (documentPage.modifiedSize.width > maxWidthPageSize.width) {
                 maxWidthPageSize.width = documentPage.modifiedSize.width

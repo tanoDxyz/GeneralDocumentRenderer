@@ -35,7 +35,7 @@ public class ContentProcessor implements ITextExtractionStrategy {
      */
     private static boolean DUMP_STATE = false;
     /**
-     * this field indicates single line text and it's bounds
+     * this field indicates single line text and it's pageRelativeBounds
      */
     public HashMap<String, ArrayList<TextChunk>> textAndBoundsArray = new HashMap<>(2000);
     public ArrayList<TextRenderInfo> allTextRenderInfos = new ArrayList<>(2000);

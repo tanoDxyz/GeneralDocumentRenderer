@@ -69,7 +69,6 @@ open class DocumentRenderView @JvmOverloads constructor(
     private val minZoom = DEFAULT_MIN_SCALE
     private val midZoom = DEFAULT_MID_SCALE
     private val maxZoom = DEFAULT_MAX_SCALE
-    val documentPageRequestHandler = DocumentPageRequestHandler()
 
     init {
         executor = Executors.newCachedThreadPool()
@@ -1054,63 +1053,18 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
 
-    inner class DocumentPageRequestHandler : PageRequests {
-        override fun redraw() {
-            redraw()
-        }
-
-        override fun enableDisableScroll(enable: Boolean) {
-            touchEventMgr.scrollingEnabled = enable
-        }
-
-        override fun stopFling() {
-            stopFling()
-        }
-
-        override fun enableDisableFling(enable: Boolean) {
-            touchEventMgr.flingingEnabled = enable
-        }
-
-        override fun enableDisableScale(enable: Boolean) {
-            touchEventMgr.scalingEnabled = enable
-        }
-
-        override fun getCurrentX(): Float {
-            return contentDrawOffsetX
-        }
-
-        override fun getCurrentY(): Float {
-            return contentDrawOffsetY
-        }
-
-        override fun setCurrentX(x: Float) {
-            contentDrawOffsetX = x
-        }
-
-        override fun setCurrentY(y: Float) {
-            contentDrawOffsetY = y
-        }
-
-        override fun getPageCount(): Int {
-            return document.getPagesCount()
-        }
-
-        override fun jumpToPage(pageNumber: Int, withAnimation: Boolean) {
-            this@DocumentRenderView.jumpToPage0(pageNumber, withAnimation)
-        }
-    }
-
     interface IdleStateCallback {
         @TestOnly
         fun renderViewState(idle: Boolean)
     }
 
     companion object {
-        val DEFAULT_MAX_SCALE = 3.0f // todo change this
-        val DEFAULT_MID_SCALE = 1.75f //todo and this to change the double tap zoom levels
-        val DEFAULT_MIN_SCALE = 1.0f
-        var MAXIMUM_ZOOM = 3.0f
         var MINIMUM_ZOOM = 1.0F
+        var MAXIMUM_ZOOM = 15f
+
+        val DEFAULT_MAX_SCALE = MAXIMUM_ZOOM
+        val DEFAULT_MID_SCALE = 4F
+        val DEFAULT_MIN_SCALE = MINIMUM_ZOOM
         var REFRESH_RATE_IN_CASE_VIEW_BUZY = 10L
         var SCROLL_HANDLE_AND_PAGE_DISPLAY_BOX_HIDE_DELAY_MILLISECS = 1000L
     }
