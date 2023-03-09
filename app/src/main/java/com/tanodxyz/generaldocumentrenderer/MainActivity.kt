@@ -89,6 +89,8 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
                         val pageElement = PageElement(page = documentPage)
                         pageElement.layoutParams.width = 200
                         pageElement.layoutParams.height = 200
+                        pageElement.layoutParams.x = 40F
+                        pageElement.layoutParams.y = 50F
 
 //                        val pageElement1 = PageElement(page = documentPage)
 //                        pageElement1.layoutParams.width = 200

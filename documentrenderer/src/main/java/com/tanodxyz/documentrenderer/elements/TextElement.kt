@@ -1,4 +1,6 @@
 package com.tanodxyz.documentrenderer.elements
 
-class TextElement {
+import com.tanodxyz.documentrenderer.page.DocumentPage
+
+class TextElement(page: DocumentPage): PageElement(page = page) {
 }

@@ -80,6 +80,11 @@ open class DocumentRenderView @JvmOverloads constructor(
         touchEventMgr.registerListener(this)
     }
 
+    @TestOnly
+    fun __getDocument(): Document {
+        return document
+    }
+
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         viewSize = Size(w, h)
@@ -614,7 +619,7 @@ open class DocumentRenderView @JvmOverloads constructor(
      * page number starting from zero
      */
     protected fun findPageBoundsFor(pageNo: Int, contentDrawX: Float): RectF {
-        val normalizedPageNo = if(pageNo <= 0) 0 else pageNo
+        val normalizedPageNo = if (pageNo <= 0) 0 else pageNo
         var pageX: Float
         var pageY: Float
         var pageEnd: Float
@@ -630,8 +635,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         val targetPageBounds = RectF(0F, 0F, 0F, 0F)
         val page = documentPages[normalizedPageNo]
         //page x
-        val scaledPageStart
-        = (toCurrentScale(document.pageIndexes[normalizedPageNo].x))
+        val scaledPageStart = (toCurrentScale(document.pageIndexes[normalizedPageNo].x))
         pageX =
             contentDrawX + scaledPageStart + document.pageMargins.left
         // pageY
@@ -667,7 +671,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     @TestOnly
     fun __pageFling(velocityX: Float, velocityY: Float) {
-        pageFling(velocityX,velocityY)
+        pageFling(velocityX, velocityY)
     }
 
     protected fun pageFling(velocityX: Float, velocityY: Float) {
@@ -1022,7 +1026,8 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     fun nightMode(night: Boolean) {
         document.nightMode = night
-        if (document.nightMode) pagePaint.color = Color.BLACK else pagePaint.color = document.pageBackColor
+        if (document.nightMode) pagePaint.color = Color.BLACK else pagePaint.color =
+            document.pageBackColor
         redraw()
     }
 

@@ -2,12 +2,14 @@ package com.tanodxyz.generaldocumentrenderer
 
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.View
-import android.widget.Toast
 import androidx.test.espresso.UiController
 import androidx.test.espresso.ViewAction
 import androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom
 import com.tanodxyz.documentrenderer.DocumentRenderView
+import com.tanodxyz.documentrenderer.elements.PageElement
+import com.tanodxyz.documentrenderer.page.DocumentPage
 import org.hamcrest.Matcher
 import org.junit.Assert
 import java.security.SecureRandom
@@ -75,6 +77,94 @@ class ViewNightModeSwipe(var night: Boolean = true) :
     }
 }
 
+class PageElementCoordinatesAction : ViewAction {
+    private lateinit var documentPage: DocumentPage
+    private lateinit var pageElement: PageElement
+
+
+    override fun getDescription(): String {
+        return "Performs various actions on PageElement"
+    }
+
+    override fun getConstraints(): Matcher<View> {
+        return isAssignableFrom(DocumentRenderView::class.java)
+    }
+
+    override fun perform(uiController: UiController?, view: View?) {
+        val renderView: DocumentRenderView = view as DocumentRenderView
+        val document = renderView.__getDocument()
+        documentPage = document.getPage(0)!!
+        pageElement = documentPage.elements[0]
+        pageElement.layoutParams.width = 200
+        pageElement.layoutParams.height = 200
+        pageElement.layoutParams.x = 1F
+        pageElement.layoutParams.y = 1F
+        renderView.redraw()
+    }
+
+    private val TAG = "ElmntDrwnRelativeTest"
+    fun pageElementDrawnRelativeToPageCoordinates(): Boolean {
+        Log.i(
+            TAG,
+            "pageElementDrawnRelativeToPageCoordinates: PageBounds = ${documentPage.pageBounds} " +
+                    "|||||| elementBounds = ${pageElement.elementBounds}"
+        )
+        return pageElement.elementBounds.left >= documentPage.pageBounds.left &&
+                pageElement.elementBounds.top >= documentPage.pageBounds.top
+    }
+}
+
+
+class PageElementScaleAction : ViewAction {
+    private lateinit var documentPage: DocumentPage
+    private lateinit var pageElement: PageElement
+
+
+    override fun getDescription(): String {
+        return "Performs Scale Actions on view"
+    }
+
+    override fun getConstraints(): Matcher<View> {
+        return isAssignableFrom(DocumentRenderView::class.java)
+    }
+
+    override fun perform(uiController: UiController?, view: View?) {
+        val renderView: DocumentRenderView = view as DocumentRenderView
+        val document = renderView.__getDocument()
+        documentPage = document.getPage(0)!!
+        pageElement = documentPage.elements[0]
+
+        val xBeforeZoom = pageElement.elementBounds.left
+        val yBeforeZoom = pageElement.elementBounds.top
+        val xPage = documentPage.pageBounds.left
+        val yPage = documentPage.pageBounds.top
+        if(xBeforeZoom < xPage || yBeforeZoom < yPage) {
+            throw java.lang.Exception("Test failed ->>> pageElement Bounds are not relative to page. ")
+        }
+        renderView.zoomTo(DocumentRenderView.MAXIMUM_ZOOM)
+        renderView.redraw()
+        val xAfterZoom = pageElement.elementBounds.left
+        val yAfterZoom = pageElement.elementBounds.top
+        val xPageAfterZoom = documentPage.pageBounds.left
+        val yPageAfterZoom = documentPage.pageBounds.top
+        if(xAfterZoom < xPageAfterZoom || yAfterZoom < yPageAfterZoom) {
+            throw java.lang.Exception("Test failed ->>> pageElement Bounds are not relative to page. ")
+        }
+
+    }
+
+    private val TAG = "ElmntDrwnRelativeTest"
+    fun pageElementDrawnRelativeToPageCoordinates(): Boolean {
+        Log.i(
+            TAG,
+            "pageElementDrawnRelativeToPageCoordinates: PageBounds = ${documentPage.pageBounds} " +
+                    "|||||| elementBounds = ${pageElement.elementBounds}"
+        )
+        return pageElement.elementBounds.left >= documentPage.pageBounds.left &&
+                pageElement.elementBounds.top >= documentPage.pageBounds.top
+    }
+}
+
 
 class JumpToPageTest() :
     ViewAction {
@@ -119,11 +209,11 @@ class ScrollTest(val vertical: Boolean = true) :
                 var y = renderView.getCurrentY()
                 handler.post {
                     if (vertical) {
-                        y-=i
+                        y -= i
                     } else {
-                        x+=i
+                        x += i
                     }
-                    renderView.moveTo(x,y)
+                    renderView.moveTo(x, y)
                     pageAfterScroll = renderView.getCurrentPageIndex()
                 }
                 Thread.sleep(1000)
@@ -147,15 +237,19 @@ class FlingTest() :
         val renderView: DocumentRenderView = view as DocumentRenderView
         val handler = Handler(Looper.getMainLooper())
         val pageFlingRunnable = {
-            renderView.__pageFling(13000F,2000F)
+            renderView.__pageFling(13000F, 2000F)
         }
         renderView.jumpToPage(100)
         renderView.changeSwipeMode()
         thread {
-            while(true) {
+            while (true) {
                 Thread.sleep(1500)
                 handler.post(pageFlingRunnable)
             }
         }
     }
+}
+
+fun sleep(seconds: Int) {
+    Thread.sleep(seconds * 1000L)
 }

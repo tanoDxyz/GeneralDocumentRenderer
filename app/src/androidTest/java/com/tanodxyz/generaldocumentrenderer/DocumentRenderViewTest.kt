@@ -46,9 +46,6 @@ class DocumentRenderViewTest {
         sleep(5)
     }
 
-    fun sleep(seconds: Int) {
-        Thread.sleep(seconds * 1000L)
-    }
 
     @Test
     fun nightMode__swap() {
