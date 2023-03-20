@@ -12,7 +12,7 @@ import com.tanodxyz.documentrenderer.events.EventManager
 class TouchEventsManager(val context: Context) :
     GestureDetector.SimpleOnGestureListener(),
     ScaleGestureDetector.OnScaleGestureListener {
-    private var scaling: Boolean = false
+    internal var scaling: Boolean = false
     private var eventsListener: TouchEventsListener? = null
     private val scaleGestureDetector = ScaleGestureDetector(context, this)
     private val gestureDetector = GestureDetector(context, this)
@@ -21,7 +21,7 @@ class TouchEventsManager(val context: Context) :
     var flingingEnabled = true
     var scalingEnabled = true
 
-    private var scrolling = false
+    internal var scrolling = false
     fun registerListener(eventsListener: TouchEventsListener) {
         this.eventsListener = eventsListener
     }
@@ -112,7 +112,7 @@ class TouchEventsManager(val context: Context) :
 
     override fun onScale(detector: ScaleGestureDetector): Boolean {
         if (scalingEnabled && hostCanRecieveTouchEvents()) {
-            var dr = detector!!.scaleFactor
+            var dr = detector.scaleFactor
             val wantedZoom: Float = (eventsListener?.getCurrentZoom() ?: 1F) * dr
             val minZoom: Float =
                 Math.min(MINIMUM_ZOOM, eventsListener?.getMinZoom() ?: MINIMUM_ZOOM)
@@ -124,7 +124,7 @@ class TouchEventsManager(val context: Context) :
             } else if (wantedZoom > maxZoom) {
                 dr = maxZoom / currentZoom
             }
-            eventsListener?.zoomCenteredRelativeTo(dr, PointF(detector!!.focusX, detector!!.focusY))
+            eventsListener?.zoomCenteredRelativeTo(dr, PointF(detector.focusX, detector.focusY))
             return true
         } else {
             return false

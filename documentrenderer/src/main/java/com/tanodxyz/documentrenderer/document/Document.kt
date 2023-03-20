@@ -338,16 +338,6 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         }
     }
 
-    //    fun getPagesThatFitsScreenSize(
-//        start: Int,
-//        viewSize: Size,
-//        forward: Boolean
-//    ): List<DocumentPage> {
-//        val pagesList = mutableListOf<DocumentPage>()
-//
-//        for(i:Int in start until )
-//        return pagesList
-//    }
     @Synchronized
     open fun getPagesToBeDrawn(currentPage: Int, viewSize: Int): List<DocumentPage> {
         val page = currentPage - 1

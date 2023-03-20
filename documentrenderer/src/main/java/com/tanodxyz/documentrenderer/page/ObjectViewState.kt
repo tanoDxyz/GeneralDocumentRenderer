@@ -1,6 +1,6 @@
 package com.tanodxyz.documentrenderer.page
 
-enum class PageViewState {
+enum class ObjectViewState {
     VISIBLE, PARTIALLY_VISIBLE, INVISIBLE;
 
 
@@ -16,7 +16,7 @@ enum class PageViewState {
         return this == PARTIALLY_VISIBLE
     }
 
-    fun isPagePartiallyOrCompletelyVisible():Boolean {
+    fun isObjectPartiallyOrCompletelyVisible():Boolean {
         return this == VISIBLE || this == PARTIALLY_VISIBLE
     }
 }

@@ -1,14 +1,20 @@
 package com.tanodxyz.documentrenderer
 
 import android.annotation.SuppressLint
+import android.annotation.TargetApi
 import android.content.res.Resources
+import android.graphics.Bitmap
 import android.graphics.RectF
 import android.os.Build
 import android.util.TypedValue
+import android.view.MotionEvent
 import android.view.View
+import com.tanodxyz.documentrenderer.events.GenericMotionEvent
+import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 import com.tanodxyz.documentrenderer.page.DocumentPage
-import com.tanodxyz.documentrenderer.page.PageViewState
+import com.tanodxyz.documentrenderer.page.ObjectViewState
 import java.io.Closeable
+import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
 
@@ -30,12 +36,16 @@ fun Resources.pdfPointToPixel(points: Int): Float {
     )
 }
 
-fun Resources.spToPx(sp: Int): Float {
+fun Resources.spToPx(sp: Number): Float {
     return TypedValue.applyDimension(
         TypedValue.COMPLEX_UNIT_SP,
         sp.toFloat(),
         displayMetrics
     )
+}
+
+fun Resources.pxToSp(pixels: Number): Float {
+    return pixels.toFloat() / displayMetrics.scaledDensity
 }
 
 fun Resources.screenWidth() {
@@ -80,7 +90,7 @@ object ViewIdGenerator {
     }
 }
 
-fun getPageViewState(pageBounds: RectF, viewSize: Size, swipeVertical: Boolean): PageViewState {
+fun getPageViewState(pageBounds: RectF, viewSize: Size, swipeVertical: Boolean): ObjectViewState {
     val viewBounds = RectF(0F, 0F, viewSize.width.toFloat(), viewSize.height.toFloat())
     val viewBoundsRelativeToPageBounds =
         RectF(pageBounds.left, pageBounds.top, viewSize.width.toFloat(), viewSize.height.toFloat())
@@ -111,10 +121,10 @@ fun getPageViewState(pageBounds: RectF, viewSize: Size, swipeVertical: Boolean):
             false
         }
     }
-    val pageViewState =
-        if (pageIsTotallyVisible) PageViewState.VISIBLE
-        else if (pageIsPartiallyVisible) PageViewState.PARTIALLY_VISIBLE else PageViewState.INVISIBLE
-    return pageViewState
+    val objectViewState =
+        if (pageIsTotallyVisible) ObjectViewState.VISIBLE
+        else if (pageIsPartiallyVisible) ObjectViewState.PARTIALLY_VISIBLE else ObjectViewState.INVISIBLE
+    return objectViewState
 }
 
 infix fun IntRange.getPagesViaPageIndexes(pageData: MutableList<DocumentPage>): MutableList<DocumentPage> {
@@ -162,6 +172,26 @@ fun Pair<Float, Float>.getHeight(): Float {
 
 fun Pair<Float, Float>.getWidth(): Float {
     return RectF(this.first, 0F, this.second, 0F).getWidth()
+}
+
+/**
+ * By this we mean that at least one pointer is active.
+ */
+fun IMotionEventMarker?.isEventFinishedOrCanceled(): Boolean {
+    return when (this) {
+        is GenericMotionEvent -> !hasNoMotionEvent() && motionEvent?.action == MotionEvent.ACTION_UP || motionEvent?.action == MotionEvent.ACTION_CANCEL
+        else -> false
+    }
+}
+
+fun Bitmap?.sizeOf(): Int {
+    return this?.byteCount ?: 0
+}
+
+fun Bitmap?.recycleSafetly() {
+    kotlin.runCatching {
+        this?.recycle()
+    }
 }
 
 fun Closeable?.closeResource() {

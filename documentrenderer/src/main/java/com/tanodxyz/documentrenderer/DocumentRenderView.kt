@@ -15,8 +15,9 @@ import com.tanodxyz.documentrenderer.elements.IElement
 import com.tanodxyz.documentrenderer.events.*
 import com.tanodxyz.documentrenderer.extensions.ScrollHandle
 import com.tanodxyz.documentrenderer.page.DocumentPage
-import com.tanodxyz.documentrenderer.page.PageViewState
+import com.tanodxyz.documentrenderer.page.ObjectViewState
 import org.jetbrains.annotations.TestOnly
+import java.util.BitSet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.math.abs
@@ -35,7 +36,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     private var currentPageForImmediateTouchEvent: Int = 0
     internal lateinit var document: Document
     protected var buzyTokensCounter = 0
-
+    internal var eventsIdentityHelper = EventsIdentityHelper()
     protected var touchEventMgr: TouchEventsManager
     protected var enableAntialiasing = true
 
@@ -65,10 +66,13 @@ open class DocumentRenderView @JvmOverloads constructor(
     var idleStateCallback: IdleStateCallback? = null
     var pageNumberDisplayBoxXAndYMargin = resources.dpToPx(16)
     val _16Dp = resources.dpToPx(16)
+    var eventsDispatchedToPropagatingPageOnly = false
     private var pageNumberBoxBackgroundRectangle = RectF(0F, 0F, 0F, 0F)
     private val minZoom = DEFAULT_MIN_SCALE
     private val midZoom = DEFAULT_MID_SCALE
     private val maxZoom = DEFAULT_MAX_SCALE
+
+    protected var cache = CacheManager(CACHE_FACTOR)
 
     init {
         executor = Executors.newCachedThreadPool()
@@ -100,6 +104,10 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (currentPage > 1) {
             jumpToPage0(currentPage - 1, false)
         }
+    }
+
+    fun isScaling(): Boolean {
+        return eventsIdentityHelper.isScaling()
     }
 
     @Synchronized
@@ -192,6 +200,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         executor?.shutdownNow()
         contentDrawOffsetY = 0F
         contentDrawOffsetX = 0F
+        cache.recycle()
     }
 
     protected fun recalculatePageSizesAndSetDefaultXYOffsets(
@@ -383,13 +392,18 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     fun dispatchEventToThePagesInFocus(iMotionEventMarker: IMotionEventMarker) {
         if (canViewRecieveTouchEvents()) {
+            eventsIdentityHelper.feed(iMotionEventMarker)
             findAllVisiblePagesOnScreen().forEach { visiblePage ->
                 visiblePage.apply {
-                    if (pageBounds.contains(
-                            iMotionEventMarker.getX(),
-                            iMotionEventMarker.getY()
-                        ) || iMotionEventMarker.hasNoMotionEvent()
-                    ) {
+                    if (eventsDispatchedToPropagatingPageOnly) {
+                        if (pageBounds.contains(
+                                iMotionEventMarker.getX(),
+                                iMotionEventMarker.getY()
+                            ) || iMotionEventMarker.hasNoMotionEvent()
+                        ) {
+                            onEvent(iMotionEventMarker)
+                        }
+                    } else {
                         onEvent(iMotionEventMarker)
                     }
                 }
@@ -404,8 +418,8 @@ open class DocumentRenderView @JvmOverloads constructor(
         while (forwardPagesScanIndex < documentPages.count()) {
             val documentPage = documentPages[forwardPagesScanIndex]
             val pageViewState = getPageViewState(documentPage.pageBounds)
-            if (pageViewState == PageViewState.VISIBLE
-                || pageViewState == PageViewState.PARTIALLY_VISIBLE
+            if (pageViewState == ObjectViewState.VISIBLE
+                || pageViewState == ObjectViewState.PARTIALLY_VISIBLE
             ) {
                 visiblePages.add(documentPage)
                 ++forwardPagesScanIndex
@@ -417,8 +431,8 @@ open class DocumentRenderView @JvmOverloads constructor(
         while (backwardPagesScanIndex >= 0) {
             val documentPage = documentPages[backwardPagesScanIndex]
             val pageViewState = getPageViewState(documentPage.pageBounds)
-            if (pageViewState == PageViewState.VISIBLE
-                || pageViewState == PageViewState.PARTIALLY_VISIBLE
+            if (pageViewState == ObjectViewState.VISIBLE
+                || pageViewState == ObjectViewState.PARTIALLY_VISIBLE
             ) {
                 visiblePages.add(documentPage)
                 --backwardPagesScanIndex
@@ -453,6 +467,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                 absoluteY
             )
         )
+        println("IENGINE: scroll is ${eventsIdentityHelper.isScaling()}")
         moveTo(absoluteX, absoluteY)
     }
 
@@ -477,6 +492,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     override fun onScaleBegin() {
         dispatchEventToThePagesInFocus(ScaleBeginEvent(null))
     }
+
 
     override fun onLongPress(e: MotionEvent?) {
         dispatchEventToThePagesInFocus(LongPressEvent(e))
@@ -564,7 +580,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         zoomCenteredTo(zoom * dr, pointF)
     }
 
-    fun getPageViewState(pageBounds: RectF): PageViewState {
+    fun getPageViewState(pageBounds: RectF): ObjectViewState {
         val viewBounds = RectF(0F, 0F, width.toFloat(), height.toFloat())
         val viewBoundsRelativeToPageBounds =
             RectF(pageBounds.left, pageBounds.top, width.toFloat(), height.toFloat())
@@ -595,10 +611,10 @@ open class DocumentRenderView @JvmOverloads constructor(
                 false
             }
         }
-        val pageViewState =
-            if (pageIsTotallyVisible) PageViewState.VISIBLE
-            else if (pageIsPartiallyVisible) PageViewState.PARTIALLY_VISIBLE else PageViewState.INVISIBLE
-        return pageViewState
+        val objectViewState =
+            if (pageIsTotallyVisible) ObjectViewState.VISIBLE
+            else if (pageIsPartiallyVisible) ObjectViewState.PARTIALLY_VISIBLE else ObjectViewState.INVISIBLE
+        return objectViewState
     }
 
     fun getCurrentPage(): DocumentPage? {
@@ -890,7 +906,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     protected fun calculateCurrentPage(page: DocumentPage): Int {
         val pageViewState = getPageViewState(page.pageBounds)
-        return if (pageViewState == PageViewState.VISIBLE && page.uniqueId == document.getPagesCount() - 1) {
+        return if (pageViewState == ObjectViewState.VISIBLE && page.uniqueId == document.getPagesCount() - 1) {
             page.uniqueId + 1
         } else if (document.swipeVertical) {
             if (page.pageBounds.top < (height.div(2F)) /*&& page.pageBounds.bottom > 0*/) {
@@ -1057,7 +1073,6 @@ open class DocumentRenderView @JvmOverloads constructor(
         )
     }
 
-
     interface IdleStateCallback {
         @TestOnly
         fun renderViewState(idle: Boolean)
@@ -1065,12 +1080,40 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     companion object {
         var MINIMUM_ZOOM = 1.0F
-        var MAXIMUM_ZOOM = 15f
+        var MAXIMUM_ZOOM = 10f // greater this so the following
+        val PAGE_SNAPSHOT_SCALE_DOWN_FACTOR = 2F //
 
         val DEFAULT_MAX_SCALE = MAXIMUM_ZOOM
-        val DEFAULT_MID_SCALE = 4F
+        val DEFAULT_MID_SCALE = MAXIMUM_ZOOM.div(2)
         val DEFAULT_MIN_SCALE = MINIMUM_ZOOM
+
         var REFRESH_RATE_IN_CASE_VIEW_BUZY = 10L
         var SCROLL_HANDLE_AND_PAGE_DISPLAY_BOX_HIDE_DELAY_MILLISECS = 1000L
+
+        var CACHE_FACTOR = 8
+    }
+
+    class EventsIdentityHelper {
+        private val bitSet = BitSet(3)
+        fun feed(iMotionEventMarker: IMotionEventMarker?) {
+            if (iMotionEventMarker is ScaleBeginEvent) {
+                bitSet.set(0)
+            }
+            if (iMotionEventMarker is ScaleEndEvent) {
+                bitSet.clear(0)
+            }
+
+            if (iMotionEventMarker is GenericMotionEvent && iMotionEventMarker.hasNoMotionEvent()
+                    .not() && (iMotionEventMarker.motionEvent?.action == MotionEvent.ACTION_CANCEL
+                        || iMotionEventMarker.motionEvent?.action == MotionEvent.ACTION_UP
+                        || iMotionEventMarker.motionEvent?.action == MotionEvent.ACTION_POINTER_UP)
+            ) {
+                bitSet.clear(0)
+            }
+        }
+
+        fun isScaling(): Boolean {
+            return bitSet.get(0)
+        }
     }
 }

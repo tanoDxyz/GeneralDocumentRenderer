@@ -1,14 +1,13 @@
 package com.tanodxyz.documentrenderer.page
 
 import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
 import android.graphics.RectF
+import android.util.SparseArray
+import android.view.MotionEvent
 import com.tanodxyz.documentrenderer.*
-import com.tanodxyz.documentrenderer.elements.IElement
 import com.tanodxyz.documentrenderer.elements.PageElement
-import com.tanodxyz.documentrenderer.events.IMotionEventMarker
-import com.tanodxyz.documentrenderer.events.IEventHandler
+import com.tanodxyz.documentrenderer.elements.PageSnapShotElement
+import com.tanodxyz.documentrenderer.events.*
 import java.io.Serializable
 
 data class DocumentPage(
@@ -20,10 +19,10 @@ data class DocumentPage(
     ),
     val pageBounds: RectF = RectF(0F, 0F, 0F, 0F),
     val documentRenderView: DocumentRenderView
-) : Serializable,IEventHandler {
-
+) : Serializable, IEventHandler {
+    internal var argsToElements = SparseArray<Any>()
     internal var modifiedSize: Size = originalSize
-
+    protected var pageSnapShotElement: PageSnapShotElement = PageSnapShotElement(this)
     fun getWidth(): Float {
         return pageBounds.getWidth()
     }
@@ -32,14 +31,31 @@ data class DocumentPage(
         return pageBounds.getHeight()
     }
 
-    fun draw(canvas: Canvas, pageViewState: PageViewState) {
-        if(pageViewState.isPagePartiallyOrCompletelyVisible()) {
-            elements.forEach { iElement -> iElement.draw(canvas) }
+    fun draw(canvas: Canvas, pageViewState: ObjectViewState) {
+        if (pageViewState.isObjectPartiallyOrCompletelyVisible()) {
+            if (documentRenderView.isScaling()) {
+                pageSnapShotElement.draw(canvas)
+            } else {
+                argsToElements[DocumentPage.RE_DRAW_WITH_NEW_PAGE_BOUNDS] = true // Changes need to adjust that whether we really need to redraw static text element.
+                elements.forEach { iElement -> iElement.draw(canvas, argsToElements) }
+            }
+        } else {
+            pageSnapShotElement.recycle()
         }
     }
 
+
     override fun onEvent(event: IMotionEventMarker?) {
-        elements.forEach { iElement-> iElement.onEvent(event) }
+        event?.apply {
+            if (this is GenericMotionEvent && !this.hasNoMotionEvent()) {
+                if (this.motionEvent?.action == MotionEvent.ACTION_DOWN) {
+                    pageSnapShotElement.preparePageSnapShot()
+                } else if (this.motionEvent?.action == MotionEvent.ACTION_UP) {
+                    documentRenderView.redraw()
+                }
+            }
+        }
+        elements.forEach { iElement -> iElement.onEvent(event) }
     }
 
     fun resetPageBounds() {
@@ -47,5 +63,11 @@ data class DocumentPage(
         pageBounds.left = 0F
         pageBounds.right = 0F
         pageBounds.bottom = 0F
+    }
+
+
+    companion object {
+        const val RE_DRAW_WITH_NEW_PAGE_BOUNDS = 0xcafe
+        const val RE_DRAW_WITH_RELATIVE_TO_ORIGIN__SNAPSHOT__ = 0xbc
     }
 }

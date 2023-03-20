@@ -53,8 +53,12 @@ class CacheManager(memoryFactor: Int) {
 
     interface Blob {
         fun getUniqueID(): String
+
+        /**
+         * size in kbs
+         */
         fun getSize(): Int
         fun onRemove()
-        fun <T> getPayLoad(): T
+        fun getPayLoad(): Any?
     }
 }

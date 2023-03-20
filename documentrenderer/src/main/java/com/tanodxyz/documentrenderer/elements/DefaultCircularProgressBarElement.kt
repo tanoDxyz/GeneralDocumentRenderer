@@ -9,6 +9,7 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.text.StaticLayout
 import android.text.TextPaint
+import android.util.SparseArray
 import android.view.animation.AccelerateDecelerateInterpolator
 import com.tanodxyz.documentrenderer.R
 import com.tanodxyz.documentrenderer.dpToPx
@@ -51,7 +52,7 @@ class DefaultCircularProgressBarElement(val context: Context) : IElement {
         strokeCap = Paint.Cap.ROUND
     }
 
-    override fun draw(canvas: Canvas) {
+    override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
         setSpace(canvas.width.toFloat(), canvas.height.toFloat())
         ++currentPercentage
         --startAngle
@@ -60,11 +61,8 @@ class DefaultCircularProgressBarElement(val context: Context) : IElement {
         }
 
         canvas.let {
-            // 2
             drawBackgroundArc(it)
-            // 3
             drawInnerArc(it)
-
             drawText(it)
         }
     }
