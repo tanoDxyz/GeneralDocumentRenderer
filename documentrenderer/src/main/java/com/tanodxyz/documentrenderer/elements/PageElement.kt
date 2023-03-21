@@ -104,4 +104,7 @@ open class PageElement(
         val TAG = PAGE_ELEMENT
     }
 
+    fun requestRedraw() {
+        page?.documentRenderView?.redraw()
+    }
 }

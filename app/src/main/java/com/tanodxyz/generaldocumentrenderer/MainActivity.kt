@@ -97,7 +97,7 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
 
                         val textElement = StaticTextElement(page = documentPage)
                         textElement.layoutParams.width = 200
-                        textElement.layoutParams.height = 400
+                        textElement.layoutParams.height = 100
                         textElement.layoutParams.x = 300F
                         textElement.layoutParams.y = 200F
                         textElement.setText("This is the dummy text amigo gringo and mamiro and we are going to paste a long line text that you may cannot handle properly and that is the reason for such banevalounch\nThis is the dummy text amigo gringo and mamiro and we are going to paste a long line text that you may cannot handle properly and that is the reason for such banevalounch\nThis is the dummy text amigo gringo and mamiro and we are going to paste a long line text that you may cannot handle properly and that is the reason for such banevalounch\nThis is the dummy text amigo gringo and mamiro and we are going to paste a long line text that you may cannot handle properly and that is the reason for such banevalounch\nThis is the dummy text amigo gringo and mamiro and we are going to paste a long line text that you may cannot handle properly and that is the reason for such banevalounch\nThis is the dummy text amigo gringo and mamiro and we are going to paste a long line text that you may cannot handle properly and that is the reason for such banevalounch")
@@ -172,7 +172,7 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
                         textElement7.setText("This is the dummy text amigo gringo and mamiro and we are" +
                                 " going to paste a long line text that you may cannot handle properly and" +
                                 " that is the reason for such banevalounch")
-                        elements.addAll(arrayOf(textElement,pageElement,textElement1,textElement2,textElement3,textElement4,textElement5,textElement6,textElement7))
+                        elements.addAll(arrayOf(textElement,pageElement/*,textElement1,textElement2,textElement3,textElement4,textElement5,textElement6,textElement7*/))
                         document!!.addPage(
                             documentPage
                         )
