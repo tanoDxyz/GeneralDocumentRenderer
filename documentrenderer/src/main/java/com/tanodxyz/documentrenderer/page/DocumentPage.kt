@@ -34,16 +34,24 @@ data class DocumentPage(
     fun draw(canvas: Canvas, pageViewState: ObjectViewState) {
         if (pageViewState.isObjectPartiallyOrCompletelyVisible()) {
             if (documentRenderView.isScaling()) {
-                pageSnapShotElement.draw(canvas)
+                if (pageSnapShotElement.isEmpty()) {
+                    canvas.dispatchDrawCallToIndividualElements()
+                } else {
+                    pageSnapShotElement.draw(canvas)
+                }
             } else {
-                argsToElements[DocumentPage.RE_DRAW_WITH_NEW_PAGE_BOUNDS] = true // Changes need to adjust that whether we really need to redraw static text element.
-                elements.forEach { iElement -> iElement.draw(canvas, argsToElements) }
+                canvas.dispatchDrawCallToIndividualElements()
             }
         } else {
             pageSnapShotElement.recycle()
         }
     }
 
+
+    private fun Canvas.dispatchDrawCallToIndividualElements() {
+        argsToElements[RE_DRAW_WITH_NEW_PAGE_BOUNDS] = true
+        elements.forEach { iElement -> iElement.draw(this, argsToElements) }
+    }
 
     override fun onEvent(event: IMotionEventMarker?) {
         event?.apply {

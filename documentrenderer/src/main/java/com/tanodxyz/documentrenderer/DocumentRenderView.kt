@@ -467,7 +467,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                 absoluteY
             )
         )
-        println("IENGINE: scroll is ${eventsIdentityHelper.isScaling()}")
+        
         moveTo(absoluteX, absoluteY)
     }
 
