@@ -95,8 +95,8 @@ class PageElementCoordinatesAction : ViewAction {
         val document = renderView.__getDocument()
         documentPage = document.getPage(0)!!
         pageElement = documentPage.elements[0]
-        pageElement.layoutParams.width = 200
-        pageElement.layoutParams.height = 200
+        pageElement.layoutParams.widthSpec = 200
+        pageElement.layoutParams.heightSpec = 200
         pageElement.layoutParams.x = 1F
         pageElement.layoutParams.y = 1F
         renderView.redraw()

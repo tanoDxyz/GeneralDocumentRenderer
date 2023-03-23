@@ -254,7 +254,7 @@ public class ContentProcessor implements ITextExtractionStrategy {
     /**
      * Determines if a space character should be inserted between a previous chunk and the current chunk.
      * This method is exposed as a callback so subclasses can fine time the algorithm for determining whether a space should be inserted or not.
-     * By default, this method will insert a space if the there is a gap of more than half the font space character width between the end of the
+     * By default, this method will insert a space if the there is a gap of more than half the font space character widthSpec between the end of the
      * previous chunk and the beginning of the current chunk.  It will also indicate that a space is needed if the starting point of the new chunk
      * appears *before* the end of the previous chunk (i.e. overlapping text).
      *

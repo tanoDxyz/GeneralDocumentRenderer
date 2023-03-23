@@ -32,10 +32,10 @@ open class DocumentRenderView @JvmOverloads constructor(
     private lateinit var viewSize: Size
     protected var canShowPageCountBox: Boolean = true
     protected var scrollHandle: ScrollHandle? = null
-    private var buzyStateIndicator: IElement? = null
+    private var busyStateIndicator: IElement? = null
     private var currentPageForImmediateTouchEvent: Int = 0
     internal lateinit var document: Document
-    protected var buzyTokensCounter = 0
+    protected var busyTokensCounter = 0
     internal var eventsIdentityHelper = EventsIdentityHelper()
     protected var touchEventMgr: TouchEventsManager
     protected var enableAntialiasing = true
@@ -112,21 +112,21 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     @Synchronized
     fun buzy() {
-        ++buzyTokensCounter
+        ++busyTokensCounter
         redraw()
     }
 
     @Synchronized
     fun free() {
-        if (buzyTokensCounter > 0) {
-            --buzyTokensCounter
+        if (busyTokensCounter > 0) {
+            --busyTokensCounter
             redraw()
         }
     }
 
     @Synchronized
     fun isFree(): Boolean {
-        return buzyTokensCounter <= 0
+        return busyTokensCounter <= 0
     }
 
     fun stopFling() {
@@ -238,7 +238,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                 contentDrawOffsetY = height.div(2) - scaledPageHeight.div(2)
             }
             val contentWidth: Float = document.getDocLen(zoom)
-            if (contentWidth < width) { // whole document width visible on screen
+            if (contentWidth < width) { // whole document widthSpec visible on screen
                 contentDrawOffsetX = (width - contentWidth).div(2)
             }
         }
@@ -751,7 +751,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     open fun setBuzyStateIndicator(iElement: IElement) {
-        this.buzyStateIndicator = iElement
+        this.busyStateIndicator = iElement
     }
 
     open fun getRenderedDocLen(zoom: Float): Float {
@@ -808,7 +808,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             // Check X offset
             var offsetX = absX
             val contentWidth: Float = document.getDocLen(zoom)
-            if (contentWidth < width) { // whole document width visible on screen
+            if (contentWidth < width) { // whole document widthSpec visible on screen
                 offsetX = (width - contentWidth).div(2)
             } else {
                 if (offsetX > 0) { // left visible
@@ -870,9 +870,9 @@ open class DocumentRenderView @JvmOverloads constructor(
         }
         canvas?.let { drawBackground(it) }
         synchronized(this) {
-            if (buzyTokensCounter > 0 && buzyStateIndicator != null) {
+            if (busyTokensCounter > 0 && busyStateIndicator != null) {
                 animationManager.stopAll()
-                buzyStateIndicator!!.draw(canvas!!)
+                busyStateIndicator!!.draw(canvas!!)
                 touchEventMgr.enabled = false
                 postInvalidateDelayed(REFRESH_RATE_IN_CASE_VIEW_BUZY)
                 return

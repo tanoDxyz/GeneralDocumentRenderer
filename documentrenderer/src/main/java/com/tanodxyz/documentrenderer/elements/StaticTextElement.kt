@@ -1,23 +1,19 @@
 package com.tanodxyz.documentrenderer.elements
 
-import android.R
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.os.Build
 import android.text.*
 import android.text.TextUtils.TruncateAt
-import android.util.Log
 import android.util.SparseArray
-import android.widget.TextView
 import androidx.annotation.RequiresApi
-import androidx.core.text.toSpanned
+import androidx.core.text.TextUtilsCompat
 import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.spToPx
 import java.lang.reflect.Constructor
-import java.lang.reflect.InvocationTargetException
 import kotlin.math.roundToInt
 
 
@@ -27,23 +23,24 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
         this.color = DEFAULT_TEXT_COLOR
         this.textSize = DEFAULT_TEXT_SIZE
     }
-    var preserveLength: Boolean = false
+
+
     var textSizePixels: Float = DEFAULT_TEXT_SIZE
     var ellipSize = TruncateAt.END
     var alignment = Layout.Alignment.ALIGN_NORMAL
-    var textDirectionHeuristics = TextDirectionHeuristics.FIRSTSTRONG_LTR
+    var textDirectionHeuristics = TextDirectionHeuristics.LTR
     var spacingmult = 1.0F
     var spacingAdd = 0.0F
     var includePadding = false
 
     @RequiresApi(Build.VERSION_CODES.M)
-    var lineBreakingStrategy = Layout.BREAK_STRATEGY_SIMPLE
+    var lineBreakingStrategy = Layout.BREAK_STRATEGY_BALANCED
 
     @RequiresApi(Build.VERSION_CODES.M)
     var hyphenationFrequency = Layout.HYPHENATION_FREQUENCY_NONE
 
     @RequiresApi(Build.VERSION_CODES.P)
-    var useLineSpacingFromFallbacks = false
+    var useLineSpacingFromFallbacks = true
 
     protected var layout: StaticLayout? = null
 
@@ -83,9 +80,7 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
             if (drawFromOrigin) page.documentRenderView.toCurrentScale(layoutParams.height).div(
                 PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
             ) else page.documentRenderView.toCurrentScale(layoutParams.height)
-        if (preserveLength) {
-            this.text = TextUtils.ellipsize(text, textPaint, height, TruncateAt.END, true, null)
-        }
+
         val maxLinesByInspection =
             getMaxLinesByInspection(
                 makeStaticLayout(width.roundToInt(), Int.MAX_VALUE),
@@ -99,6 +94,7 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
             val builder =
                 StaticLayout.Builder.obtain(text, 0, text.length, textPaint, width)
                     .setMaxLines(maxLines).setAlignment(alignment)
+                    .setEllipsize(ellipSize)
                     .setTextDirection(textDirectionHeuristics)
                     .setLineSpacing(spacingAdd, spacingmult)
                     .setIncludePad(includePadding)
