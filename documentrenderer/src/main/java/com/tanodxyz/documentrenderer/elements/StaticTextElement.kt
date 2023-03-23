@@ -6,8 +6,12 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.os.Build
 import android.text.*
+import android.text.TextUtils.TruncateAt
 import android.util.Log
 import android.util.SparseArray
+import android.widget.TextView
+import androidx.annotation.RequiresApi
+import androidx.core.text.toSpanned
 import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 import com.tanodxyz.documentrenderer.page.DocumentPage
@@ -18,19 +22,35 @@ import kotlin.math.roundToInt
 
 
 class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
-    private lateinit var text: String
-    private var textPaint: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+    protected lateinit var text: CharSequence
+    protected var textPaint: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         this.color = DEFAULT_TEXT_COLOR
         this.textSize = DEFAULT_TEXT_SIZE
     }
-
+    var preserveLength: Boolean = false
     var textSizePixels: Float = DEFAULT_TEXT_SIZE
+    var ellipSize = TruncateAt.END
+    var alignment = Layout.Alignment.ALIGN_NORMAL
+    var textDirectionHeuristics = TextDirectionHeuristics.FIRSTSTRONG_LTR
+    var spacingmult = 1.0F
+    var spacingAdd = 0.0F
+    var includePadding = false
 
-    private var layout: StaticLayout? = null
+    @RequiresApi(Build.VERSION_CODES.M)
+    var lineBreakingStrategy = Layout.BREAK_STRATEGY_SIMPLE
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    var hyphenationFrequency = Layout.HYPHENATION_FREQUENCY_NONE
+
+    @RequiresApi(Build.VERSION_CODES.P)
+    var useLineSpacingFromFallbacks = false
+
+    protected var layout: StaticLayout? = null
 
     override var type = "TextElement"
-    fun setText(text: String, textSizeSp: Float = -1F) {
+    fun setText(text: CharSequence, textSizeSp: Float = -1F) {
         this.text = text
+        TextPaint.ANTI_ALIAS_FLAG
         setTextSize(textSizeSp)
         initTextLayout(false)
     }
@@ -59,17 +79,35 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
             .div(PAGE_SNAPSHOT_SCALE_DOWN_FACTOR) else page.documentRenderView.toCurrentScale(
             layoutParams.width
         )
-        val height = if(drawFromOrigin) page.documentRenderView.toCurrentScale(layoutParams.height).div(
-            PAGE_SNAPSHOT_SCALE_DOWN_FACTOR) else page.documentRenderView.toCurrentScale(layoutParams.height)
+        val height =
+            if (drawFromOrigin) page.documentRenderView.toCurrentScale(layoutParams.height).div(
+                PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
+            ) else page.documentRenderView.toCurrentScale(layoutParams.height)
+        if (preserveLength) {
+            this.text = TextUtils.ellipsize(text, textPaint, height, TruncateAt.END, true, null)
+        }
         val maxLinesByInspection =
-            getMaxLinesByInspection(makeStaticLayout(width.roundToInt(),Int.MAX_VALUE), height.roundToInt())
-        layout = makeStaticLayout(width.roundToInt(),maxLinesByInspection)
+            getMaxLinesByInspection(
+                makeStaticLayout(width.roundToInt(), Int.MAX_VALUE),
+                height.roundToInt()
+            )
+        layout = makeStaticLayout(width.roundToInt(), maxLinesByInspection)
     }
 
-    private fun makeStaticLayout(width: Int, maxLines: Int): StaticLayout {
+    protected fun makeStaticLayout(width: Int, maxLines: Int): StaticLayout {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            StaticLayout.Builder.obtain(text, 0, text.length, textPaint, width)
-                .setMaxLines(maxLines).setEllipsize(TextUtils.TruncateAt.END).build()
+            val builder =
+                StaticLayout.Builder.obtain(text, 0, text.length, textPaint, width)
+                    .setMaxLines(maxLines).setAlignment(alignment)
+                    .setTextDirection(textDirectionHeuristics)
+                    .setLineSpacing(spacingAdd, spacingmult)
+                    .setIncludePad(includePadding)
+                    .setBreakStrategy(lineBreakingStrategy)
+                    .setHyphenationFrequency(hyphenationFrequency)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                builder.setUseLineSpacingFromFallbacks(useLineSpacingFromFallbacks)
+            }
+            builder.build()
         } else {
             val constructor: Constructor<StaticLayout> =
                 StaticLayout::class.java.getConstructor(
@@ -83,7 +121,7 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
                     Float::class.javaPrimitiveType,
                     Float::class.javaPrimitiveType,
                     Boolean::class.javaPrimitiveType,
-                    TextUtils.TruncateAt::class.java,
+                    TruncateAt::class.java,
                     Int::class.javaPrimitiveType,
                     Int::class.javaPrimitiveType
                 )
@@ -94,12 +132,12 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
                 text.length,
                 textPaint,
                 width,
-                Layout.Alignment.ALIGN_NORMAL,
-                TextDirectionHeuristics.FIRSTSTRONG_LTR,
-                1.0,
-                1.0,
-                true,
-                TextUtils.TruncateAt.END,
+                alignment,
+                textDirectionHeuristics,
+                spacingmult,
+                spacingAdd,
+                includePadding,
+                ellipSize,
                 width,
                 maxLines
             )

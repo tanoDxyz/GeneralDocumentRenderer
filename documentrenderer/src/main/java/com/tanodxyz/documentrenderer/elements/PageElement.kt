@@ -6,6 +6,7 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.util.Log
 import android.util.SparseArray
+import androidx.annotation.VisibleForTesting
 import com.tanodxyz.documentrenderer.DocumentRenderView
 import com.tanodxyz.documentrenderer.events.*
 import com.tanodxyz.documentrenderer.page.DocumentPage
@@ -19,6 +20,7 @@ open class PageElement(
     var debug = true
     protected open var type = PAGE_ELEMENT
 
+    @VisibleForTesting
     protected val elementBounds = RectF()
 
     val paint: Paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {

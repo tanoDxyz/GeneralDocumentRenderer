@@ -1,25 +1,23 @@
 package com.tanodxyz.generaldocumentrenderer
 
 import android.content.Context
-import android.graphics.BitmapFactory
-import androidx.appcompat.app.AppCompatActivity
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.view.View
-import android.widget.TextView
-import androidx.appcompat.widget.AppCompatImageView
+import androidx.appcompat.app.AppCompatActivity
 import com.tanodxyz.documentrenderer.*
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.elements.DefaultCircularProgressBarElement
 import com.tanodxyz.documentrenderer.elements.PageElement
 import com.tanodxyz.documentrenderer.elements.StaticTextElement
 import com.tanodxyz.documentrenderer.extensions.DefaultScrollHandle
-
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.pagesizecalculator.DefaultPageSizeCalculator
-import com.tanodxyz.generaldocumentrenderer.pdfparsing.PdfParser
 import com.tanodxyz.itext722g.IText722
-import org.jetbrains.annotations.TestOnly
 import java.security.SecureRandom
 import kotlin.concurrent.thread
 
@@ -97,81 +95,90 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
 
                         val textElement = StaticTextElement(page = documentPage)
                         textElement.layoutParams.width = 200
-                        textElement.layoutParams.height = 100
+                        textElement.layoutParams.height = 800
                         textElement.layoutParams.x = 300F
                         textElement.layoutParams.y = 200F
-                        textElement.setText("This is the dummy text amigo gringo and mamiro and we are going to paste a long line text that you may cannot handle properly and that is the reason for such banevalounch\nThis is the dummy text amigo gringo and mamiro and we are going to paste a long line text that you may cannot handle properly and that is the reason for such banevalounch\nThis is the dummy text amigo gringo and mamiro and we are going to paste a long line text that you may cannot handle properly and that is the reason for such banevalounch\nThis is the dummy text amigo gringo and mamiro and we are going to paste a long line text that you may cannot handle properly and that is the reason for such banevalounch\nThis is the dummy text amigo gringo and mamiro and we are going to paste a long line text that you may cannot handle properly and that is the reason for such banevalounch\nThis is the dummy text amigo gringo and mamiro and we are going to paste a long line text that you may cannot handle properly and that is the reason for such banevalounch")
+                        val wordtoSpan: Spannable =
+                            SpannableString("I know just how to whisper, And I know just how to cry,I know just where to find the answers and who.")
 
+                        wordtoSpan.setSpan(
+                            ForegroundColorSpan(Color.BLUE),
+                            15,
+                            30,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        )
 
-                        val textElement1 = StaticTextElement(page = documentPage)
-                        textElement1.layoutParams.width = 200
-                        textElement1.layoutParams.height = 400
-                        textElement1.layoutParams.x = 300F
-                        textElement1.layoutParams.y = 500f
-                        textElement1.setText("This is the dummy text amigo gringo and mamiro and we are" +
-                                " going to paste a long line text that you may cannot handle properly and" +
-                                " that is the reason for such banevalounch")
+                        textElement.setText(wordtoSpan)
 
-
-                        val textElement2 = StaticTextElement(page = documentPage)
-                        textElement2.layoutParams.width = 200
-                        textElement2.layoutParams.height = 400
-                        textElement2.layoutParams.x = 300F
-                        textElement2.layoutParams.y = 500f
-                        textElement2.setText("This is the dummy text amigo gringo and mamiro and we are" +
-                                " going to paste a long line text that you may cannot handle properly and" +
-                                " that is the reason for such banevalounch")
-
-
-                        val textElement3 = StaticTextElement(page = documentPage)
-                        textElement3.layoutParams.width = 200
-                        textElement3.layoutParams.height = 400
-                        textElement3.layoutParams.x = 300F
-                        textElement3.layoutParams.y = 500f
-                        textElement3.setText("This is the dummy text amigo gringo and mamiro and we are" +
-                                " going to paste a long line text that you may cannot handle properly and" +
-                                " that is the reason for such banevalounch")
-
-
-                        val textElement4 = StaticTextElement(page = documentPage)
-                        textElement4.layoutParams.width = 200
-                        textElement4.layoutParams.height = 400
-                        textElement4.layoutParams.x = 300F
-                        textElement4.layoutParams.y = 500f
-                        textElement4.setText("This is the dummy text amigo gringo and mamiro and we are" +
-                                " going to paste a long line text that you may cannot handle properly and" +
-                                " that is the reason for such banevalounch")
-
-
-
-                        val textElement5 = StaticTextElement(page = documentPage)
-                        textElement5.layoutParams.width = 200
-                        textElement5.layoutParams.height = 400
-                        textElement5.layoutParams.x = 300F
-                        textElement5.layoutParams.y = 500f
-                        textElement5.setText("This is the dummy text amigo gringo and mamiro and we are" +
-                                " going to paste a long line text that you may cannot handle properly and" +
-                                " that is the reason for such banevalounch")
-
-
-                        val textElement6 = StaticTextElement(page = documentPage)
-                        textElement6.layoutParams.width = 200
-                        textElement6.layoutParams.height = 400
-                        textElement6.layoutParams.x = 300F
-                        textElement6.layoutParams.y = 500f
-                        textElement6.setText("This is the dummy text amigo gringo and mamiro and we are" +
-                                " going to paste a long line text that you may cannot handle properly and" +
-                                " that is the reason for such banevalounch")
-
-
-                        val textElement7 = StaticTextElement(page = documentPage)
-                        textElement7.layoutParams.width = 200
-                        textElement7.layoutParams.height = 400
-                        textElement7.layoutParams.x = 300F
-                        textElement7.layoutParams.y = 500f
-                        textElement7.setText("This is the dummy text amigo gringo and mamiro and we are" +
-                                " going to paste a long line text that you may cannot handle properly and" +
-                                " that is the reason for such banevalounch")
+//                        val textElement1 = StaticTextElement(page = documentPage)
+//                        textElement1.layoutParams.width = 200
+//                        textElement1.layoutParams.height = 400
+//                        textElement1.layoutParams.x = 300F
+//                        textElement1.layoutParams.y = 500f
+//                        textElement1.setText("This is the dummy text amigo gringo and mamiro and we are" +
+//                                " going to paste a long line text that you may cannot handle properly and" +
+//                                " that is the reason for such banevalounch")
+//
+//
+//                        val textElement2 = StaticTextElement(page = documentPage)
+//                        textElement2.layoutParams.width = 200
+//                        textElement2.layoutParams.height = 400
+//                        textElement2.layoutParams.x = 300F
+//                        textElement2.layoutParams.y = 500f
+//                        textElement2.setText("This is the dummy text amigo gringo and mamiro and we are" +
+//                                " going to paste a long line text that you may cannot handle properly and" +
+//                                " that is the reason for such banevalounch")
+//
+//
+//                        val textElement3 = StaticTextElement(page = documentPage)
+//                        textElement3.layoutParams.width = 200
+//                        textElement3.layoutParams.height = 400
+//                        textElement3.layoutParams.x = 300F
+//                        textElement3.layoutParams.y = 500f
+//                        textElement3.setText("This is the dummy text amigo gringo and mamiro and we are" +
+//                                " going to paste a long line text that you may cannot handle properly and" +
+//                                " that is the reason for such banevalounch")
+//
+//
+//                        val textElement4 = StaticTextElement(page = documentPage)
+//                        textElement4.layoutParams.width = 200
+//                        textElement4.layoutParams.height = 400
+//                        textElement4.layoutParams.x = 300F
+//                        textElement4.layoutParams.y = 500f
+//                        textElement4.setText("This is the dummy text amigo gringo and mamiro and we are" +
+//                                " going to paste a long line text that you may cannot handle properly and" +
+//                                " that is the reason for such banevalounch")
+//
+//
+//
+//                        val textElement5 = StaticTextElement(page = documentPage)
+//                        textElement5.layoutParams.width = 200
+//                        textElement5.layoutParams.height = 400
+//                        textElement5.layoutParams.x = 300F
+//                        textElement5.layoutParams.y = 500f
+//                        textElement5.setText("This is the dummy text amigo gringo and mamiro and we are" +
+//                                " going to paste a long line text that you may cannot handle properly and" +
+//                                " that is the reason for such banevalounch")
+//
+//
+//                        val textElement6 = StaticTextElement(page = documentPage)
+//                        textElement6.layoutParams.width = 200
+//                        textElement6.layoutParams.height = 400
+//                        textElement6.layoutParams.x = 300F
+//                        textElement6.layoutParams.y = 500f
+//                        textElement6.setText("This is the dummy text amigo gringo and mamiro and we are" +
+//                                " going to paste a long line text that you may cannot handle properly and" +
+//                                " that is the reason for such banevalounch")
+//
+//
+//                        val textElement7 = StaticTextElement(page = documentPage)
+//                        textElement7.layoutParams.width = 200
+//                        textElement7.layoutParams.height = 400
+//                        textElement7.layoutParams.x = 300F
+//                        textElement7.layoutParams.y = 500f
+//                        textElement7.setText("This is the dummy text amigo gringo and mamiro and we are" +
+//                                " going to paste a long line text that you may cannot handle properly and" +
+//                                " that is the reason for such banevalounch")
                         elements.addAll(arrayOf(textElement,pageElement/*,textElement1,textElement2,textElement3,textElement4,textElement5,textElement6,textElement7*/))
                         document!!.addPage(
                             documentPage
