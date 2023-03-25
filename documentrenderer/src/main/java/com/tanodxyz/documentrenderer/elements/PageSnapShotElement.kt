@@ -5,6 +5,8 @@ import android.graphics.Canvas
 import android.util.SparseArray
 import androidx.core.graphics.toRect
 import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
+import com.tanodxyz.documentrenderer.getHeight
+import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.recycleSafetly
 import kotlin.math.roundToInt
@@ -46,9 +48,9 @@ class PageSnapShotElement(documentPage: DocumentPage) : PageElement(page = docum
         val documentRenderView = page.documentRenderView
         pageSnapShot = PageSnapShot(
             Bitmap.createBitmap(
-                pageBounds.width().div(PAGE_SNAPSHOT_SCALE_DOWN_FACTOR).roundToInt(),
-                pageBounds.height().div(PAGE_SNAPSHOT_SCALE_DOWN_FACTOR).roundToInt(),
-                Bitmap.Config.ARGB_8888
+                pageBounds.getWidth().div(PAGE_SNAPSHOT_SCALE_DOWN_FACTOR).roundToInt(),
+                pageBounds.getHeight().div(PAGE_SNAPSHOT_SCALE_DOWN_FACTOR).roundToInt(),
+                Bitmap.Config.
             ),
             documentRenderView.getCurrentZoom()
         )

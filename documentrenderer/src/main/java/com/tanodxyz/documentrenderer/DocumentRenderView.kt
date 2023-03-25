@@ -1080,14 +1080,14 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     companion object {
         var MINIMUM_ZOOM = 1.0F
-        var MAXIMUM_ZOOM = 10f // greater this so the following
-        val PAGE_SNAPSHOT_SCALE_DOWN_FACTOR = 2F //
+        var MAXIMUM_ZOOM = 10f
+        val PAGE_SNAPSHOT_SCALE_DOWN_FACTOR = 2
 
         val DEFAULT_MAX_SCALE = MAXIMUM_ZOOM
         val DEFAULT_MID_SCALE = MAXIMUM_ZOOM.div(2)
         val DEFAULT_MIN_SCALE = MINIMUM_ZOOM
 
-        var REFRESH_RATE_IN_CASE_VIEW_BUZY = 10L
+        var REFRESH_RATE_IN_CASE_VIEW_BUZY = 10L // milliseconds
         var SCROLL_HANDLE_AND_PAGE_DISPLAY_BOX_HIDE_DELAY_MILLISECS = 1000L
 
         var CACHE_FACTOR = 8

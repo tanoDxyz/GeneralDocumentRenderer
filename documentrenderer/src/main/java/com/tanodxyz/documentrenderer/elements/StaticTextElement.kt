@@ -8,7 +8,6 @@ import android.text.*
 import android.text.TextUtils.TruncateAt
 import android.util.SparseArray
 import androidx.annotation.RequiresApi
-import androidx.core.text.TextUtilsCompat
 import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 import com.tanodxyz.documentrenderer.page.DocumentPage
@@ -72,13 +71,20 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
                     PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
                 ) else textSizePixels
             )
-        val width = if (drawFromOrigin) page.documentRenderView.toCurrentScale(layoutParams.width)
-            .div(PAGE_SNAPSHOT_SCALE_DOWN_FACTOR) else page.documentRenderView.toCurrentScale(
+        val width = if (drawFromOrigin) page.documentRenderView.toCurrentScale(
+            layoutParams.width.div(
+                PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
+            )
+        )
+        else page.documentRenderView.toCurrentScale(
             layoutParams.width
         )
+
         val height =
-            if (drawFromOrigin) page.documentRenderView.toCurrentScale(layoutParams.height).div(
-                PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
+            if (drawFromOrigin) page.documentRenderView.toCurrentScale(
+                layoutParams.height.div(
+                    PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
+                )
             ) else page.documentRenderView.toCurrentScale(layoutParams.height)
 
         val maxLinesByInspection =
@@ -172,7 +178,6 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
                         )
                     )
                 )
-
             } else {
                 getBoundsRelativeToPage().apply {
                     translate(left, top)
