@@ -6,6 +6,7 @@ import android.graphics.Paint
 import android.os.Build
 import android.text.*
 import android.text.TextUtils.TruncateAt
+import android.text.style.BulletSpan
 import android.util.SparseArray
 import androidx.annotation.RequiresApi
 import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
@@ -25,7 +26,7 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
 
 
     var textSizePixels: Float = DEFAULT_TEXT_SIZE
-    var ellipSize = TruncateAt.END
+    var ellipseSize = TruncateAt.END
     var alignment = Layout.Alignment.ALIGN_NORMAL
     var textDirectionHeuristics = TextDirectionHeuristics.LTR
     var spacingmult = 1.0F
@@ -48,7 +49,7 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
         this.text = text
         TextPaint.ANTI_ALIAS_FLAG
         setTextSize(textSizeSp)
-        initTextLayout(false)
+//        initTextLayout(false) //todo uncomment
     }
 
     fun setTextSize(sp: Float) {
@@ -71,28 +72,61 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
                     PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
                 ) else textSizePixels
             )
-        val width = if (drawFromOrigin) page.documentRenderView.toCurrentScale(
-            layoutParams.width.div(
-                PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
-            )
-        )
-        else page.documentRenderView.toCurrentScale(
-            layoutParams.width
-        )
 
+        val shouldScaleWidth = !layoutParams.widthMatchParent
+        val width =
+            if (drawFromOrigin) {
+                if (shouldScaleWidth) {
+                    page.documentRenderView.toCurrentScale(
+                        layoutParams.getWidth().div(
+                            PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
+                        )
+                    ).roundToInt()
+                } else {
+                    layoutParams.getWidth().div(
+                        PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
+                    ).roundToInt()
+                }
+            } else {
+                if (shouldScaleWidth) {
+                    page.documentRenderView.toCurrentScale(
+                        layoutParams.getWidth()
+                    ).roundToInt()
+                } else {
+                    layoutParams.getWidth()
+                }
+            }
+
+        val shouldScaleHeight = !layoutParams.heightMatchParent
         val height =
-            if (drawFromOrigin) page.documentRenderView.toCurrentScale(
-                layoutParams.height.div(
-                    PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
-                )
-            ) else page.documentRenderView.toCurrentScale(layoutParams.height)
+            if (drawFromOrigin) {
+                if (shouldScaleHeight) {
+                    page.documentRenderView.toCurrentScale(
+                        layoutParams.getHeight().div(
+                            PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
+                        )
+                    ).roundToInt()
+                } else {
+                    layoutParams.getHeight().div(
+                        PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
+                    ).roundToInt()
+                }
+            } else {
+                if (shouldScaleHeight) {
+                    page.documentRenderView.toCurrentScale(
+                        layoutParams.getHeight()
+                    ).roundToInt()
+                } else {
+                    layoutParams.getHeight()
+                }
+            }
 
         val maxLinesByInspection =
             getMaxLinesByInspection(
-                makeStaticLayout(width.roundToInt(), Int.MAX_VALUE),
-                height.roundToInt()
+                makeStaticLayout(width, Int.MAX_VALUE),
+                height
             )
-        layout = makeStaticLayout(width.roundToInt(), maxLinesByInspection)
+        layout = makeStaticLayout(width, maxLinesByInspection)
     }
 
     protected fun makeStaticLayout(width: Int, maxLines: Int): StaticLayout {
@@ -100,7 +134,7 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
             val builder =
                 StaticLayout.Builder.obtain(text, 0, text.length, textPaint, width)
                     .setMaxLines(maxLines).setAlignment(alignment)
-                    .setEllipsize(ellipSize)
+                    .setEllipsize(ellipseSize)
                     .setTextDirection(textDirectionHeuristics)
                     .setLineSpacing(spacingAdd, spacingmult)
                     .setIncludePad(includePadding)
@@ -139,7 +173,7 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
                 spacingmult,
                 spacingAdd,
                 includePadding,
-                ellipSize,
+                ellipseSize,
                 width,
                 maxLines
             )
@@ -186,6 +220,9 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
             layout?.draw(canvas)
             restore()
         }
+    }
+
+    fun a() {
     }
 
     private fun getMaxLinesByInspection(staticLayout: StaticLayout, maxHeight: Int): Int {

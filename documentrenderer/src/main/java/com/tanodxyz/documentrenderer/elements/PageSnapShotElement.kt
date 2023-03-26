@@ -9,6 +9,8 @@ import com.tanodxyz.documentrenderer.getHeight
 import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.recycleSafetly
+import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.roundToInt
 
 class PageSnapShotElement(documentPage: DocumentPage) : PageElement(page = documentPage) {
@@ -50,7 +52,7 @@ class PageSnapShotElement(documentPage: DocumentPage) : PageElement(page = docum
             Bitmap.createBitmap(
                 pageBounds.getWidth().div(PAGE_SNAPSHOT_SCALE_DOWN_FACTOR).roundToInt(),
                 pageBounds.getHeight().div(PAGE_SNAPSHOT_SCALE_DOWN_FACTOR).roundToInt(),
-                Bitmap.Config.
+                Bitmap.Config.ARGB_4444
             ),
             documentRenderView.getCurrentZoom()
         )

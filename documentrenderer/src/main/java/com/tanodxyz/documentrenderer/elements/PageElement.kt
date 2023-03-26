@@ -9,13 +9,18 @@ import android.util.SparseArray
 import androidx.annotation.VisibleForTesting
 import com.tanodxyz.documentrenderer.DocumentRenderView
 import com.tanodxyz.documentrenderer.events.*
+import com.tanodxyz.documentrenderer.getHeight
+import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.page.ObjectViewState
+import kotlin.math.roundToInt
 
 open class PageElement(
-    /*protected*/ val layoutParams: LayoutParams = LayoutParams(),
-                  protected val page: DocumentPage? = null
-) : IElement {
+    protected val page: DocumentPage? = null,
+    /*protected*/
+    val layoutParams: LayoutParams = LayoutParams(page),
+
+    ) : IElement {
 
     var debug = true
     protected open var type = PAGE_ELEMENT
@@ -44,6 +49,7 @@ open class PageElement(
 
         return false
     }
+
     fun SparseArray<Any>?.shouldDrawFromOrigin(): Boolean {
         return this != null && this[DocumentPage.RE_DRAW_WITH_RELATIVE_TO_ORIGIN__SNAPSHOT__] == true
     }
@@ -77,8 +83,18 @@ open class PageElement(
         val pageBounds = page!!.pageBounds
         val left = pageBounds.left + page.documentRenderView.toCurrentScale(layoutParams.x)
         val top = pageBounds.top + page.documentRenderView.toCurrentScale(layoutParams.y)
-        val right = left + page.documentRenderView.toCurrentScale(layoutParams.width)
-        val bottom = top + page.documentRenderView.toCurrentScale(layoutParams.height)
+
+        val right =
+            if (layoutParams.widthMatchParent) {
+                left + (layoutParams.getWidth()) // we are not scaling this because we are already using width from pageBounds. pageBounds are already scaled
+            } else {
+                left + page.documentRenderView.toCurrentScale(layoutParams.getWidth())
+            }
+        val bottom = if (layoutParams.heightMatchParent) {
+            top + (layoutParams.getHeight())// we are not scaling this because we are already using height from pageBounds. pageBounds are already scaled
+        } else {
+            top + page.documentRenderView.toCurrentScale(layoutParams.getHeight())
+        }
         elementBounds.left = left
         elementBounds.top = top
         elementBounds.right = right
@@ -86,9 +102,31 @@ open class PageElement(
         return elementBounds
     }
 
-    class LayoutParams(var width: Int = 0, var height: Int = 0) {
+    open class LayoutParams(
+        private val page: DocumentPage?,
+        var rawWidth: Int = 0,
+        var rawHeight: Int = 0,
+        var widthMatchParent: Boolean = false,
+        var heightMatchParent: Boolean = false
+    ) {
         var x = 0F
         var y = 0F
+        fun getWidth(): Int {
+            return if (widthMatchParent) {
+                page!!.pageBounds.getWidth().roundToInt()
+            } else {
+                rawWidth
+            }
+        }
+
+
+        fun getHeight(): Int {
+            return if (heightMatchParent) {
+                page!!.pageBounds.getHeight().roundToInt()
+            } else {
+                rawHeight
+            }
+        }
     }
 
     open fun recycle() {}
@@ -96,8 +134,8 @@ open class PageElement(
     override fun toString(): String {
         return " type = $type , " +
                 "Bounds = $elementBounds ," +
-                " width = ${layoutParams.width} ," +
-                " height = ${layoutParams.height} , " +
+                " width = ${layoutParams.getWidth()} ," +
+                " height = ${layoutParams.getHeight()} , " +
                 "x = ${layoutParams.x} , y = ${layoutParams.y} "
     }
 

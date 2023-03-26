@@ -1,6 +1,7 @@
 package com.tanodxyz.generaldocumentrenderer
 
 import android.content.Context
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.text.Spannable
@@ -60,6 +61,7 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
     }
 
     companion object {
+        var sr = SecureRandom()
         var document: Document? = null
         fun createAndAddPagesToDocument(
             context: Context,
@@ -86,17 +88,20 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
                             )
                         )
                         val pageElement = PageElement(page = documentPage)
-                        pageElement.layoutParams.width = 500
-                        pageElement.layoutParams.height = 500
+                        pageElement.layoutParams.rawWidth = 500
+                        pageElement.layoutParams.rawHeight = 500
                         pageElement.layoutParams.x = 40F
                         pageElement.layoutParams.y = 50F
                         val textElement = StaticTextElement(page = documentPage)
-                        textElement.layoutParams.width = 0
-                        textElement.layoutParams.height = 500
-                        textElement.layoutParams.x = 50F
-                        textElement.layoutParams.y = 50F
+                        textElement.layoutParams.rawWidth = 200
+                        textElement.layoutParams.widthMatchParent = true
+                        textElement.layoutParams.heightMatchParent = true
+                        textElement.textColor = Color.MAGENTA
+                        textElement.layoutParams.rawHeight = 200
+                        textElement.layoutParams.x = 0F
+                        textElement.layoutParams.y = 0F
                         val wordtoSpan: Spannable =
-                            SpannableString("You manually draw the text on Canvas when you have styling needs that are not supported by default by the platform, like writing text that follows a curved path.\n" +
+                            SpannableString("${sr.nextInt()} You manually draw the text on Canvas when you have styling needs that are not supported by default by the platform, like writing text that follows a curved path.\n" +
                                     "\n" +
                                     "Spans allow you to implement multi-style text with finer grained customisation. For example, you can define paragraphs of your text to have a bullet point by applying a BulletSpan. You can customise the gap between the text margin and the bullet and the colour of the bullet. Starting with Android P, you can even set the radius of the bullet point. You can also create a custom implementation for the span. Check out “Create custom spans” section below to find out how.");
 //                        wordtoSpan.setSpan(QuoteSpan(), 0, wordtoSpan.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
