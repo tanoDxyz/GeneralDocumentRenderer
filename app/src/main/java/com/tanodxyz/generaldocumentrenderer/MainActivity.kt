@@ -93,11 +93,11 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
                         pageElement.layoutParams.x = 40F
                         pageElement.layoutParams.y = 50F
                         val textElement = StaticTextElement(page = documentPage)
-                        textElement.layoutParams.rawWidth = 200
+                        textElement.layoutParams.rawWidth = 500
                         textElement.layoutParams.widthMatchParent = true
                         textElement.layoutParams.heightMatchParent = true
                         textElement.textColor = Color.MAGENTA
-                        textElement.layoutParams.rawHeight = 200
+                        textElement.layoutParams.rawHeight = 9000
                         textElement.layoutParams.x = 0F
                         textElement.layoutParams.y = 0F
                         val wordtoSpan: Spannable =

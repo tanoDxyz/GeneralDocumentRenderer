@@ -32,8 +32,8 @@ open class DocumentRenderView @JvmOverloads constructor(
     private lateinit var viewSize: Size
     protected var canShowPageCountBox: Boolean = true
     protected var scrollHandle: ScrollHandle? = null
-    private var busyStateIndicator: IElement? = null
-    private var currentPageForImmediateTouchEvent: Int = 0
+    protected var busyStateIndicator: IElement? = null
+    protected var currentPageForImmediateTouchEvent: Int = 0
     internal lateinit var document: Document
     protected var busyTokensCounter = 0
     internal var eventsIdentityHelper = EventsIdentityHelper()
@@ -1080,8 +1080,8 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     companion object {
         var MINIMUM_ZOOM = 1.0F
-        var MAXIMUM_ZOOM = 10f
-        val PAGE_SNAPSHOT_SCALE_DOWN_FACTOR = 1.5
+        var MAXIMUM_ZOOM = 5f
+        var PAGE_SNAPSHOT_SCALE_DOWN_FACTOR = 1F
 
         val DEFAULT_MAX_SCALE = MAXIMUM_ZOOM
         val DEFAULT_MID_SCALE = MAXIMUM_ZOOM.div(2)

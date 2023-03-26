@@ -6,7 +6,6 @@ import android.graphics.Paint
 import android.os.Build
 import android.text.*
 import android.text.TextUtils.TruncateAt
-import android.text.style.BulletSpan
 import android.util.SparseArray
 import androidx.annotation.RequiresApi
 import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
@@ -60,6 +59,58 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
         }
     }
 
+    private fun calculateHeight(drawFromOrigin: Boolean): Int {
+        val shouldScaleHeight = !layoutParams.heightMatchParent
+        page!!
+        return if (drawFromOrigin) {
+            if (shouldScaleHeight) {
+                page.documentRenderView.toCurrentScale(
+                    layoutParams.getHeight().div(
+                        PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
+                    )
+                ).roundToInt()
+            } else {
+                layoutParams.getHeight().div(
+                    PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
+                ).roundToInt()
+            }
+        } else {
+            if (shouldScaleHeight) {
+                page.documentRenderView.toCurrentScale(
+                    layoutParams.getHeight()
+                ).roundToInt()
+            } else {
+                layoutParams.getHeight()
+            }
+        }
+    }
+
+    private fun calculateWidth(drawFromOrigin: Boolean): Int {
+        page!!
+        val shouldScaleWidth = !layoutParams.widthMatchParent
+        return if (drawFromOrigin) {
+            if (shouldScaleWidth) {
+                page.documentRenderView.toCurrentScale(
+                    layoutParams.getWidth().div(
+                        PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
+                    )
+                ).roundToInt()
+            } else {
+                layoutParams.getWidth().div(
+                    PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
+                ).roundToInt()
+            }
+        } else {
+            if (shouldScaleWidth) {
+                page.documentRenderView.toCurrentScale(
+                    layoutParams.getWidth()
+                ).roundToInt()
+            } else {
+                layoutParams.getWidth()
+            }
+        }
+    }
+
     private fun initTextLayout(drawFromOrigin: Boolean) {
         val oldTextSize = textPaint.textSize
         val newTextSize = page!!.documentRenderView.toCurrentScale(textSizePixels)
@@ -73,54 +124,8 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
                 ) else textSizePixels
             )
 
-        val shouldScaleWidth = !layoutParams.widthMatchParent
-        val width =
-            if (drawFromOrigin) {
-                if (shouldScaleWidth) {
-                    page.documentRenderView.toCurrentScale(
-                        layoutParams.getWidth().div(
-                            PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
-                        )
-                    ).roundToInt()
-                } else {
-                    layoutParams.getWidth().div(
-                        PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
-                    ).roundToInt()
-                }
-            } else {
-                if (shouldScaleWidth) {
-                    page.documentRenderView.toCurrentScale(
-                        layoutParams.getWidth()
-                    ).roundToInt()
-                } else {
-                    layoutParams.getWidth()
-                }
-            }
-
-        val shouldScaleHeight = !layoutParams.heightMatchParent
-        val height =
-            if (drawFromOrigin) {
-                if (shouldScaleHeight) {
-                    page.documentRenderView.toCurrentScale(
-                        layoutParams.getHeight().div(
-                            PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
-                        )
-                    ).roundToInt()
-                } else {
-                    layoutParams.getHeight().div(
-                        PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
-                    ).roundToInt()
-                }
-            } else {
-                if (shouldScaleHeight) {
-                    page.documentRenderView.toCurrentScale(
-                        layoutParams.getHeight()
-                    ).roundToInt()
-                } else {
-                    layoutParams.getHeight()
-                }
-            }
-
+        val width = calculateWidth(drawFromOrigin)
+        val height = calculateHeight(drawFromOrigin)
         val maxLinesByInspection =
             getMaxLinesByInspection(
                 makeStaticLayout(width, Int.MAX_VALUE),
@@ -199,24 +204,8 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
         initTextLayout(drawFromOrigin)
         canvas.apply {
             save()
-            if (drawFromOrigin) {
-                translate(
-                    page!!.documentRenderView.toCurrentScale(
-                        layoutParams.x.div(
-                            PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
-                        )
-                    ),
-                    page.documentRenderView.toCurrentScale(
-                        layoutParams.y.div(
-                            PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
-                        )
-                    )
-                )
-            } else {
-                getBoundsRelativeToPage().apply {
-                    translate(left, top)
-                }
-            }
+            val leftAndTop = args.getLeftAndTop()
+            translate(leftAndTop.x, leftAndTop.y)
             layout?.draw(canvas)
             restore()
         }

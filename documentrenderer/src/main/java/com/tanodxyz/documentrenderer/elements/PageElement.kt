@@ -1,8 +1,8 @@
 package com.tanodxyz.documentrenderer.elements
 
-import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.PointF
 import android.graphics.RectF
 import android.util.Log
 import android.util.SparseArray
@@ -100,6 +100,26 @@ open class PageElement(
         elementBounds.right = right
         elementBounds.bottom = bottom
         return elementBounds
+    }
+
+    open fun SparseArray<Any>?.getLeftAndTop(): PointF {
+        val drawFromOrigin = this.shouldDrawFromOrigin()
+        return if (drawFromOrigin) {
+            val x = page!!.documentRenderView.toCurrentScale(
+                layoutParams.x.div(
+                    DocumentRenderView.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
+                )
+            )
+            val y = page.documentRenderView.toCurrentScale(
+                layoutParams.y.div(
+                    DocumentRenderView.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
+                )
+            )
+            PointF(x, y)
+        } else {
+            val boundsRelativeToPage = getBoundsRelativeToPage()
+            PointF(boundsRelativeToPage.left, boundsRelativeToPage.top)
+        }
     }
 
     open class LayoutParams(
