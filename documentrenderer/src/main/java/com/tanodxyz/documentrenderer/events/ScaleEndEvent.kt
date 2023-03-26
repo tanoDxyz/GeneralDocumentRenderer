@@ -4,6 +4,6 @@ import android.view.MotionEvent
 
 open class ScaleEndEvent(motionEvent: MotionEvent?) : GenericMotionEvent(motionEvent) {
     override fun toString(): String {
-        return "ScaleEndEvent: x=${getX()} | y=${getY()}"
+        return "ScaleEndEvent: xPadding=${getX()} | yPadding=${getY()}"
     }
 }

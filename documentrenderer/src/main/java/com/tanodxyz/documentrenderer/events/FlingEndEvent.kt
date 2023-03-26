@@ -4,6 +4,6 @@ import android.view.MotionEvent
 
 open class FlingEndEvent(motionEvent: MotionEvent?) : GenericMotionEvent(motionEvent) {
     override fun toString(): String {
-        return "FlingEndEvent: x=${getX()} | y=${getY()}"
+        return "FlingEndEvent: xPadding=${getX()} | yPadding=${getY()}"
     }
 }

@@ -21,7 +21,7 @@ open class FlingStartEvent(
     }
 
     override fun toString(): String {
-        return "FlingStartEvent: x=${getX()} | y=${getY()}"
+        return "FlingStartEvent: xPadding=${getX()} | yPadding=${getY()}"
     }
 
 }

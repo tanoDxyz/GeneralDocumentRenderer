@@ -50,8 +50,8 @@ class PageSnapShotElement(documentPage: DocumentPage) : PageElement(page = docum
         val documentRenderView = page.documentRenderView
         pageSnapShot = PageSnapShot(
             Bitmap.createBitmap(
-                pageBounds.getWidth().div(PAGE_SNAPSHOT_SCALE_DOWN_FACTOR).toInt(),
-                pageBounds.getHeight().div(PAGE_SNAPSHOT_SCALE_DOWN_FACTOR).toInt(),
+                pageBounds.getWidth().div(PAGE_SNAPSHOT_SCALE_DOWN_FACTOR).roundToInt(),
+                pageBounds.getHeight().div(PAGE_SNAPSHOT_SCALE_DOWN_FACTOR).roundToInt(),
                 Bitmap.Config.ARGB_4444
             ),
             documentRenderView.getCurrentZoom()

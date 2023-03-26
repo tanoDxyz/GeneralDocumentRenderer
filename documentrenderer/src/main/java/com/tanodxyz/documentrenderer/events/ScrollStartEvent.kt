@@ -25,6 +25,6 @@ open class ScrollStartEvent(
     }
 
     override fun toString(): String {
-        return "ScrollStartEvent: x=${getX()} | y=${getY()} | distanceTraveledX=$distanceTraveledX | distanceTraveledY=$distanceTraveledY"
+        return "ScrollStartEvent: xPadding=${getX()} | yPadding=${getY()} | distanceTraveledX=$distanceTraveledX | distanceTraveledY=$distanceTraveledY"
     }
 }

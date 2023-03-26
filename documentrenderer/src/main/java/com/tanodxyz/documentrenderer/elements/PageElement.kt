@@ -26,8 +26,10 @@ open class PageElement(
     protected open var type = PAGE_ELEMENT
 
     @VisibleForTesting
-    protected val elementBounds = RectF()
+    protected val elementBoundsRelativeToPage = RectF()
 
+    @VisibleForTesting
+    protected val elementBoundsRelativeToOrigin = RectF()
     val paint: Paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.MAGENTA
         textSize = 12F
@@ -79,47 +81,73 @@ open class PageElement(
         }
     }
 
-    open fun getBoundsRelativeToPage(fromOrigin: Boolean = false): RectF {
+    open fun getBoundsRelativeToPage(drawFromOrigin: Boolean = false): RectF {
         val pageBounds = page!!.pageBounds
-        val left = pageBounds.left + page.documentRenderView.toCurrentScale(layoutParams.x)
-        val top = pageBounds.top + page.documentRenderView.toCurrentScale(layoutParams.y)
+        val scaledX = page.documentRenderView.toCurrentScale(layoutParams.xPadding)
+        val scaledY = page.documentRenderView.toCurrentScale(layoutParams.yPadding)
 
-        val right =
-            if (layoutParams.widthMatchParent) {
-                left + (layoutParams.getWidth()) // we are not scaling this because we are already using width from pageBounds. pageBounds are already scaled
+
+        if (drawFromOrigin) {
+            val scaleDownX =
+                page.documentRenderView.toCurrentScale(layoutParams.xPadding.div(DocumentRenderView.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR))
+            val scaleDownY =
+                page.documentRenderView.toCurrentScale(layoutParams.yPadding.div(DocumentRenderView.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR))
+            val scaleDownWidth =
+                layoutParams.getWidth().div(DocumentRenderView.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR)
+            val scaledDownHeight =
+                layoutParams.getHeight().div(DocumentRenderView.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR)
+
+            val left = scaleDownX
+            val top = scaleDownY
+            val right =
+                if (layoutParams.widthMatchParent) {
+                    (left + scaleDownWidth) - scaleDownX.times(2)// we are not scaling this because we are already using width from pageBounds. pageBounds are already scaled
+                } else {
+                    (left + page.documentRenderView.toCurrentScale(
+                        layoutParams.getWidth()
+                            .div(DocumentRenderView.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR)
+                    )) - scaleDownX.times(2)
+                }
+
+            val bottom = if (layoutParams.heightMatchParent) {
+                (top + scaledDownHeight) - scaleDownY.times(2)// we are not scaling this because we are already using height from pageBounds. pageBounds are already scaled
             } else {
-                left + page.documentRenderView.toCurrentScale(layoutParams.getWidth())
+                (top + page.documentRenderView.toCurrentScale(
+                    layoutParams.getHeight().div(DocumentRenderView.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR)
+                )) - scaleDownY.times(2)
             }
-        val bottom = if (layoutParams.heightMatchParent) {
-            top + (layoutParams.getHeight())// we are not scaling this because we are already using height from pageBounds. pageBounds are already scaled
+            elementBoundsRelativeToOrigin.left = left
+            elementBoundsRelativeToOrigin.right = right
+            elementBoundsRelativeToOrigin.top = top
+            elementBoundsRelativeToOrigin.bottom = bottom
+            return elementBoundsRelativeToOrigin
         } else {
-            top + page.documentRenderView.toCurrentScale(layoutParams.getHeight())
+            val left = pageBounds.left + scaledX
+            val top = pageBounds.top + scaledY
+
+            val right =
+                if (layoutParams.widthMatchParent) {
+                    (left + layoutParams.getWidth()) - scaledX.times(2)// we are not scaling this because we are already using width from pageBounds. pageBounds are already scaled
+                } else {
+                    (left + page.documentRenderView.toCurrentScale(layoutParams.getWidth())) - scaledX.times(2)
+                }
+            val bottom = if (layoutParams.heightMatchParent) {
+                (top + layoutParams.getHeight()) - scaledY.times(2)// we are not scaling this because we are already using height from pageBounds. pageBounds are already scaled
+            } else {
+                (top + page.documentRenderView.toCurrentScale(layoutParams.getHeight())) - scaledY.times(2)
+            }
+            elementBoundsRelativeToPage.left = left
+            elementBoundsRelativeToPage.top = top
+            elementBoundsRelativeToPage.right = right
+            elementBoundsRelativeToPage.bottom = bottom
+            return elementBoundsRelativeToPage
         }
-        elementBounds.left = left
-        elementBounds.top = top
-        elementBounds.right = right
-        elementBounds.bottom = bottom
-        return elementBounds
     }
 
     open fun SparseArray<Any>?.getLeftAndTop(): PointF {
         val drawFromOrigin = this.shouldDrawFromOrigin()
-        return if (drawFromOrigin) {
-            val x = page!!.documentRenderView.toCurrentScale(
-                layoutParams.x.div(
-                    DocumentRenderView.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
-                )
-            )
-            val y = page.documentRenderView.toCurrentScale(
-                layoutParams.y.div(
-                    DocumentRenderView.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
-                )
-            )
-            PointF(x, y)
-        } else {
-            val boundsRelativeToPage = getBoundsRelativeToPage()
-            PointF(boundsRelativeToPage.left, boundsRelativeToPage.top)
-        }
+        val boundsRelativeToPage = getBoundsRelativeToPage(drawFromOrigin)
+        return PointF(boundsRelativeToPage.left, boundsRelativeToPage.top)
     }
 
     open class LayoutParams(
@@ -129,11 +157,11 @@ open class PageElement(
         var widthMatchParent: Boolean = false,
         var heightMatchParent: Boolean = false
     ) {
-        var x = 0F
-        var y = 0F
+        var xPadding = 0F
+        var yPadding = 0F
         fun getWidth(): Int {
             return if (widthMatchParent) {
-                page!!.pageBounds.getWidth().toInt()
+                page!!.pageBounds.getWidth().roundToInt()
             } else {
                 rawWidth
             }
@@ -142,7 +170,7 @@ open class PageElement(
 
         fun getHeight(): Int {
             return if (heightMatchParent) {
-                page!!.pageBounds.getHeight().toInt()
+                page!!.pageBounds.getHeight().roundToInt()
             } else {
                 rawHeight
             }
@@ -153,10 +181,10 @@ open class PageElement(
 
     override fun toString(): String {
         return " type = $type , " +
-                "Bounds = $elementBounds ," +
+                "Bounds = $elementBoundsRelativeToPage ," +
                 " width = ${layoutParams.getWidth()} ," +
                 " height = ${layoutParams.getHeight()} , " +
-                "x = ${layoutParams.x} , y = ${layoutParams.y} "
+                "xPadding = ${layoutParams.xPadding} , yPadding = ${layoutParams.yPadding} "
     }
 
     companion object {

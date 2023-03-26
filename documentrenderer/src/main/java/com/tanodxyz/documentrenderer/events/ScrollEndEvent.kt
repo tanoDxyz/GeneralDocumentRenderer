@@ -4,6 +4,6 @@ import android.view.MotionEvent
 
 open class ScrollEndEvent(motionEvent: MotionEvent?) : GenericMotionEvent(motionEvent) {
     override fun toString(): String {
-        return "ScrollEndEvent: x=${getX()} | y=${getY()}"
+        return "ScrollEndEvent: xPadding=${getX()} | yPadding=${getY()}"
     }
 }
