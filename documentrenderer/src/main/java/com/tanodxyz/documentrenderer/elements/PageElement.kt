@@ -133,7 +133,7 @@ open class PageElement(
         var y = 0F
         fun getWidth(): Int {
             return if (widthMatchParent) {
-                page!!.pageBounds.getWidth().roundToInt()
+                page!!.pageBounds.getWidth().toInt()
             } else {
                 rawWidth
             }
@@ -142,7 +142,7 @@ open class PageElement(
 
         fun getHeight(): Int {
             return if (heightMatchParent) {
-                page!!.pageBounds.getHeight().roundToInt()
+                page!!.pageBounds.getHeight().toInt()
             } else {
                 rawHeight
             }

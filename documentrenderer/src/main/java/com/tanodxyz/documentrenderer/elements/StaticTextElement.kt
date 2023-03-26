@@ -68,17 +68,17 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
                     layoutParams.getHeight().div(
                         PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
                     )
-                ).roundToInt()
+                ).toInt()
             } else {
                 layoutParams.getHeight().div(
                     PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
-                ).roundToInt()
+                ).toInt()
             }
         } else {
             if (shouldScaleHeight) {
                 page.documentRenderView.toCurrentScale(
                     layoutParams.getHeight()
-                ).roundToInt()
+                ).toInt()
             } else {
                 layoutParams.getHeight()
             }
@@ -94,17 +94,17 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
                     layoutParams.getWidth().div(
                         PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
                     )
-                ).roundToInt()
+                ).toInt()
             } else {
                 layoutParams.getWidth().div(
                     PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
-                ).roundToInt()
+                ).toInt()
             }
         } else {
             if (shouldScaleWidth) {
                 page.documentRenderView.toCurrentScale(
                     layoutParams.getWidth()
-                ).roundToInt()
+                ).toInt()
             } else {
                 layoutParams.getWidth()
             }
