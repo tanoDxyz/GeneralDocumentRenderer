@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.tanodxyz.documentrenderer.*
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.elements.DefaultCircularProgressBarElement
+import com.tanodxyz.documentrenderer.elements.ImageElement
 import com.tanodxyz.documentrenderer.elements.PageElement
 import com.tanodxyz.documentrenderer.elements.StaticTextElement
 import com.tanodxyz.documentrenderer.extensions.DefaultScrollHandle
@@ -75,7 +76,7 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
                 document = Document(context, FixPageSizeCalculator())
                 val handler = Handler()
                 thread(start = true) {
-                    for (i: Int in 0 until 120) {
+                    for (i: Int in 0 until 1) {
                         val elements = mutableListOf<PageElement>()
 
                         val documentPage = DocumentPage(
@@ -89,14 +90,14 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
                         )
 
                         val textElement = StaticTextElement(page = documentPage)
-//                        textElement.layoutParams.paddings = RectF(32F,32F,32F,32F)
-                        textElement.layoutParams.rawWidth = 200
-                        textElement.layoutParams.widthMatchParent = true
-                        textElement.layoutParams.heightMatchParent = true
+//                        textElement.paddings = RectF(32F,32F,32F,32F)
+                        textElement.rawWidth = 200
+                        textElement.widthMatchParent = true
+                        textElement.heightMatchParent = true
                         textElement.textColor = Color.BLACK
-                        textElement.layoutParams.rawHeight = 200
-                        textElement.layoutParams.xPadding = 50f
-                        textElement.layoutParams.yPadding = 50F
+                        textElement.rawHeight = 200
+                        textElement.x = 8
+                        textElement.y = 8
                         val wordtoSpan: Spannable =
                             SpannableString("${sr.nextInt()} You manually draw the text on Canvas when you have styling needs that are not supported by default by the platform, like writing text that follows a curved path.\n" +
                                     "\n" +
@@ -111,42 +112,53 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
 //                        )
 
                         textElement.setText(wordtoSpan)
+//                        for(i:Int in 0 until 100) {
+//                            val imageElement = ImageElement(documentPage)
+//                            imageElement.rawWidth = 200
+//                            imageElement.rawHeight = 200
+//                            imageElement.x = 10
+//                            imageElement.y = 10
+//                            imageElement.widthMatchParent = true
+//                            imageElement.heightMatchParent = true
+//                            elements.add(imageElement)
+//                        }
+
 
 //                        val textElement1 = StaticTextElement(page = documentPage)
-//                        textElement1.layoutParams.widthSpec = 200
-//                        textElement1.layoutParams.heightSpec = 400
-//                        textElement1.layoutParams.xPadding = 300F
-//                        textElement1.layoutParams.yPadding = 500f
+//                        textElement1.widthSpec = 200
+//                        textElement1.heightSpec = 400
+//                        textElement1.x = 300F
+//                        textElement1.y = 500f
 //                        textElement1.setText("This is the dummy text amigo gringo and mamiro and we are" +
 //                                " going to paste a long line text that you may cannot handle properly and" +
 //                                " that is the reason for such banevalounch")
 //
 //
 //                        val textElement2 = StaticTextElement(page = documentPage)
-//                        textElement2.layoutParams.widthSpec = 200
-//                        textElement2.layoutParams.heightSpec = 400
-//                        textElement2.layoutParams.xPadding = 300F
-//                        textElement2.layoutParams.yPadding = 500f
+//                        textElement2.widthSpec = 200
+//                        textElement2.heightSpec = 400
+//                        textElement2.x = 300F
+//                        textElement2.y = 500f
 //                        textElement2.setText("This is the dummy text amigo gringo and mamiro and we are" +
 //                                " going to paste a long line text that you may cannot handle properly and" +
 //                                " that is the reason for such banevalounch")
 //
 //
 //                        val textElement3 = StaticTextElement(page = documentPage)
-//                        textElement3.layoutParams.widthSpec = 200
-//                        textElement3.layoutParams.heightSpec = 400
-//                        textElement3.layoutParams.xPadding = 300F
-//                        textElement3.layoutParams.yPadding = 500f
+//                        textElement3.widthSpec = 200
+//                        textElement3.heightSpec = 400
+//                        textElement3.x = 300F
+//                        textElement3.y = 500f
 //                        textElement3.setText("This is the dummy text amigo gringo and mamiro and we are" +
 //                                " going to paste a long line text that you may cannot handle properly and" +
 //                                " that is the reason for such banevalounch")
 //
 //
 //                        val textElement4 = StaticTextElement(page = documentPage)
-//                        textElement4.layoutParams.widthSpec = 200
-//                        textElement4.layoutParams.heightSpec = 400
-//                        textElement4.layoutParams.xPadding = 300F
-//                        textElement4.layoutParams.yPadding = 500f
+//                        textElement4.widthSpec = 200
+//                        textElement4.heightSpec = 400
+//                        textElement4.x = 300F
+//                        textElement4.y = 500f
 //                        textElement4.setText("This is the dummy text amigo gringo and mamiro and we are" +
 //                                " going to paste a long line text that you may cannot handle properly and" +
 //                                " that is the reason for such banevalounch")
@@ -154,30 +166,30 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
 //
 //
 //                        val textElement5 = StaticTextElement(page = documentPage)
-//                        textElement5.layoutParams.widthSpec = 200
-//                        textElement5.layoutParams.heightSpec = 400
-//                        textElement5.layoutParams.xPadding = 300F
-//                        textElement5.layoutParams.yPadding = 500f
+//                        textElement5.widthSpec = 200
+//                        textElement5.heightSpec = 400
+//                        textElement5.x = 300F
+//                        textElement5.y = 500f
 //                        textElement5.setText("This is the dummy text amigo gringo and mamiro and we are" +
 //                                " going to paste a long line text that you may cannot handle properly and" +
 //                                " that is the reason for such banevalounch")
 //
 //
 //                        val textElement6 = StaticTextElement(page = documentPage)
-//                        textElement6.layoutParams.widthSpec = 200
-//                        textElement6.layoutParams.heightSpec = 400
-//                        textElement6.layoutParams.xPadding = 300F
-//                        textElement6.layoutParams.yPadding = 500f
+//                        textElement6.widthSpec = 200
+//                        textElement6.heightSpec = 400
+//                        textElement6.x = 300F
+//                        textElement6.y = 500f
 //                        textElement6.setText("This is the dummy text amigo gringo and mamiro and we are" +
 //                                " going to paste a long line text that you may cannot handle properly and" +
 //                                " that is the reason for such banevalounch")
 //
 //
 //                        val textElement7 = StaticTextElement(page = documentPage)
-//                        textElement7.layoutParams.widthSpec = 200
-//                        textElement7.layoutParams.heightSpec = 400
-//                        textElement7.layoutParams.xPadding = 300F
-//                        textElement7.layoutParams.yPadding = 500f
+//                        textElement7.widthSpec = 200
+//                        textElement7.heightSpec = 400
+//                        textElement7.x = 300F
+//                        textElement7.y = 500f
 //                        textElement7.setText("This is the dummy text amigo gringo and mamiro and we are" +
 //                                " going to paste a long line text that you may cannot handle properly and" +
 //                                " that is the reason for such banevalounch")
@@ -191,13 +203,13 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
 //                                    /*secureRandom.nextInt(1000) + 10*/200
 //                                )
 //                            )
-//                            val pageElement = PageElement(page = documentPage1, PageElement.LayoutParams(paddings = RectF(80F,80F,80F,80F)))
-//                            pageElement.layoutParams.rawWidth = 200
-//                            pageElement.layoutParams.rawHeight = 200
-//                            pageElement.layoutParams.widthMatchParent = true
-//                            pageElement.layoutParams.heightMatchParent = true
-//                            pageElement.layoutParams.xPadding = 0F
-//                            pageElement.layoutParams.yPadding = 0F
+//                            val pageElement = PageElement(page = documentPage1, PageElement(paddings = RectF(80F,80F,80F,80F)))
+//                            pageElement.rawWidth = 200
+//                            pageElement.rawHeight = 200
+//                            pageElement.widthMatchParent = true
+//                            pageElement.heightMatchParent = true
+//                            pageElement.x = 0F
+//                            pageElement.y = 0F
 //                            elements.add(pageElement)
 //                            document!!.addPage(documentPage1)
 //                        }

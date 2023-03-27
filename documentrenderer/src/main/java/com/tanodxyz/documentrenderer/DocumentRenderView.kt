@@ -650,7 +650,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         val documentPages = document.getDocumentPages()
         val targetPageBounds = RectF(0F, 0F, 0F, 0F)
         val page = documentPages[normalizedPageNo]
-        //page xPadding
+        //page x
         val scaledPageStart = (toCurrentScale(document.pageIndexes[normalizedPageNo].x))
         pageX =
             contentDrawX + scaledPageStart + document.pageMargins.left
@@ -776,7 +776,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                     }
                 }
             }
-//            xPadding
+//            x
             var offsetX = absX
             val scaledPageWidth: Float = toCurrentScale(document.getMaxPageWidth())
             if (scaledPageWidth < width) {
@@ -973,7 +973,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         var pageHeightToDraw = 0
         var scaledFitPageHeight = 0F
         if (document.swipeVertical) {
-            // page xPadding
+            // page x
             scaledPageStart =
                 (toCurrentScale(document.getMaxPageWidth() - page.modifiedSize.width).div(2))
             pageX =
@@ -998,7 +998,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             scaledFitPageHeight = toCurrentScale(pageHeightToDraw)
             pageBottom = (pageY + scaledFitPageHeight) - bottomMarginToSubtract
         } else {
-            //page xPadding
+            //page x
             pageX =
                 contentDrawOffsetX + toCurrentScale(document.pageIndexes[page.uniqueId].x) + document.pageMargins.left
             // pageY
@@ -1081,7 +1081,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     companion object {
         var MINIMUM_ZOOM = 1.0F
         var MAXIMUM_ZOOM = 5f
-        var PAGE_SNAPSHOT_SCALE_DOWN_FACTOR = 2F
+        var PAGE_SNAPSHOT_SCALE_DOWN_FACTOR = 1F
 
         val DEFAULT_MAX_SCALE = MAXIMUM_ZOOM
         val DEFAULT_MID_SCALE = MAXIMUM_ZOOM.div(2)

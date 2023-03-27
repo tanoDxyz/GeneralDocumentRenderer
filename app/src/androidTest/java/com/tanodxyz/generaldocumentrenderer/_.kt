@@ -97,8 +97,8 @@ class PageElementCoordinatesAction : ViewAction {
         pageElement = documentPage.elements[0]
         pageElement.layoutParams.widthSpec = 200
         pageElement.layoutParams.heightSpec = 200
-        pageElement.layoutParams.xPadding = 1F
-        pageElement.layoutParams.yPadding = 1F
+        pageElement.layoutParams.x = 1F
+        pageElement.layoutParams.y = 1F
         renderView.redraw()
     }
 
