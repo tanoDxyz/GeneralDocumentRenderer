@@ -3,7 +3,7 @@ package com.tanodxyz.documentrenderer.elements
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.Path
+import android.graphics.Typeface
 import android.os.Build
 import android.text.*
 import android.text.TextUtils.TruncateAt
@@ -19,7 +19,7 @@ import java.lang.reflect.Constructor
 import kotlin.math.roundToInt
 
 
-class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
+class SimpleStaticTextElement(page: DocumentPage) : PageElement(page = page) {
     protected lateinit var charSequence: CharSequence
     protected var textPaint: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         this.color = DEFAULT_TEXT_COLOR
@@ -58,6 +58,10 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
         } else {
             page?.documentRenderView?.resources?.spToPx(sp) ?: DEFAULT_TEXT_SIZE
         }
+    }
+
+    fun setTypeFace(typeface: Typeface) {
+        textPaint.typeface = typeface
     }
 
     private fun calculateHeight(drawFromOrigin: Boolean): Int {
@@ -166,14 +170,10 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
         canvas.apply {
             save()
             val leftAndTop = args.getLeftAndTop()
-            drawRect(getBoundsRelativeToPage(drawFromOrigin), paint)
             translate(leftAndTop.x, leftAndTop.y)
             layout?.draw(canvas)
             restore()
         }
-    }
-
-    fun a() {
     }
 
     private fun getMaxLinesByInspection(staticLayout: StaticLayout, maxHeight: Int): Int {

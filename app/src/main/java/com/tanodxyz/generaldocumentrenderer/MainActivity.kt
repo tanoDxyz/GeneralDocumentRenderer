@@ -2,6 +2,7 @@ package com.tanodxyz.generaldocumentrenderer
 
 import android.content.Context
 import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
 import android.os.Handler
 import android.text.Spannable
@@ -11,9 +12,8 @@ import androidx.appcompat.app.AppCompatActivity
 import com.tanodxyz.documentrenderer.*
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.elements.DefaultCircularProgressBarElement
-import com.tanodxyz.documentrenderer.elements.ImageElement
 import com.tanodxyz.documentrenderer.elements.PageElement
-import com.tanodxyz.documentrenderer.elements.StaticTextElement
+import com.tanodxyz.documentrenderer.elements.SimpleStaticTextElement
 import com.tanodxyz.documentrenderer.extensions.DefaultScrollHandle
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.pagesizecalculator.FixPageSizeCalculator
@@ -76,7 +76,7 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
                 document = Document(context, FixPageSizeCalculator())
                 val handler = Handler()
                 thread(start = true) {
-                    for (i: Int in 0 until 1) {
+                    for (i: Int in 0 until 1200) {
                         val elements = mutableListOf<PageElement>()
 
                         val documentPage = DocumentPage(
@@ -89,17 +89,18 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
                             )
                         )
 
-                        val textElement = StaticTextElement(page = documentPage)
+                        val textElement = SimpleStaticTextElement(page = documentPage)
+                        val createFromAsset =
+                            Typeface.createFromAsset(context.assets, "fonts/abcd.otf")
+                        textElement.setTypeFace(createFromAsset)
 //                        textElement.paddings = RectF(32F,32F,32F,32F)
-                        textElement.rawWidth = 200
                         textElement.widthMatchParent = true
                         textElement.heightMatchParent = true
                         textElement.textColor = Color.BLACK
-                        textElement.rawHeight = 200
-                        textElement.x = 8
-                        textElement.y = 8
+                        textElement.x = 80
+                        textElement.y = 80
                         val wordtoSpan: Spannable =
-                            SpannableString("${sr.nextInt()} You manually draw the text on Canvas when you have styling needs that are not supported by default by the platform, like writing text that follows a curved path.\n" +
+                            SpannableString("${sr.nextInt()} You manually draw the text on Canvas when you haveeeeeee styling needs that are not supported by default by the platform, like writing text that follows a curved path.\n" +
                                     "\n" +
                                     "Spans allow you to implement multi-style text with finer grained customisation. For example, you can define paragraphs of your text to have a bullet point by applying a BulletSpan. You can customise the gap between the text margin and the bullet and the colour of the bullet. Starting with Android P, you can even set the radius of the bullet point. You can also create a custom implementation for the span. Check out “Create custom spans” section below to find out how.");
 //                        wordtoSpan.setSpan(QuoteSpan(), 0, wordtoSpan.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
