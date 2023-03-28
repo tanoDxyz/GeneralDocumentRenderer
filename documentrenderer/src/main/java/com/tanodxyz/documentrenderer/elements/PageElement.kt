@@ -23,8 +23,7 @@ open class PageElement(
     var x: Int = 0,
     var y: Int = 0,
     var widthMatchParent: Boolean = false,
-    var heightMatchParent: Boolean = false,
-    var padding: RectF = RectF()
+    var heightMatchParent: Boolean = false
 ) : IElement {
 
     var debug = true
@@ -37,7 +36,7 @@ open class PageElement(
     val elementBoundsRelativeToOrigin = RectF()
 
     val paint: Paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.BLACK
+        color = Color.GREEN
         textSize = 12F
     }
 
@@ -90,7 +89,7 @@ open class PageElement(
             } else {
                 (top + page.documentRenderView.toCurrentScale(
                     getHeight().div(DocumentRenderView.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR)
-                )) /*- scaleDownY.times(2)*/
+                ))
             }
             elementBoundsRelativeToOrigin.left = left
             elementBoundsRelativeToOrigin.right = right
@@ -105,14 +104,14 @@ open class PageElement(
 
             val right =
                 if (widthMatchParent) {
-                    (left+ getWidth()) - scaledX.times(2)
+                    (left + getWidth()) - scaledX.times(2)
                 } else {
-                    (left + page.documentRenderView.toCurrentScale(getWidth())) /*- scaledX.times(2)*/
+                    (left + page.documentRenderView.toCurrentScale(getWidth()))
                 }
             val bottom = if (heightMatchParent) {
                 (top + getHeight()) - scaledY.times(2)
             } else {
-                (top + page.documentRenderView.toCurrentScale(getHeight())) /*- scaledY.times(2)*/
+                (top + page.documentRenderView.toCurrentScale(getHeight()))
             }
             elementBoundsRelativeToPage.left = left
             elementBoundsRelativeToPage.top = top

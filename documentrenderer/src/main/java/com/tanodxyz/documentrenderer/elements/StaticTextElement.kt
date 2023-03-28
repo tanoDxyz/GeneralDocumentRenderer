@@ -3,6 +3,7 @@ package com.tanodxyz.documentrenderer.elements
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Path
 import android.os.Build
 import android.text.*
 import android.text.TextUtils.TruncateAt
@@ -19,7 +20,7 @@ import kotlin.math.roundToInt
 
 
 class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
-    protected lateinit var text: CharSequence
+    protected lateinit var charSequence: CharSequence
     protected var textPaint: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         this.color = DEFAULT_TEXT_COLOR
         this.textSize = DEFAULT_TEXT_SIZE
@@ -32,7 +33,7 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
     var textDirectionHeuristics = TextDirectionHeuristics.LTR
     var spacingmult = 1.0F
     var spacingAdd = 2.0F
-    var includePadding = false
+    var includePadding = true
 
     @RequiresApi(Build.VERSION_CODES.M)
     var lineBreakingStrategy = Layout.BREAK_STRATEGY_SIMPLE
@@ -46,11 +47,9 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
     protected var layout: StaticLayout? = null
 
     override var type = "TextElement"
-    fun setText(text: CharSequence, textSizeSp: Float = -1F) {
-        this.text = text
+    fun setText(text: CharSequence) {
+        this.charSequence = text
         TextPaint.ANTI_ALIAS_FLAG
-        setTextSize(textSizeSp)
-//        initTextLayout(false) //todo uncomment
     }
 
     fun setTextSize(sp: Float) {
@@ -81,9 +80,9 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
                     PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
                 ) else textSizePixels
             )
-
         val width = calculateWidth(drawFromOrigin)
         val height = calculateHeight(drawFromOrigin)
+
         val maxLinesByInspection =
             getMaxLinesByInspection(
                 makeStaticLayout(width, Int.MAX_VALUE),
@@ -92,10 +91,14 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
         layout = makeStaticLayout(width, maxLinesByInspection)
     }
 
-    protected fun makeStaticLayout(width: Int, maxLines: Int): StaticLayout {
+    protected fun makeStaticLayout(
+        width: Int,
+        maxLines: Int
+    ): StaticLayout {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
             val builder =
-                StaticLayout.Builder.obtain(text, 0, text.length, textPaint, width)
+                StaticLayout.Builder.obtain(charSequence, 0, charSequence.length, textPaint, width)
                     .setMaxLines(maxLines).setAlignment(alignment)
                     .setEllipsize(ellipseSize)
                     .setTextDirection(textDirectionHeuristics)
@@ -126,9 +129,9 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
                 )
             constructor.setAccessible(true)
             constructor.newInstance(
-                text,
+                charSequence,
                 0,
-                text.length,
+                charSequence.length,
                 textPaint,
                 width,
                 alignment,
@@ -163,6 +166,7 @@ class StaticTextElement(page: DocumentPage) : PageElement(page = page) {
         canvas.apply {
             save()
             val leftAndTop = args.getLeftAndTop()
+            drawRect(getBoundsRelativeToPage(drawFromOrigin), paint)
             translate(leftAndTop.x, leftAndTop.y)
             layout?.draw(canvas)
             restore()
