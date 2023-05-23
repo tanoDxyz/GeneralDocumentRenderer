@@ -106,9 +106,10 @@ open class DocumentRenderView @JvmOverloads constructor(
         }
     }
 
-    fun isScaling(): Boolean {
-        return eventsIdentityHelper.isScaling()
-    }
+    val isScaling: Boolean get() = eventsIdentityHelper.isScaling()
+    val isScrolling: Boolean get() = eventsIdentityHelper.isScrolling()
+    val isFlinging: Boolean get() = eventsIdentityHelper.isFlinging()
+
 
     @Synchronized
     fun buzy() {
@@ -132,6 +133,21 @@ open class DocumentRenderView @JvmOverloads constructor(
     fun stopFling() {
         animationManager.stopFling()
     }
+
+    fun stopScroll() {
+        enableDisableScroll = false
+    }
+    
+    var enableDisableFling: Boolean
+        get() = touchEventMgr.flingingEnabled
+        set(value) {
+            touchEventMgr.flingingEnabled = value
+        }
+    var enableDisableScroll: Boolean
+        get() = touchEventMgr.scrollingEnabled
+        set(value) {
+            touchEventMgr.scrollingEnabled = value
+        }
 
     open fun setPositionOffset(progress: Float, moveHandle: Boolean) {
         if (document.swipeVertical) {
@@ -264,7 +280,6 @@ open class DocumentRenderView @JvmOverloads constructor(
             this@DocumentRenderView.zoom = this.zoomLevel
             this@DocumentRenderView.currentPage = currentPage
         }
-        println("9di: onRestore CurrentPage ${currentPage}")
     }
 
 
@@ -467,7 +482,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                 absoluteY
             )
         )
-        
+
         moveTo(absoluteX, absoluteY)
     }
 
@@ -1081,7 +1096,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     companion object {
         var MINIMUM_ZOOM = 1.0F
         var MAXIMUM_ZOOM = 5f
-        var PAGE_SNAPSHOT_SCALE_DOWN_FACTOR = 1.5F
+        var PAGE_SNAPSHOT_SCALE_DOWN_FACTOR = 2F
 
         val DEFAULT_MAX_SCALE = MAXIMUM_ZOOM
         val DEFAULT_MID_SCALE = MAXIMUM_ZOOM.div(2)
@@ -1103,17 +1118,41 @@ open class DocumentRenderView @JvmOverloads constructor(
                 bitSet.clear(0)
             }
 
+            if (iMotionEventMarker is ScrollStartEvent) {
+                bitSet.set(1)
+            }
+            if (iMotionEventMarker is ScrollEndEvent) {
+                bitSet.clear(1)
+            }
+
+            if (iMotionEventMarker is FlingStartEvent) {
+                bitSet.set(2)
+            }
+
+            if (iMotionEventMarker is FlingEndEvent) {
+                bitSet.clear(2)
+            }
+
             if (iMotionEventMarker is GenericMotionEvent && iMotionEventMarker.hasNoMotionEvent()
                     .not() && (iMotionEventMarker.motionEvent?.action == MotionEvent.ACTION_CANCEL
                         || iMotionEventMarker.motionEvent?.action == MotionEvent.ACTION_UP
                         || iMotionEventMarker.motionEvent?.action == MotionEvent.ACTION_POINTER_UP)
             ) {
                 bitSet.clear(0)
+                bitSet.clear(1)
             }
         }
 
         fun isScaling(): Boolean {
             return bitSet.get(0)
+        }
+
+        fun isScrolling(): Boolean {
+            return bitSet.get(1)
+        }
+
+        fun isFlinging(): Boolean {
+            return bitSet.get(2)
         }
     }
 }
