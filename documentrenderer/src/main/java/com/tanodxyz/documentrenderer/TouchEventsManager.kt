@@ -7,7 +7,6 @@ import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.MAXIMUM_ZOOM
 import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.MINIMUM_ZOOM
-import com.tanodxyz.documentrenderer.events.EventManager
 
 class TouchEventsManager(val context: Context) :
     GestureDetector.SimpleOnGestureListener(),
@@ -44,7 +43,7 @@ class TouchEventsManager(val context: Context) :
     }
 
     private fun hostCanRecieveTouchEvents(): Boolean {
-        return this.eventsListener?.canViewRecieveTouchEvents() == true
+        return this.eventsListener?.canViewReceiveTouchEvents() == true
     }
 
     private fun finishScroll(motionEvent: MotionEvent?) {
@@ -268,7 +267,7 @@ class TouchEventsManager(val context: Context) :
         fun onSingleTapUp(e: MotionEvent?)
         fun onShowPress(e: MotionEvent?)
 
-        fun canViewRecieveTouchEvents(): Boolean
+        fun canViewReceiveTouchEvents(): Boolean
     }
 
     data class MovementDirections(

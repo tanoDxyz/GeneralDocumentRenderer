@@ -9,6 +9,6 @@ open class ScaleEvent(
     val focusY: Float
 ) : GenericMotionEvent(motionEvent) {
     override fun toString(): String {
-        return "ScaleEvent: x=${getX()} | y=${getY()}"
+        return "ScaleEvent: leftMargin=${getX()} | topMargin=${getY()}"
     }
 }

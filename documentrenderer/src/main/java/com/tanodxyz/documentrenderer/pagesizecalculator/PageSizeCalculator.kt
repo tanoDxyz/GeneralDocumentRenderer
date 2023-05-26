@@ -6,6 +6,7 @@ import com.tanodxyz.documentrenderer.document.Document
 abstract class PageSizeCalculator {
     abstract fun setup(args: HashMap<String, Any>)
     abstract fun calculate(pageSize: Size): Size
+    abstract fun calculateElementSizeRelative(size: Size): Size
     open lateinit var optimalMaxWidthPageSize: Size
     open lateinit var optimalMaxHeightPageSize: Size
     open lateinit var viewSize: Size

@@ -1,15 +1,13 @@
 package com.tanodxyz.documentrenderer.elements
 
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Typeface
+import android.graphics.*
 import android.os.Build
 import android.text.*
 import android.text.TextUtils.TruncateAt
 import android.util.SparseArray
 import androidx.annotation.RequiresApi
 import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
+import com.tanodxyz.documentrenderer.dpToPx
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 import com.tanodxyz.documentrenderer.getHeight
 import com.tanodxyz.documentrenderer.getWidth
@@ -20,6 +18,7 @@ import kotlin.math.roundToInt
 
 
 class SimpleStaticTextElement(page: DocumentPage) : PageElement(page = page) {
+    private var normalized: Boolean = false
     protected lateinit var charSequence: CharSequence
     protected var textPaint: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         this.color = DEFAULT_TEXT_COLOR
@@ -33,7 +32,7 @@ class SimpleStaticTextElement(page: DocumentPage) : PageElement(page = page) {
     var textDirectionHeuristics = TextDirectionHeuristics.LTR
     var spacingmult = 1.0F
     var spacingAdd = 2.0F
-    var includePadding = true
+    var includePadding = false
 
     @RequiresApi(Build.VERSION_CODES.M)
     var lineBreakingStrategy = Layout.BREAK_STRATEGY_SIMPLE
@@ -42,14 +41,35 @@ class SimpleStaticTextElement(page: DocumentPage) : PageElement(page = page) {
     var hyphenationFrequency = Layout.HYPHENATION_FREQUENCY_NONE
 
     @RequiresApi(Build.VERSION_CODES.P)
-    var useLineSpacingFromFallbacks = true
+    var useLineSpacingFromFallbacks = false
 
     protected var layout: StaticLayout? = null
 
     override var type = "TextElement"
     fun setText(text: CharSequence) {
         this.charSequence = text
-        TextPaint.ANTI_ALIAS_FLAG
+    }
+
+    fun normalizeText() {
+        if(!normalized) {
+            normalized = true
+            val wordsList = this.charSequence.split(' ')
+            val stringBuilder = java.lang.StringBuilder(charSequence.length)
+            val availableLineWidth = calculateWidth(false) - 200
+
+            var lineWidthConsumed = 0F
+            wordsList.forEach { word ->
+                val wordWidth = StaticLayout.getDesiredWidth(word, textPaint)
+                lineWidthConsumed += wordWidth
+                if (lineWidthConsumed < availableLineWidth) {
+                    stringBuilder.append(word).append(' ')
+                } else {
+                    stringBuilder.append('\n').append(word).append( ' ')
+                    lineWidthConsumed = 0F
+                }
+            }
+            charSequence = stringBuilder.toString()
+        }
     }
 
     fun setTextSize(sp: Float) {
@@ -59,6 +79,7 @@ class SimpleStaticTextElement(page: DocumentPage) : PageElement(page = page) {
             page?.documentRenderView?.resources?.spToPx(sp) ?: DEFAULT_TEXT_SIZE
         }
     }
+
 
     fun setTypeFace(typeface: Typeface) {
         textPaint.typeface = typeface
@@ -86,7 +107,7 @@ class SimpleStaticTextElement(page: DocumentPage) : PageElement(page = page) {
             )
         val width = calculateWidth(drawFromOrigin)
         val height = calculateHeight(drawFromOrigin)
-
+        normalizeText()
         val maxLinesByInspection =
             getMaxLinesByInspection(
                 makeStaticLayout(width, Int.MAX_VALUE),
@@ -167,6 +188,7 @@ class SimpleStaticTextElement(page: DocumentPage) : PageElement(page = page) {
         super.draw(canvas, args)
         val drawFromOrigin = args.shouldDrawFromOrigin()
         initTextLayout(drawFromOrigin)
+
         canvas.apply {
             save()
             val leftAndTop = args.getLeftAndTop()

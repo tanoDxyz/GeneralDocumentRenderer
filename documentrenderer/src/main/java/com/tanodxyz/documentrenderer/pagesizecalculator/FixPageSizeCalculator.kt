@@ -35,4 +35,8 @@ class FixPageSizeCalculator : PageSizeCalculator() {
         }
         return Size(w, h)
     }
+
+    override fun calculateElementSizeRelative(size: Size): Size {
+        return calculate(size)
+    }
 }

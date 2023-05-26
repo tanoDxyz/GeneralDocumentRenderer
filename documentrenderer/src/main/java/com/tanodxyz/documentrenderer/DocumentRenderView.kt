@@ -16,6 +16,7 @@ import com.tanodxyz.documentrenderer.events.*
 import com.tanodxyz.documentrenderer.extensions.ScrollHandle
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.page.ObjectViewState
+import com.tanodxyz.documentrenderer.pagesizecalculator.PageSizeCalculator
 import org.jetbrains.annotations.TestOnly
 import java.util.BitSet
 import java.util.concurrent.ExecutorService
@@ -109,7 +110,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     val isScaling: Boolean get() = eventsIdentityHelper.isScaling()
     val isScrolling: Boolean get() = eventsIdentityHelper.isScrolling()
     val isFlinging: Boolean get() = eventsIdentityHelper.isFlinging()
-
+    val pageSizeCalculator: PageSizeCalculator? get() = document.pageSizeCalculator
 
     @Synchronized
     fun buzy() {
@@ -137,7 +138,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     fun stopScroll() {
         enableDisableScroll = false
     }
-    
+
     var enableDisableFling: Boolean
         get() = touchEventMgr.flingingEnabled
         set(value) {
@@ -406,7 +407,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     fun dispatchEventToThePagesInFocus(iMotionEventMarker: IMotionEventMarker) {
-        if (canViewRecieveTouchEvents()) {
+        if (canViewReceiveTouchEvents()) {
             eventsIdentityHelper.feed(iMotionEventMarker)
             findAllVisiblePagesOnScreen().forEach { visiblePage ->
                 visiblePage.apply {
@@ -521,7 +522,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         dispatchEventToThePagesInFocus(ShowPressEvent(e))
     }
 
-    override fun canViewRecieveTouchEvents(): Boolean {
+    override fun canViewReceiveTouchEvents(): Boolean {
         return isInitalized()
     }
 
@@ -665,7 +666,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         val documentPages = document.getDocumentPages()
         val targetPageBounds = RectF(0F, 0F, 0F, 0F)
         val page = documentPages[normalizedPageNo]
-        //page x
+        //page leftMargin
         val scaledPageStart = (toCurrentScale(document.pageIndexes[normalizedPageNo].x))
         pageX =
             contentDrawX + scaledPageStart + document.pageMargins.left
@@ -791,7 +792,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                     }
                 }
             }
-//            x
+//            leftMargin
             var offsetX = absX
             val scaledPageWidth: Float = toCurrentScale(document.getMaxPageWidth())
             if (scaledPageWidth < width) {
@@ -988,7 +989,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         var pageHeightToDraw = 0
         var scaledFitPageHeight = 0F
         if (document.swipeVertical) {
-            // page x
+            // page leftMargin
             scaledPageStart =
                 (toCurrentScale(document.getMaxPageWidth() - page.modifiedSize.width).div(2))
             pageX =
@@ -1013,7 +1014,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             scaledFitPageHeight = toCurrentScale(pageHeightToDraw)
             pageBottom = (pageY + scaledFitPageHeight) - bottomMarginToSubtract
         } else {
-            //page x
+            //page leftMargin
             pageX =
                 contentDrawOffsetX + toCurrentScale(document.pageIndexes[page.uniqueId].x) + document.pageMargins.left
             // pageY

@@ -33,8 +33,9 @@ data class DocumentPage(
 
     fun draw(canvas: Canvas, pageViewState: ObjectViewState) {
         if (pageViewState.isObjectPartiallyOrCompletelyVisible()) {
-            if (documentRenderView.isScaling()) {
+            if (documentRenderView.isScaling) {
                 if (pageSnapShotElement.isEmpty()) {
+                    pageSnapShotElement.preparePageSnapShot()
                     canvas.dispatchDrawCallToIndividualElements()
                 } else {
                     pageSnapShotElement.draw(canvas)
@@ -72,7 +73,6 @@ data class DocumentPage(
         pageBounds.right = 0F
         pageBounds.bottom = 0F
     }
-
 
     companion object {
         const val RE_DRAW_WITH_NEW_PAGE_BOUNDS = 0xcafe

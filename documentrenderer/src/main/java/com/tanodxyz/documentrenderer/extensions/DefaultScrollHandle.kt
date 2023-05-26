@@ -189,7 +189,6 @@ class DefaultScrollHandle @JvmOverloads constructor(
         if (!documentRenderView!!.isFree() || documentRenderView!!.documentFitsView()) {
             return super.onTouchEvent(event)
         }
-        println("8uy: ${event!!.action}")
         documentRenderView?.apply {
 
             val x = event!!.x

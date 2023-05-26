@@ -76,6 +76,10 @@ class DefaultPageSizeCalculator : PageSizeCalculator() {
         }
     }
 
+    override fun calculateElementSizeRelative(size: Size): Size {
+        return calculate(size)
+    }
+
     private fun calculateMaxPages() {
         when (fitPolicy) {
             PageFitPolicy.FIT_HEIGHT -> {
@@ -88,6 +92,7 @@ class DefaultPageSizeCalculator : PageSizeCalculator() {
                     originalMaxWidthSize.height * heightRatio
                 )
             }
+
             PageFitPolicy.BOTH -> {
                 val localOptimalMaxWidth: Size = fitBoth(
                     originalMaxWidthSize,
@@ -114,6 +119,7 @@ class DefaultPageSizeCalculator : PageSizeCalculator() {
                 widthRatio = optimalMaxWidthSize.width / optimalMaxWidthSize.height.toFloat()
                 optimalMaxHeightSize = Size(viewSize.height, viewSize.width)
             }
+
             else -> {
                 optimalMaxWidthSize =
                     fitWidth(originalMaxWidthSize, viewSize.width.toFloat())
