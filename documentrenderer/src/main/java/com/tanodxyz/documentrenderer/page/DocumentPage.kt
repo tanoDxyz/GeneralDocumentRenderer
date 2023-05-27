@@ -6,7 +6,7 @@ import android.util.SparseArray
 import android.view.MotionEvent
 import com.tanodxyz.documentrenderer.*
 import com.tanodxyz.documentrenderer.elements.PageElement
-import com.tanodxyz.documentrenderer.elements.PageSnapShotElement
+import com.tanodxyz.documentrenderer.elements.PageSnapShotElementImpl
 import com.tanodxyz.documentrenderer.events.*
 import java.io.Serializable
 
@@ -22,7 +22,7 @@ data class DocumentPage(
 ) : Serializable, IEventHandler {
     internal var argsToElements = SparseArray<Any>()
     internal var modifiedSize: Size = originalSize
-    protected var pageSnapShotElement: PageSnapShotElement = PageSnapShotElement(this)
+    protected var pageSnapShotElementImpl: PageSnapShotElementImpl = PageSnapShotElementImpl(this)
     fun getWidth(): Float {
         return pageBounds.getWidth()
     }
@@ -34,31 +34,35 @@ data class DocumentPage(
     fun draw(canvas: Canvas, pageViewState: ObjectViewState) {
         if (pageViewState.isObjectPartiallyOrCompletelyVisible()) {
             if (documentRenderView.isScaling) {
-                if (pageSnapShotElement.isEmpty()) {
-                    pageSnapShotElement.preparePageSnapShot()
+                if (pageSnapShotElementImpl.isEmpty()) {
+                    pageSnapShotElementImpl.preparePageSnapshot(documentRenderView.getCurrentZoom())
                     canvas.dispatchDrawCallToIndividualElements()
                 } else {
-                    pageSnapShotElement.draw(canvas)
+                    pageSnapShotElementImpl.draw(canvas)
                 }
             } else {
                 canvas.dispatchDrawCallToIndividualElements()
             }
         } else {
-            pageSnapShotElement.recycle()
+            pageSnapShotElementImpl.recycle()
         }
     }
 
 
     private fun Canvas.dispatchDrawCallToIndividualElements() {
         argsToElements[RE_DRAW_WITH_NEW_PAGE_BOUNDS] = true
-        elements.forEach { iElement -> iElement.draw(this, argsToElements) }
+        dispatchDrawCallToIndividualElements(this,argsToElements)
+    }
+
+    fun dispatchDrawCallToIndividualElements(canvas: Canvas, args: SparseArray<Any>) {
+        elements.forEach { iElement -> iElement.draw(canvas, args) }
     }
 
     override fun onEvent(event: IMotionEventMarker?) {
         event?.apply {
             if (this is GenericMotionEvent && !this.hasNoMotionEvent()) {
                 if (this.motionEvent?.action == MotionEvent.ACTION_DOWN) {
-                    pageSnapShotElement.preparePageSnapShot()
+                    pageSnapShotElementImpl.preparePageSnapshot(documentRenderView.getCurrentZoom())
                 } else if (this.motionEvent?.action == MotionEvent.ACTION_UP) {
                     documentRenderView.redraw()
                 }
@@ -76,6 +80,6 @@ data class DocumentPage(
 
     companion object {
         const val RE_DRAW_WITH_NEW_PAGE_BOUNDS = 0xcafe
-        const val RE_DRAW_WITH_RELATIVE_TO_ORIGIN__SNAPSHOT__ = 0xbc
+        const val RE_DRAW_WITH_RELATIVE_TO_ORIGIN_SNAPSHOT_ = 0xbc
     }
 }

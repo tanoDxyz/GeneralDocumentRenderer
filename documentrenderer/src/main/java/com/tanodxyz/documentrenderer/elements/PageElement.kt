@@ -1,14 +1,10 @@
 package com.tanodxyz.documentrenderer.elements
 
-import android.graphics.Color
-import android.graphics.Paint
 import android.graphics.PointF
-import android.graphics.Rect
 import android.graphics.RectF
 import android.util.Log
 import android.util.SparseArray
 import androidx.annotation.VisibleForTesting
-import com.tanodxyz.documentrenderer.DocumentRenderView
 import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 import com.tanodxyz.documentrenderer.getHeight
@@ -90,7 +86,7 @@ open class PageElement(
     }
 
     fun SparseArray<Any>?.shouldDrawFromOrigin(): Boolean {
-        return this != null && this[DocumentPage.RE_DRAW_WITH_RELATIVE_TO_ORIGIN__SNAPSHOT__] == true
+        return this != null && this[DocumentPage.RE_DRAW_WITH_RELATIVE_TO_ORIGIN_SNAPSHOT_] == true
     }
 
     fun SparseArray<Any>?.shouldReDrawWithNewPageBounds(): Boolean {

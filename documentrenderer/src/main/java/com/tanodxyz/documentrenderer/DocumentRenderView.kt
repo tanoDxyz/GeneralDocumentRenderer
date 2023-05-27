@@ -21,6 +21,7 @@ import org.jetbrains.annotations.TestOnly
 import java.util.BitSet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.ThreadPoolExecutor
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -54,8 +55,8 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     protected var zoom = MINIMUM_ZOOM
     protected var animationManager: AnimationManager
-    protected var executor: ExecutorService? = null
-    protected var _handler: Handler? = null
+    internal var executor: ThreadPoolExecutor? = null
+    internal var _handler: Handler? = null
     var pageNumberDisplayBoxTextColor = Color.WHITE
     var pageNumberDisplayBoxBackgroundColor = Color.parseColor("#343434")
     var pageNumberDisplayBoxTextSize = resources.spToPx(12)
@@ -73,10 +74,10 @@ open class DocumentRenderView @JvmOverloads constructor(
     private val midZoom = DEFAULT_MID_SCALE
     private val maxZoom = DEFAULT_MAX_SCALE
 
-    protected var cache = CacheManager(CACHE_FACTOR)
+    internal var cache = CacheManager(CACHE_FACTOR)
 
     init {
-        executor = Executors.newCachedThreadPool()
+        executor = Executors.newCachedThreadPool() as ThreadPoolExecutor
         _handler = Handler(Looper.getMainLooper())
         this.setWillNotDraw(false)
         animationManager = AnimationManager(this.context, this)
@@ -1097,8 +1098,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     companion object {
         var MINIMUM_ZOOM = 1.0F
         var MAXIMUM_ZOOM = 5f
-        var PAGE_SNAPSHOT_SCALE_DOWN_FACTOR = 2F
-
+        var PAGE_SNAPSHOT_SCALE_DOWN_FACTOR = 1.5F
         val DEFAULT_MAX_SCALE = MAXIMUM_ZOOM
         val DEFAULT_MID_SCALE = MAXIMUM_ZOOM.div(2)
         val DEFAULT_MIN_SCALE = MINIMUM_ZOOM

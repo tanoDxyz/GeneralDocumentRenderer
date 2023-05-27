@@ -1,10 +1,8 @@
 package com.tanodxyz.documentrenderer
 
 import android.annotation.SuppressLint
-import android.annotation.TargetApi
 import android.content.res.Resources
 import android.graphics.Bitmap
-import android.graphics.Rect
 import android.graphics.RectF
 import android.os.Build
 import android.util.TypedValue
@@ -185,11 +183,8 @@ fun IMotionEventMarker?.isEventFinishedOrCanceled(): Boolean {
     }
 }
 
-fun Bitmap?.sizeOf(): Int {
-    return this?.byteCount ?: 0
-}
 
-fun Bitmap?.recycleSafetly() {
+fun Bitmap?.recycleSafely() {
     kotlin.runCatching {
         this?.recycle()
     }

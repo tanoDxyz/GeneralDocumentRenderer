@@ -16,7 +16,7 @@ import com.tanodxyz.documentrenderer.spToPx
 import java.lang.reflect.Constructor
 import kotlin.math.roundToInt
 
-
+@Deprecated(message = "replaced with something else", level = DeprecationLevel.WARNING)
 class SimpleStaticTextElement(page: DocumentPage) : PageElement(page = page) {
     private var normalized: Boolean = false
     protected lateinit var charSequence: CharSequence
