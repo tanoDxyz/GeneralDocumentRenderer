@@ -10,7 +10,7 @@ import com.tanodxyz.documentrenderer.elements.PageSnapShotElementImpl
 import com.tanodxyz.documentrenderer.events.*
 import java.io.Serializable
 
-data class DocumentPage(
+open class DocumentPage(
     val uniqueId: Int = -1,
     val elements: MutableList<PageElement> = mutableListOf(),
     val originalSize: Size = Size(
@@ -20,18 +20,22 @@ data class DocumentPage(
     val pageBounds: RectF = RectF(0F, 0F, 0F, 0F),
     val documentRenderView: DocumentRenderView
 ) : Serializable, IEventHandler {
-    internal var argsToElements = SparseArray<Any>()
-    internal var modifiedSize: Size = originalSize
-    protected var pageSnapShotElementImpl: PageSnapShotElementImpl = PageSnapShotElementImpl(this)
-    fun getWidth(): Float {
+    var argsToElements = SparseArray<Any>()
+    var modifiedSize: Size = originalSize
+    protected var pageSnapShotElementImpl: PageSnapshotElement = PageSnapShotElementImpl(this)
+    open fun getWidth(): Float {
         return pageBounds.getWidth()
     }
 
-    fun getHeight(): Float {
+    open fun getHeight(): Float {
         return pageBounds.getHeight()
     }
 
-    fun draw(canvas: Canvas, pageViewState: ObjectViewState) {
+    fun setPageSnapShotImpl(pageSnapshotElement: PageSnapshotElement) {
+        this.pageSnapShotElementImpl = pageSnapshotElement
+    }
+
+    open fun draw(canvas: Canvas, pageViewState: ObjectViewState) {
         if (pageViewState.isObjectPartiallyOrCompletelyVisible()) {
             if (documentRenderView.isScaling) {
                 if (pageSnapShotElementImpl.isEmpty()) {
@@ -49,12 +53,12 @@ data class DocumentPage(
     }
 
 
-    private fun Canvas.dispatchDrawCallToIndividualElements() {
+    protected fun Canvas.dispatchDrawCallToIndividualElements() {
         argsToElements[RE_DRAW_WITH_NEW_PAGE_BOUNDS] = true
         dispatchDrawCallToIndividualElements(this,argsToElements)
     }
 
-    fun dispatchDrawCallToIndividualElements(canvas: Canvas, args: SparseArray<Any>) {
+    open fun dispatchDrawCallToIndividualElements(canvas: Canvas, args: SparseArray<Any>) {
         elements.forEach { iElement -> iElement.draw(canvas, args) }
     }
 
@@ -71,7 +75,7 @@ data class DocumentPage(
         elements.forEach { iElement -> iElement.onEvent(event) }
     }
 
-    fun resetPageBounds() {
+    open fun resetPageBounds() {
         pageBounds.top = 0F
         pageBounds.left = 0F
         pageBounds.right = 0F

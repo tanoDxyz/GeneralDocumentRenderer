@@ -19,7 +19,6 @@ import com.tanodxyz.documentrenderer.page.ObjectViewState
 import com.tanodxyz.documentrenderer.pagesizecalculator.PageSizeCalculator
 import org.jetbrains.annotations.TestOnly
 import java.util.BitSet
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadPoolExecutor
 import kotlin.math.abs
@@ -33,8 +32,8 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     private lateinit var viewSize: Size
     protected var canShowPageCountBox: Boolean = true
-    protected var scrollHandle: ScrollHandle? = null
-    protected var busyStateIndicator: IElement? = null
+    protected var scroller: ScrollHandle? = null
+    protected var busyIndicator: IElement? = null
     protected var currentPageForImmediateTouchEvent: Int = 0
     internal lateinit var document: Document
     protected var busyTokensCounter = 0
@@ -55,8 +54,8 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     protected var zoom = MINIMUM_ZOOM
     protected var animationManager: AnimationManager
-    internal var executor: ThreadPoolExecutor? = null
-    internal var _handler: Handler? = null
+    internal var threadPoolExecutor: ThreadPoolExecutor? = null
+    protected var _handler: Handler? = null
     var pageNumberDisplayBoxTextColor = Color.WHITE
     var pageNumberDisplayBoxBackgroundColor = Color.parseColor("#343434")
     var pageNumberDisplayBoxTextSize = resources.spToPx(12)
@@ -77,7 +76,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     internal var cache = CacheManager(CACHE_FACTOR)
 
     init {
-        executor = Executors.newCachedThreadPool() as ThreadPoolExecutor
+        threadPoolExecutor = Executors.newCachedThreadPool() as ThreadPoolExecutor
         _handler = Handler(Looper.getMainLooper())
         this.setWillNotDraw(false)
         animationManager = AnimationManager(this.context, this)
@@ -154,7 +153,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     open fun setPositionOffset(progress: Float, moveHandle: Boolean) {
         if (document.swipeVertical) {
             val docLen = document.getDocLen(zoom) - height
-            val maximumScrollbarHeight = scrollHandle!!.getScrollerTotalLength()
+            val maximumScrollbarHeight = scroller!!.getScrollerTotalLength()
             val maximumScrollbarHeightScaled = document.toCurrentScale(maximumScrollbarHeight, zoom)
             val rationBetweenContentLengthAndMaxScroll = docLen.div(maximumScrollbarHeightScaled)
             val contentDrawOffsetY =
@@ -168,7 +167,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 
         } else {
             val docLen = document.getDocLen(zoom) - width
-            val maximumScrollbarWidth = scrollHandle!!.getScrollerTotalLength()
+            val maximumScrollbarWidth = scroller!!.getScrollerTotalLength()
             val maximumScrollbarWidthScaled = document.toCurrentScale(maximumScrollbarWidth, zoom)
             val rationBetweenContentLengthAndMaxScroll = docLen.div(maximumScrollbarWidthScaled)
             val contentDrawOffsetX =
@@ -184,14 +183,14 @@ open class DocumentRenderView @JvmOverloads constructor(
     fun getPositionOffset(): Float {
         return if (document.swipeVertical) {
             val docLen = document.getDocLen(zoom) - height
-            val maximumScrollBarHeight = scrollHandle!!.getScrollerTotalLength()
+            val maximumScrollBarHeight = scroller!!.getScrollerTotalLength()
             val maximumScrollBarHeightScaled = document.toCurrentScale(maximumScrollBarHeight, zoom)
             val contentLengthInContext = docLen
             val ratio = maximumScrollBarHeightScaled.div(toCurrentScale(contentLengthInContext))
             abs(ratio * (contentDrawOffsetY))
         } else {
             val docLen = document.getDocLen(zoom) - width
-            val maximumScrollBarWidth = scrollHandle!!.getScrollerTotalLength()
+            val maximumScrollBarWidth = scroller!!.getScrollerTotalLength()
             val maximumScrollBarWidthScaled = document.toCurrentScale(maximumScrollBarWidth, zoom)
             val contentLengthInContext = docLen
             val ratio = maximumScrollBarWidthScaled.div(toCurrentScale(contentLengthInContext))
@@ -199,13 +198,14 @@ open class DocumentRenderView @JvmOverloads constructor(
         }
     }
 
-    fun addScrollHandle(scrollHandle: ScrollHandle) {
-        if (this.scrollHandle != null) {
-            this.scrollHandle?.detach()
+    fun setScrollHandler(scrollHandle: ScrollHandle) {
+        if (this.scroller != null) {
+            this.scroller?.detach()
         }
         scrollHandle.attachTo(this)
-        this.scrollHandle = scrollHandle
+        this.scroller = scrollHandle
     }
+
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
@@ -214,8 +214,10 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     fun recycle() {
         _handler?.removeCallbacksAndMessages(null)
-        scrollHandle = null
-        executor?.shutdownNow()
+        _handler = null
+        scroller = null
+        threadPoolExecutor?.shutdownNow()
+        threadPoolExecutor = null
         contentDrawOffsetY = 0F
         contentDrawOffsetX = 0F
         cache.recycle()
@@ -228,7 +230,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     ) {
         animationManager.stopAll()
         buzy()
-        executor?.submit {
+        threadPoolExecutor?.submit {
             document.recalculatePageSizesAndIndexes(Size(width, height))
             _handler?.post {
                 free()
@@ -349,10 +351,10 @@ open class DocumentRenderView @JvmOverloads constructor(
             val jumpToPage = {
                 jumpToPage0(currentPage - 1, withAnimation = false)
             }
-            if (scrollHandle == null) {
+            if (scroller == null) {
                 jumpToPage.invoke()
             }
-            scrollHandle?.apply {
+            scroller?.apply {
                 detach()
                 attachTo(this@DocumentRenderView) {
                     jumpToPage.invoke()
@@ -539,7 +541,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (!animationManager.isFlinging()) {
             postDelayed({
                 canShowPageCountBox = false
-                scrollHandle?.hide()
+                scroller?.hide()
             }, SCROLL_HANDLE_AND_PAGE_DISPLAY_BOX_HIDE_DELAY_MILLISECS)
 
         }
@@ -767,8 +769,8 @@ open class DocumentRenderView @JvmOverloads constructor(
         return size.toFloat() * zoom
     }
 
-    open fun setBuzyStateIndicator(iElement: IElement) {
-        this.busyStateIndicator = iElement
+    open fun setBusyStateIndicator(iElement: IElement) {
+        this.busyIndicator = iElement
     }
 
     open fun getRenderedDocLen(zoom: Float): Float {
@@ -837,8 +839,8 @@ open class DocumentRenderView @JvmOverloads constructor(
             contentDrawOffsetY = offsetY
             contentDrawOffsetX = offsetX
         }
-        if (moveHandle && scrollHandle != null) {
-            scrollHandle!!.scroll(getPositionOffset())
+        if (moveHandle && scroller != null) {
+            scroller!!.scroll(getPositionOffset())
         }
         canShowPageCountBox = true
         redraw()
@@ -860,7 +862,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             color = if (document.nightMode) Color.BLACK else document.pageBackColor
         }
         buzy()
-        executor?.submit {
+        threadPoolExecutor?.submit {
             this.document.setup(Size(width, height))
             _handler?.post {
                 free()
@@ -887,9 +889,9 @@ open class DocumentRenderView @JvmOverloads constructor(
         }
         canvas?.let { drawBackground(it) }
         synchronized(this) {
-            if (busyTokensCounter > 0 && busyStateIndicator != null) {
+            if (busyTokensCounter > 0 && busyIndicator != null) {
                 animationManager.stopAll()
-                busyStateIndicator!!.draw(canvas!!)
+                busyIndicator!!.draw(canvas!!)
                 touchEventMgr.enabled = false
                 postInvalidateDelayed(REFRESH_RATE_IN_CASE_VIEW_BUZY)
                 return
@@ -946,10 +948,10 @@ open class DocumentRenderView @JvmOverloads constructor(
         val textBounds = Rect()
         pageNumberDisplayBoxPaint.getTextBounds(textToDisplay, 0, textToDisplay.count(), textBounds)
         val drawX = pageNumberDisplayBoxXAndYMargin
-        val drawY = if (scrollHandle == null || document.swipeVertical) {
+        val drawY = if (scroller == null || document.swipeVertical) {
             height - (pageNumberDisplayBoxXAndYMargin + textBounds.height() + _16Dp)
         } else {
-            height - (scrollHandle!!.scrollBarHeight + scrollHandle!!.marginUsed
+            height - (scroller!!.scrollBarHeight + scroller!!.marginUsed
                     + pageNumberDisplayBoxXAndYMargin + textBounds.height() + _16Dp)
         }
 

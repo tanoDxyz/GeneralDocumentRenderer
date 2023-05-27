@@ -84,9 +84,7 @@ class DefaultCircularProgressBarElement(val context: Context) : IElement {
     }
 
     private fun drawInnerArc(canvas: Canvas) {
-        // 4
         val percentageToFill = getCurrentPercentageToFill()
-        // 5
         canvas.drawArc(ovalSpace, startAngle.toFloat(), percentageToFill, false, fillArcPaint)
     }
 

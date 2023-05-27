@@ -23,12 +23,12 @@ class PageSnapShotElementImpl(
     private var bitmap: Bitmap? = null
     private var scaleLevel = 0f
     private val lock = Any()
-    private val executor = page.documentRenderView.executor
     private var args = SparseArray<Any>(5).apply {
         this[DocumentPage.RE_DRAW_WITH_RELATIVE_TO_ORIGIN_SNAPSHOT_] = true
     }
-    private val createSnap = { scaleLevel: Float ->
-        future = executor?.submit {
+
+    private fun createSnap(scaleLevel: Float) {
+        future = page.documentRenderView.threadPoolExecutor?.submit {
             create(scaleLevel)
         }
     }
@@ -81,10 +81,6 @@ class PageSnapShotElementImpl(
             canvas?.let { page.dispatchDrawCallToIndividualElements(it, args) }
         }
         busyCreatingSnap.set(false)
-    }
-
-    private fun keyForBitmapCache(page: DocumentPage): String {
-        return "snap-${page.uniqueId}"
     }
 
     @Synchronized
