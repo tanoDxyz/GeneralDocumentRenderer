@@ -5,7 +5,6 @@ import android.graphics.RectF
 import android.util.Log
 import android.util.SparseArray
 import androidx.annotation.VisibleForTesting
-import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 import com.tanodxyz.documentrenderer.getHeight
 import com.tanodxyz.documentrenderer.getWidth
@@ -105,17 +104,17 @@ open class PageElement(
 
             if (drawFromOrigin) {
                 val scaledDownHeight =
-                    getHeight().div(PAGE_SNAPSHOT_SCALE_DOWN_FACTOR)
+                    getHeight().div(page.snapSclaeDownFactor)
                 val scaleDownWidth =
-                    getWidth().div(PAGE_SNAPSHOT_SCALE_DOWN_FACTOR)
+                    getWidth().div(page.snapSclaeDownFactor)
                 val scaledDownLeftMargin =
-                    page.documentRenderView.toCurrentScale(leftMargin.div(PAGE_SNAPSHOT_SCALE_DOWN_FACTOR))
+                    page.documentRenderView.toCurrentScale(leftMargin.div(page.snapSclaeDownFactor))
                 val scaledDownTopMargin =
-                    page.documentRenderView.toCurrentScale(topMargin.div(PAGE_SNAPSHOT_SCALE_DOWN_FACTOR))
+                    page.documentRenderView.toCurrentScale(topMargin.div(page.snapSclaeDownFactor))
                 val scaledDownRightMargin =
-                    page.documentRenderView.toCurrentScale(rightMargin.div(PAGE_SNAPSHOT_SCALE_DOWN_FACTOR))
+                    page.documentRenderView.toCurrentScale(rightMargin.div(page.snapSclaeDownFactor))
                 val scaledDownBottomMargin =
-                    page.documentRenderView.toCurrentScale(bottomMargin.div(PAGE_SNAPSHOT_SCALE_DOWN_FACTOR))
+                    page.documentRenderView.toCurrentScale(bottomMargin.div(page.snapSclaeDownFactor))
 
                 left = scaledDownLeftMargin
                 top = scaledDownTopMargin

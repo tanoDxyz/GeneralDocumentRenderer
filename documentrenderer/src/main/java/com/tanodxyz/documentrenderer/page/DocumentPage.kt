@@ -22,6 +22,7 @@ open class DocumentPage(
 ) : Serializable, IEventHandler {
     var argsToElements = SparseArray<Any>()
     var modifiedSize: Size = originalSize
+    var snapSclaeDownFactor = 1f
     protected var pageSnapShotElementImpl: PageSnapshotElement = PageSnapShotElementImpl(this)
     open fun getWidth(): Float {
         return pageBounds.getWidth()

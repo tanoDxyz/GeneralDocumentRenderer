@@ -44,7 +44,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     protected val antialiasFilter =
         PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     protected val pagePaint = Paint(Paint.ANTI_ALIAS_FLAG)
-
+    val pageBackgroundColor:Int get() =  pagePaint.color
 
     protected var contentDrawOffsetX = 0F
     protected var contentDrawOffsetY = 0F
@@ -1099,8 +1099,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     companion object {
         var MINIMUM_ZOOM = 1.0F
-        var MAXIMUM_ZOOM = 5f
-        var PAGE_SNAPSHOT_SCALE_DOWN_FACTOR = 1.5F
+        var MAXIMUM_ZOOM = 100f
         val DEFAULT_MAX_SCALE = MAXIMUM_ZOOM
         val DEFAULT_MID_SCALE = MAXIMUM_ZOOM.div(2)
         val DEFAULT_MIN_SCALE = MINIMUM_ZOOM

@@ -6,13 +6,13 @@ import android.text.*
 import android.text.TextUtils.TruncateAt
 import android.util.SparseArray
 import androidx.annotation.RequiresApi
-import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
 import com.tanodxyz.documentrenderer.dpToPx
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 import com.tanodxyz.documentrenderer.getHeight
 import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.spToPx
+import java.lang.Exception
 import java.lang.reflect.Constructor
 import kotlin.math.roundToInt
 
@@ -102,7 +102,7 @@ class SimpleStaticTextElement(page: DocumentPage) : PageElement(page = page) {
         textPaint.textSize =
             page.documentRenderView.toCurrentScale(
                 if (drawFromOrigin) textSizePixels.div(
-                    PAGE_SNAPSHOT_SCALE_DOWN_FACTOR
+                    page.snapSclaeDownFactor
                 ) else textSizePixels
             )
         val width = calculateWidth(drawFromOrigin)
@@ -186,16 +186,21 @@ class SimpleStaticTextElement(page: DocumentPage) : PageElement(page = page) {
 
     override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
         super.draw(canvas, args)
-        val drawFromOrigin = args.shouldDrawFromOrigin()
-        initTextLayout(drawFromOrigin)
+        try {
+            val drawFromOrigin = args.shouldDrawFromOrigin()
+            initTextLayout(drawFromOrigin)
 
-        canvas.apply {
-            save()
-            val leftAndTop = args.getLeftAndTop()
-            translate(leftAndTop.x, leftAndTop.y)
-            layout?.draw(canvas)
-            restore()
+            canvas.apply {
+                save()
+                val leftAndTop = args.getLeftAndTop()
+                translate(leftAndTop.x, leftAndTop.y)
+                layout?.draw(canvas)
+                restore()
+            }
+        }catch (ex:Exception) {
+            ex.printStackTrace()
         }
+
     }
 
     private fun getMaxLinesByInspection(staticLayout: StaticLayout, maxHeight: Int): Int {
