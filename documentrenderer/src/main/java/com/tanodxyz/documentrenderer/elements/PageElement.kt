@@ -5,10 +5,13 @@ import android.graphics.RectF
 import android.util.Log
 import android.util.SparseArray
 import androidx.annotation.VisibleForTesting
+import com.tanodxyz.documentrenderer.Size
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 import com.tanodxyz.documentrenderer.getHeight
 import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.page.DocumentPage
+import com.tanodxyz.documentrenderer.pagesizecalculator.PageSizeCalculator
+import com.tanodxyz.documentrenderer.reset
 import kotlin.math.roundToInt
 
 open class PageElement(
@@ -27,7 +30,16 @@ open class PageElement(
         topBottomSymmetric: Boolean
     ) : this(
         page = page,
-        LayoutParams(width, height, leftMargin, topMargin, rightMargin, bottomMargin,startEndSymmetric,topBottomSymmetric)
+        LayoutParams(
+            width,
+            height,
+            leftMargin,
+            topMargin,
+            rightMargin,
+            bottomMargin,
+            startEndSymmetric,
+            topBottomSymmetric
+        )
     )
 
     constructor(page: DocumentPage, width: Int, height: Int) : this(
@@ -61,14 +73,30 @@ open class PageElement(
         return false
     }
 
+    open fun calculateElementSizeRelativeToPageSize(pageSizeCalculator: PageSizeCalculator?) {
+        if (pageSizeCalculator != null) {
+            layoutParams.apply {
+                val relativeSize =
+                    page.documentRenderView.pageSizeCalculator!!.calculateElementSizeRelative(
+                        Size(
+                            desiredWidth,
+                            desiredHeight
+                        )
+                    )
+                desiredWidth = relativeSize.width
+                desiredHeight = relativeSize.height
+            }
+        }
+    }
+
     open fun SparseArray<Any>?.getLeftAndTop(): PointF {
         val drawFromOrigin = this.shouldDrawFromOrigin()
         val boundsRelativeToPage = getBoundsRelativeToPage(drawFromOrigin)
         return PointF(boundsRelativeToPage.left, boundsRelativeToPage.top)
     }
 
-    fun getWidth(): Int {
-        return if (layoutParams.IsWidthMatchParent() || layoutParams.startEndSymmetric) {
+    private fun getWidth(): Int {
+        return if (layoutParams.isWidthMatchParent() || layoutParams.startEndSymmetric) {
             page.pageBounds.getWidth().roundToInt()
         } else {
             page.documentRenderView.toCurrentScale(layoutParams.desiredWidth).roundToInt()
@@ -76,13 +104,16 @@ open class PageElement(
     }
 
 
-    fun getHeight(): Int {
+    private fun getHeight(): Int {
         return if (layoutParams.isHeightMatchParent() || layoutParams.topBottomSymmetric) {
             page.pageBounds.getHeight().roundToInt()
         } else {
             page.documentRenderView.toCurrentScale(layoutParams.desiredHeight).roundToInt()
         }
     }
+
+    val actualWidth: Float get() = elementBoundsRelativeToPage.getWidth()
+    val actualHeight: Float get() = elementBoundsRelativeToPage.getHeight()
 
     fun SparseArray<Any>?.shouldDrawFromOrigin(): Boolean {
         return this != null && this[DocumentPage.RE_DRAW_WITH_RELATIVE_TO_ORIGIN_SNAPSHOT_] == true
@@ -93,7 +124,9 @@ open class PageElement(
     }
 
 
-    open fun getBoundsRelativeToPage(drawFromOrigin: Boolean = false): RectF {
+    open fun getBoundsRelativeToPage(
+        drawFromOrigin: Boolean = false
+    ): RectF {
         var boundsRelative: RectF? = null
         layoutParams.apply {
             var left = 0F
@@ -146,12 +179,12 @@ open class PageElement(
                 right = if (startEndSymmetric) {
                     (left + getWidth()) - scaledMarginLeft.times(2)
                 } else {
-                    (left + getWidth()) - (scaledMarginRight + scaledMarginLeft)
+                    (left + getWidth()) - (scaledMarginRight + scaledMarginLeft )
                 }
                 bottom = if (topBottomSymmetric) {
                     (top + getHeight()) - scaledMarginTop.times(2)
                 } else {
-                    (top + getHeight()) - (scaledMarginBottom + scaledMarginTop)
+                    (top + getHeight()) - (scaledMarginBottom + scaledMarginTop )
                 }
                 elementBoundsRelativeToPage.apply {
                     this.left = left
@@ -166,6 +199,12 @@ open class PageElement(
     }
 
     open fun recycle() {}
+
+    open fun resetBounds() {
+        elementBoundsRelativeToPage.reset()
+        elementBoundsRelativeToOrigin.reset()
+    }
+
     data class LayoutParams(
         var desiredWidth: Int = DEFAULT_WIDTH,
         var desiredHeight: Int = DEFAULT_HEIGHT,
@@ -174,9 +213,9 @@ open class PageElement(
         var rightMargin: Int = 0,
         var bottomMargin: Int = 0,
         var startEndSymmetric: Boolean = false,
-        var topBottomSymmetric: Boolean = false,
+        var topBottomSymmetric: Boolean = false
     ) {
-        fun IsWidthMatchParent(): Boolean {
+        fun isWidthMatchParent(): Boolean {
             return desiredWidth == MATCH_PARENT
         }
 

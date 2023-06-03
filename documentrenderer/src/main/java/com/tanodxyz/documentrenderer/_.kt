@@ -138,6 +138,12 @@ infix fun IntRange.getPagesViaPageIndexes(pageData: MutableList<DocumentPage>): 
 data class Size(var width: Int, var height: Int)
 data class SizeF(var width: Float, var height: Float)
 
+fun RectF.reset() {
+    top = 0F
+    left = 0F
+    right = 0F
+    bottom = 0F
+}
 
 fun RectF.getWidth(): Float {
     val pageBounds = this
@@ -153,15 +159,15 @@ fun RectF.getWidth(): Float {
 }
 
 fun RectF.getHeight(): Float {
-    val pageBounds = this
-    return if (pageBounds.top > 0 && pageBounds.bottom >= pageBounds.top) {
-        pageBounds.height()
-    } else if (pageBounds.top < 0 && pageBounds.bottom < 0) {
-        abs(pageBounds.bottom) - abs(pageBounds.top)
-    } else if (pageBounds.top < 0 && pageBounds.bottom > 0) {
-        pageBounds.bottom + abs(pageBounds.top)
+    val bounds = this
+    return if (bounds.top > 0 && bounds.bottom >= bounds.top) {
+        bounds.height()
+    } else if (bounds.top < 0 && bounds.bottom < 0) {
+        abs(bounds.bottom) - abs(bounds.top)
+    } else if (bounds.top < 0 && bounds.bottom > 0) {
+        bounds.bottom + abs(bounds.top)
     } else {
-        pageBounds.width()
+        bounds.width()
     }
 }
 

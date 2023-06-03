@@ -1,7 +1,14 @@
 package com.tanodxyz.documentrenderer
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.PaintFlagsDrawFilter
+import android.graphics.PointF
+import android.graphics.Rect
+import android.graphics.RectF
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -9,10 +16,24 @@ import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.view.View.OnLayoutChangeListener
 import android.widget.FrameLayout
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.elements.IElement
-import com.tanodxyz.documentrenderer.events.*
+import com.tanodxyz.documentrenderer.events.DoubleTapCompleteEvent
+import com.tanodxyz.documentrenderer.events.DoubleTapEvent
+import com.tanodxyz.documentrenderer.events.FlingEndEvent
+import com.tanodxyz.documentrenderer.events.FlingStartEvent
+import com.tanodxyz.documentrenderer.events.GenericMotionEvent
+import com.tanodxyz.documentrenderer.events.IMotionEventMarker
+import com.tanodxyz.documentrenderer.events.LongPressEvent
+import com.tanodxyz.documentrenderer.events.ScaleBeginEvent
+import com.tanodxyz.documentrenderer.events.ScaleEndEvent
+import com.tanodxyz.documentrenderer.events.ScrollEndEvent
+import com.tanodxyz.documentrenderer.events.ScrollStartEvent
+import com.tanodxyz.documentrenderer.events.ShowPressEvent
+import com.tanodxyz.documentrenderer.events.SingleTapConfirmedEvent
+import com.tanodxyz.documentrenderer.events.SingleTapUpEvent
 import com.tanodxyz.documentrenderer.extensions.ScrollHandle
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.page.ObjectViewState
@@ -29,6 +50,13 @@ open class DocumentRenderView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr), View.OnTouchListener,
     TouchEventsManager.TouchEventsListener, AnimationManager.AnimationListener {
+
+    private var layoutChangeListener =
+        OnLayoutChangeListener { view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+            if (left != oldLeft || top != oldTop || right != oldRight || bottom != oldBottom) {
+                println("marko: config changed")
+            }
+        }
 
     private lateinit var viewSize: Size
     protected var canShowPageCountBox: Boolean = true
@@ -83,6 +111,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         this.setOnTouchListener(this)
         touchEventMgr = TouchEventsManager(this.context)
         touchEventMgr.registerListener(this)
+        addOnLayoutChangeListener(layoutChangeListener)
     }
 
     @TestOnly
@@ -276,8 +305,13 @@ open class DocumentRenderView @JvmOverloads constructor(
         var superState: Parcelable? = null
         var viewState: ViewState? = null
         if (state is Bundle) {
-            viewState = state.getParcelable<ViewState>("viewState")!!
-            superState = state.getParcelable("superState")!!
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                viewState = state.getParcelable("viewState",ViewState::class.java)!!
+                superState = state.getParcelable("superState",Parcelable::class.java)!!
+            } else {
+                viewState = state.getParcelable<ViewState>("viewState")!!
+                superState = state.getParcelable("superState")!!
+            }
         }
         super.onRestoreInstanceState(superState)
         viewState?.apply {
@@ -914,7 +948,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             documentPages.forEach { documentPage ->
                 val pageViewState = getPageViewState(documentPage.pageBounds)
                 drawPageBackground(documentPage)
-                documentPage.draw(canvas, pageViewState)
+                documentPage.draw(this@DocumentRenderView,canvas, pageViewState)
                 currentPage = calculateCurrentPage(documentPage)
             }
             if (canShowPageCountBox) {

@@ -258,7 +258,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         contentLength = 0F
         var indexX = 0F
         var indexY = 0F
-        pageIndexes = ArrayList<PointF>(originalDocumentPageData.count())
+        pageIndexes = ArrayList(originalDocumentPageData.count())
         for (i: Int in originalDocumentPageData.indices) {
             val documentPage = originalDocumentPageData[i]
 
