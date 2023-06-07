@@ -22,7 +22,7 @@ open class DocumentPage(
 ) : Serializable, IEventHandler {
     var argsToElements = SparseArray<Any>()
     var modifiedSize: Size = originalSize
-    var snapSclaeDownFactor = 1f
+    var snapScaleDownFactor = 1f
     lateinit var documentRenderView: DocumentRenderView
     protected var pageSnapShotElementImpl: PageSnapshotElement = PageSnapShotElementImpl(this)
     open fun getWidth(): Float {
@@ -33,7 +33,7 @@ open class DocumentPage(
         return pageBounds.getHeight()
     }
 
-    fun setPageSnapShotImpl(pageSnapshotElement: PageSnapshotElement) {
+    open fun setPageSnapShotImpl(pageSnapshotElement: PageSnapshotElement) {
         this.pageSnapShotElementImpl = pageSnapshotElement
     }
 
@@ -81,6 +81,10 @@ open class DocumentPage(
     open fun resetPageBounds() {
         pageBounds.reset()
         elements.forEach { it.resetBounds() }
+    }
+
+    open fun onMeasurementDone(pageSizeCalculator: PageSizeCalculator) {
+        elements.forEach { it.pageMeasurementDone(pageSizeCalculator) }
     }
 
     companion object {

@@ -60,44 +60,29 @@ class DefaultScrollHandle @JvmOverloads constructor(
     override fun attachTo(view: DocumentRenderView, onLayout: (() -> Unit)?) {
         view.removeView(this)
         val margins = marginUsed.roundToInt()
-        val layoutParamsForThisView =
-            if (view.isSwipeVertical()) {
-                widthScroller = DEFAULT_WIDTH
-                heightScroller = DEFAULT_HEIGHT
-                FrameLayout.LayoutParams(
-                    widthScroller.roundToInt(),
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                ).apply {
-                    gravity = Gravity.END
-                    topMargin = margins
-                    bottomMargin = margins
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                        marginEnd = margins
-                    } else {
-                        rightMargin = margins
-                    }
-                }
-            } else {
-                widthScroller = DEFAULT_HEIGHT
-                heightScroller = DEFAULT_WIDTH
-                FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    heightScroller.roundToInt()
-                ).apply {
-                    gravity = Gravity.BOTTOM
-                    bottomMargin = margins
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                        marginEnd = margins
-                    } else {
-                        rightMargin = margins
-                    }
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                        marginStart = margins
-                    } else {
-                        leftMargin = margins
-                    }
-                }
+        val layoutParamsForThisView = if (view.isSwipeVertical()) {
+            widthScroller = DEFAULT_WIDTH
+            heightScroller = DEFAULT_HEIGHT
+            FrameLayout.LayoutParams(
+                widthScroller.roundToInt(), ViewGroup.LayoutParams.MATCH_PARENT
+            ).apply {
+                gravity = Gravity.END
+                topMargin = margins
+                bottomMargin = margins
+                marginEnd = margins
             }
+        } else {
+            widthScroller = DEFAULT_HEIGHT
+            heightScroller = DEFAULT_WIDTH
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, heightScroller.roundToInt()
+            ).apply {
+                gravity = Gravity.BOTTOM
+                bottomMargin = margins
+                marginEnd = margins
+                marginStart = margins
+            }
+        }
         layoutParams = layoutParamsForThisView
         onLayout?.apply {
             doOnLayout {
@@ -149,7 +134,9 @@ class DefaultScrollHandle @JvmOverloads constructor(
 
     override fun hide(delayed: Boolean) {
         if (delayed) {
-            handler_.postDelayed(hidePageScrollerRunnable, SCROLL_HANDLE_AND_PAGE_DISPLAY_BOX_HIDE_DELAY_MILLISECS)
+            handler_.postDelayed(
+                hidePageScrollerRunnable, SCROLL_HANDLE_AND_PAGE_DISPLAY_BOX_HIDE_DELAY_MILLISECS
+            )
         } else {
             visibility = View.INVISIBLE
         }
@@ -159,8 +146,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
         val swipeVertical = documentRenderView!!.isSwipeVertical()
         if (swipeVertical) {
             val verticalTopPosition = 0F
-            val verticalBottomPosition =
-                this@DefaultScrollHandle.measuredHeight - (heightScroller)
+            val verticalBottomPosition = this@DefaultScrollHandle.measuredHeight - (heightScroller)
             val maxHeight = (verticalBottomPosition - verticalTopPosition)
             drawOffset = if (pos <= verticalTopPosition) {
                 verticalTopPosition
@@ -171,8 +157,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
             }
         } else {
             val horizontalLeftPosition = 0F
-            val horizontalRightPosition =
-                this@DefaultScrollHandle.measuredWidth - (widthScroller)
+            val horizontalRightPosition = this@DefaultScrollHandle.measuredWidth - (widthScroller)
             val maxWidth = (horizontalRightPosition - horizontalLeftPosition)
             drawOffset = if (pos <= horizontalLeftPosition) {
                 horizontalLeftPosition
@@ -201,6 +186,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
                     touched = oval.contains(x, y)
                     return touched
                 }
+
                 ACTION_MOVE -> {
                     if (touched) {
                         val currentPos = if (isSwipeVertical()) {
@@ -213,6 +199,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
                     }
                     return true
                 }
+
                 ACTION_CANCEL, ACTION_UP, ACTION_POINTER_UP -> {
                     touched = false
                     redraw()
@@ -257,11 +244,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
                     lineDrawX += drawOffset
                 }
                 canvas.drawLine(
-                    lineDrawX,
-                    lineDrawY,
-                    (lineLength + lineDrawX),
-                    (lineDrawY),
-                    ovalLinePaint
+                    lineDrawX, lineDrawY, (lineLength + lineDrawX), (lineDrawY), ovalLinePaint
                 )
                 canvas.drawLine(
                     lineDrawX,

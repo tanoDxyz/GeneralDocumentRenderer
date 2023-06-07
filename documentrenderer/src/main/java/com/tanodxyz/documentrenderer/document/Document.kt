@@ -10,12 +10,12 @@ import com.tanodxyz.documentrenderer.pagesizecalculator.DefaultPageSizeCalculato
 import com.tanodxyz.documentrenderer.pagesizecalculator.PageSizeCalculator
 import java.util.*
 import kotlin.collections.ArrayList
-
+// todo code check ok . line check ok . inheritance check ok.
 open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator? = null) {
     protected var maxHeightPageSize = Size(0, 0)
     protected var maxWidthPageSize = Size(0, 0)
     protected val documentMeta = HashMap<String, Any?>()
-    protected val originalDocumentPageData = mutableListOf<DocumentPage>()
+    protected val documentPageData = mutableListOf<DocumentPage>()
     protected var originalMaxPageWidth = Size(0, 0)
     protected var originalMaxPageHeight = Size(0, 0)
     protected var contentLength = 0F
@@ -28,7 +28,6 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         context.resources.dpToPx(2) // bottom margin
     )
     var pageCorners: Float = 0.0F
-
 
     fun <T> get(property: String): T? {
         val propertyValue = documentMeta[property]
@@ -47,7 +46,6 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         set(value) {
             this[PROPERTY_DOCUMENT_NAME] = value
         }
-
 
     var documentFitPagePolicy: PageFitPolicy
         get() {
@@ -87,18 +85,9 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
             this[PROPERTY_DOCUMENT_FIT_EACH_PAGE] = value
         }
 
-    var documentViewMode: DocumentViewMode
-        get() {
-            return get<DocumentViewMode>(PROPERTY_DOCUMENT_VIEW_MODE) ?: DocumentViewMode.DAY
-        }
-        set(value) {
-            this[PROPERTY_DOCUMENT_VIEW_MODE] = value
-        }
-
     companion object {
         const val PROPERTY_DOCUMENT_NAME = "com.gdr.documentName"
         const val PROPERTY_DOCUMENT_PAGE_FIT_POLICY = "com.gdr.documentPageFitPolicy"
-        const val PROPERTY_DOCUMENT_VIEW_MODE = "com.gdr.documentViewMode"
         const val PROPERTY_DOCUMENT_FIT_EACH_PAGE = "com.gdr.fiteachpage"
         const val PROPERTY_DOCUMENT_SWIPE_VERTICAL = "com.gdr.swipeVertical"
         const val PROPERTY_DOCUMENT_PAGE_FLING = "com.gdr.page.fling"
@@ -106,7 +95,6 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         const val PROPERTY_PAGE_BACK_COLOR = "com.page.back.color"
         const val DOCUMENT_NAME = "document-"
     }
-
 
     enum class PageFitPolicy {
         FIT_WIDTH, FIT_HEIGHT, BOTH, NONE;
@@ -126,86 +114,19 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         }
     }
 
-    enum class DocumentViewMode {
-        DAY, NIGHT;
-
-        companion object {
-            fun mode(name: String?): DocumentViewMode {
-                return if (name.equals(DAY.name, true)) {
-                    DAY
-                } else if (name.equals(NIGHT.name, true)) {
-                    NIGHT
-                } else {
-                    DAY
-                }
-            }
-        }
-    }
-
-
-    //    fun getPageViaIndex(pageIndex: Int): DocumentPage? {
-//        return try {
-//            originalDocumentPageData.first { documentPage -> documentPage.uniqueId == pageIndex }
-//        } catch (ex: Exception) {
-//            null
-//        }
-//    }
-//
-//
-//
-//    fun getPageListIndex(pageIndex: Int): Int {
-//        for (i: Int in originalDocumentPageData.indices) {
-//            val documentPage = originalDocumentPageData[i]
-//            if (documentPage.uniqueId == pageIndex) {
-//                return i
-//            }
-//        }
-//        return -1
-//    }
-//
     @Synchronized
     open fun addPage(documentPage: DocumentPage) {
-        originalDocumentPageData.add(documentPage)
+        documentPageData.add(documentPage)
     }
 
     @Synchronized
     open fun addPages(documentPages: List<DocumentPage>) {
-        originalDocumentPageData.addAll(documentPages)
+        documentPageData.addAll(documentPages)
     }
-//
-//    fun deletePage(documentPage: DocumentPage) {
-//        originalDocumentPageData.remove(documentPage)
-//    }
-//
-//    fun deletePage(deletePageIndex: Int) {
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-//            originalDocumentPageData.removeIf { documentPage -> documentPage.uniqueId == deletePageIndex }
-//        } else {
-//            originalDocumentPageData.filter { documentPage -> documentPage.uniqueId == deletePageIndex }
-//                .apply {
-//                    if (this.isNotEmpty()) {
-//                        originalDocumentPageData.removeAll(this)
-//                    }
-//                }
-//        }
-//    }
-//
-//    fun deletePages(range: IntRange) {
-//        originalDocumentPageData.removeAll(range getPagesViaPageIndexes originalDocumentPageData)
-//    }
-//
-//    fun updatePage(documentPageIndex: Int, updatePage: DocumentPage): Boolean {
-//        val pageListIndex = getPageListIndex(documentPageIndex)
-//        val pageExistsForGivenIndex = pageListIndex > -1
-//        if (pageExistsForGivenIndex) {
-//            originalDocumentPageData[pageListIndex] = updatePage
-//        }
-//        return pageExistsForGivenIndex
-//    }
 
     @Synchronized
     open fun setup(viewSize: Size) {
-        originalDocumentPageData.forEach { documentPage ->
+        documentPageData.forEach { documentPage ->
             val pageSize = documentPage.originalSize
             if (pageSize.width > originalMaxPageWidth.width) {
                 originalMaxPageWidth = pageSize
@@ -234,9 +155,13 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
 
     @Synchronized
     open fun recalculatePageSizesAndIndexes(viewSize: Size) {
-        if (originalDocumentPageData.isEmpty()) {
+        if (documentPageData.isEmpty()) {
             return
         }
+        if(viewSize.width <= 0 || viewSize.height <=  0) {
+            return
+        }
+
         if (pageSizeCalculator == null) {
             pageSizeCalculator = DefaultPageSizeCalculator()
         }
@@ -251,16 +176,17 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
                 get<Boolean>(PROPERTY_DOCUMENT_FIT_EACH_PAGE) ?: false
             )
         }
+        // setup page size calculator
         pageSizeCalculator!!.setup(props)
         maxWidthPageSize = pageSizeCalculator!!.optimalMaxWidthPageSize
         maxHeightPageSize = pageSizeCalculator!!.optimalMaxHeightPageSize
-
+        // calculate page size and element sizes
         contentLength = 0F
         var indexX = 0F
         var indexY = 0F
-        pageIndexes = ArrayList(originalDocumentPageData.count())
-        for (i: Int in originalDocumentPageData.indices) {
-            val documentPage = originalDocumentPageData[i]
+        pageIndexes = ArrayList(documentPageData.count())
+        for (i: Int in documentPageData.indices) {
+            val documentPage = documentPageData[i]
 
             // calculate leftMargin & topMargin pageRelativeBounds
             documentPage.modifiedSize = pageSizeCalculator!!.calculate(documentPage.originalSize)
@@ -283,7 +209,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
                 pageIndexes.add(PointF(indexX, 0F))
                 indexX += documentPage.modifiedSize.width
             }
-
+            documentPage.onMeasurementDone(pageSizeCalculator!!)
         }
     }
 
@@ -297,31 +223,11 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         return getTotalContentLength() * zoom
     }
 
-//    fun documentPageIterator(): DocumentPageIterator = DocumentPageIterator()
-//
-//    inner class DocumentPageIterator : Iterable<DocumentPage> {
-//        private var nextElementIndex = 0
-//        override fun iterator(): Iterator<DocumentPage> {
-//            return object : Iterator<DocumentPage> {
-//                override fun hasNext(): Boolean {
-//                    return (nextElementIndex + 1) < getDocumentPages().count()
-//                }
-//
-//                override fun next(): DocumentPage {
-//                    val documentPages = getDocumentPages()
-//                    val documentPage = documentPages[nextElementIndex]
-//                    nextElementIndex++
-//                    return documentPage
-//                }
-//            }
-//        }
-//    }
-
     @Synchronized
     open fun getTotalContentLength(): Float = contentLength
 
     @Synchronized
-    open fun getDocumentPages(): List<DocumentPage> = originalDocumentPageData
+    open fun getDocumentPages(): List<DocumentPage> = documentPageData
 
     @Synchronized
     open fun haveNoPages(): Boolean = getDocumentPages().isEmpty()
@@ -334,7 +240,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         return if (pageNumber < 0 || pageNumber >= getPagesCount()) {
             null
         } else {
-            originalDocumentPageData[pageNumber]
+            documentPageData[pageNumber]
         }
     }
 
@@ -344,8 +250,8 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         val pagesToBeDrawn = mutableListOf<DocumentPage>()
         if (page <= 0) {
             var pagesAddedToListSize = 0
-            for (i: Int in originalDocumentPageData.indices) {
-                val documentPage = originalDocumentPageData[i]
+            for (i: Int in documentPageData.indices) {
+                val documentPage = documentPageData[i]
                 if (viewSize < pagesAddedToListSize) {
                     break
                 }
@@ -358,8 +264,8 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
             }
         } else {
             var pagesAddedToListForwardSize = 0
-            for (i: Int in page until originalDocumentPageData.count()) {
-                val documentPage = originalDocumentPageData[i]
+            for (i: Int in page until documentPageData.count()) {
+                val documentPage = documentPageData[i]
                 if (viewSize < pagesAddedToListForwardSize) {
                     break
                 }
@@ -373,7 +279,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
 
             var pagesAddedToListBackwardSize = 0
             for (i: Int in (page - 1) downTo 0) {
-                val documentPage = originalDocumentPageData[i]
+                val documentPage = documentPageData[i]
                 if (viewSize < pagesAddedToListBackwardSize) {
                     break
                 }

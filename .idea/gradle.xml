@@ -13,7 +13,6 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/documentrenderer" />
-            <option value="$PROJECT_DIR$/itext722g" />
           </set>
         </option>
       </GradleProjectSettings>

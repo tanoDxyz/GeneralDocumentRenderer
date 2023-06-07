@@ -6,6 +6,7 @@ import android.util.Log
 import android.util.SparseArray
 import androidx.annotation.VisibleForTesting
 import com.tanodxyz.documentrenderer.Size
+import com.tanodxyz.documentrenderer.Thread
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 import com.tanodxyz.documentrenderer.getHeight
 import com.tanodxyz.documentrenderer.getWidth
@@ -137,17 +138,17 @@ open class PageElement(
 
             if (drawFromOrigin) {
                 val scaledDownHeight =
-                    getHeight().div(page.snapSclaeDownFactor)
+                    getHeight().div(page.snapScaleDownFactor)
                 val scaleDownWidth =
-                    getWidth().div(page.snapSclaeDownFactor)
+                    getWidth().div(page.snapScaleDownFactor)
                 val scaledDownLeftMargin =
-                    page.documentRenderView.toCurrentScale(leftMargin.div(page.snapSclaeDownFactor))
+                    page.documentRenderView.toCurrentScale(leftMargin.div(page.snapScaleDownFactor))
                 val scaledDownTopMargin =
-                    page.documentRenderView.toCurrentScale(topMargin.div(page.snapSclaeDownFactor))
+                    page.documentRenderView.toCurrentScale(topMargin.div(page.snapScaleDownFactor))
                 val scaledDownRightMargin =
-                    page.documentRenderView.toCurrentScale(rightMargin.div(page.snapSclaeDownFactor))
+                    page.documentRenderView.toCurrentScale(rightMargin.div(page.snapScaleDownFactor))
                 val scaledDownBottomMargin =
-                    page.documentRenderView.toCurrentScale(bottomMargin.div(page.snapSclaeDownFactor))
+                    page.documentRenderView.toCurrentScale(bottomMargin.div(page.snapScaleDownFactor))
 
                 left = scaledDownLeftMargin
                 top = scaledDownTopMargin
@@ -203,6 +204,13 @@ open class PageElement(
     open fun resetBounds() {
         elementBoundsRelativeToPage.reset()
         elementBoundsRelativeToOrigin.reset()
+    }
+
+    @Thread(description = "will be called on worker thread.")
+    open fun pageMeasurementDone(pageSizeCalculator: PageSizeCalculator) {
+        val elementSizeRelativePage = pageSizeCalculator.calculateElementSizeRelative(Size(layoutParams.desiredWidth,layoutParams.desiredHeight))
+        layoutParams.desiredWidth = elementSizeRelativePage.width
+        layoutParams.desiredHeight = elementSizeRelativePage.height
     }
 
     data class LayoutParams(

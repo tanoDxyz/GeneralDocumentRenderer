@@ -3,7 +3,6 @@ package com.tanodxyz.documentrenderer.page
 enum class ObjectViewState {
     VISIBLE, PARTIALLY_VISIBLE, INVISIBLE;
 
-
     fun isPageCompletelyVisible(): Boolean {
         return this == VISIBLE
     }

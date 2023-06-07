@@ -16,4 +16,3 @@ dependencyResolutionManagement {
 rootProject.name = "General Document Renderer"
 include ':app'
 include ':documentrenderer'
-include ':itext722g'

@@ -1,28 +1,16 @@
 package com.tanodxyz.documentrenderer.elements
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Canvas
-import android.graphics.DrawFilter
-import android.graphics.Paint
-import android.os.Environment
-import android.util.Log.i
 import android.util.SparseArray
 import androidx.core.graphics.toRect
-import com.tanodxyz.documentrenderer.closeResource
 import com.tanodxyz.documentrenderer.getHeight
 import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.page.PageSnapshotElement
 import com.tanodxyz.documentrenderer.recycleSafely
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.FileOutputStream
-import java.util.Collections.addAll
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.jvm.internal.Intrinsics.Kotlin
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -82,6 +70,8 @@ open class PageSnapShotElementImpl(
             val pageBounds = page.pageBounds
             val pageMaxSize = max(pageBounds.getWidth(), pageBounds.getHeight()).roundToInt()
             var sdFactor:Float = 1F
+
+            // scale down the algorithm.
             if(pageMaxSize > snapDimenRanges.last().second.last) {
                 val displayMetrics = page.documentRenderView.context.resources.displayMetrics
                 sdFactor = pageMaxSize / min(displayMetrics.widthPixels,displayMetrics.heightPixels).toFloat()
@@ -93,7 +83,7 @@ open class PageSnapShotElementImpl(
                     }
                 }
             }
-            page.snapSclaeDownFactor = sdFactor
+            page.snapScaleDownFactor = sdFactor
             val bitmap = Bitmap.createBitmap(
                 pageBounds.getWidth().div(sdFactor)
                     .roundToInt(),
