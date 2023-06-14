@@ -95,7 +95,7 @@ class SimpleStaticTextElement(page: DocumentPage) : PageElement(page = page) {
 
     private fun initTextLayout(drawFromOrigin: Boolean) {
         val oldTextSize = textPaint.textSize
-        val newTextSize = page!!.documentRenderView.toCurrentScale(textSizePixels)
+        val newTextSize = page.documentRenderView.toCurrentScale(textSizePixels)
         if (!drawFromOrigin && oldTextSize == newTextSize && layout != null) {
             return
         }

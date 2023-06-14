@@ -20,6 +20,7 @@ import android.view.View.OnLayoutChangeListener
 import android.widget.FrameLayout
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.elements.IElement
+import com.tanodxyz.documentrenderer.elements.PageSnapShotElementImpl.Companion.snapDimenRanges
 import com.tanodxyz.documentrenderer.events.DoubleTapCompleteEvent
 import com.tanodxyz.documentrenderer.events.DoubleTapEvent
 import com.tanodxyz.documentrenderer.events.FlingEndEvent
@@ -72,7 +73,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     protected val antialiasFilter =
         PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     protected val pagePaint = Paint(Paint.ANTI_ALIAS_FLAG)
-    val pageBackgroundColor:Int get() =  pagePaint.color
+    val pageBackgroundColor: Int get() = pagePaint.color
 
     protected var contentDrawOffsetX = 0F
     protected var contentDrawOffsetY = 0F
@@ -306,8 +307,8 @@ open class DocumentRenderView @JvmOverloads constructor(
         var viewState: ViewState? = null
         if (state is Bundle) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                viewState = state.getParcelable("viewState",ViewState::class.java)!!
-                superState = state.getParcelable("superState",Parcelable::class.java)!!
+                viewState = state.getParcelable("viewState", ViewState::class.java)!!
+                superState = state.getParcelable("superState", Parcelable::class.java)!!
             } else {
                 viewState = state.getParcelable<ViewState>("viewState")!!
                 superState = state.getParcelable("superState")!!
@@ -948,7 +949,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             documentPages.forEach { documentPage ->
                 val pageViewState = getPageViewState(documentPage.pageBounds)
                 drawPageBackground(documentPage)
-                documentPage.draw(this@DocumentRenderView,canvas, pageViewState)
+                documentPage.draw(this@DocumentRenderView, canvas, pageViewState)
                 currentPage = calculateCurrentPage(documentPage)
             }
             if (canShowPageCountBox) {
@@ -1133,7 +1134,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     companion object {
         var MINIMUM_ZOOM = 1.0F
-        var MAXIMUM_ZOOM = 100f
+        var MAXIMUM_ZOOM = 100F
         val DEFAULT_MAX_SCALE = MAXIMUM_ZOOM
         val DEFAULT_MID_SCALE = MAXIMUM_ZOOM.div(2)
         val DEFAULT_MIN_SCALE = MINIMUM_ZOOM

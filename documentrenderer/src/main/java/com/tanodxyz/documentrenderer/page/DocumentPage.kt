@@ -23,6 +23,7 @@ open class DocumentPage(
     var argsToElements = SparseArray<Any>()
     var modifiedSize: Size = originalSize
     var snapScaleDownFactor = 1f
+    var drawPageSnapShot = true
     lateinit var documentRenderView: DocumentRenderView
     protected var pageSnapShotElementImpl: PageSnapshotElement = PageSnapShotElementImpl(this)
     open fun getWidth(): Float {
@@ -39,19 +40,23 @@ open class DocumentPage(
 
     open fun draw(view: DocumentRenderView, canvas: Canvas, pageViewState: ObjectViewState) {
         this.documentRenderView = view
-        if (pageViewState.isObjectPartiallyOrCompletelyVisible()) {
-            if (documentRenderView.isScaling) {
-                if (pageSnapShotElementImpl.isEmpty()) {
-                    pageSnapShotElementImpl.preparePageSnapshot(documentRenderView.getCurrentZoom())
-                    canvas.dispatchDrawCallToIndividualElements()
+        if(drawPageSnapShot) {
+            if (pageViewState.isObjectPartiallyOrCompletelyVisible()) {
+                if (documentRenderView.isScaling) {
+                    if (pageSnapShotElementImpl.isEmpty()) {
+                        pageSnapShotElementImpl.preparePageSnapshot(documentRenderView.getCurrentZoom())
+                        canvas.dispatchDrawCallToIndividualElements()
+                    } else {
+                        pageSnapShotElementImpl.draw(canvas)
+                    }
                 } else {
-                    pageSnapShotElementImpl.draw(canvas)
+                    canvas.dispatchDrawCallToIndividualElements()
                 }
             } else {
-                canvas.dispatchDrawCallToIndividualElements()
+                pageSnapShotElementImpl.recycle()
             }
         } else {
-            pageSnapShotElementImpl.recycle()
+            dispatchDrawCallToIndividualElements(canvas,argsToElements)
         }
     }
 

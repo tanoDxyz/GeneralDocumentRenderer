@@ -4,11 +4,13 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.util.SparseArray
 import androidx.core.graphics.toRect
+import com.tanodxyz.documentrenderer.DocumentRenderView
 import com.tanodxyz.documentrenderer.getHeight
 import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.page.PageSnapshotElement
 import com.tanodxyz.documentrenderer.recycleSafely
+import java.util.Collections.addAll
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.max
@@ -46,7 +48,6 @@ open class PageSnapShotElementImpl(
     @Synchronized
     override fun isEmpty(): Boolean {
         return bitmap == null
-
     }
 
     override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
@@ -65,18 +66,24 @@ open class PageSnapShotElementImpl(
     protected fun create(scaleLevel: Float) {
         busyCreatingSnap.set(true)
         if (scaleLevel != this.scaleLevel || bitmap == null) {
+            if(snapDimenRanges.isEmpty()) {
+                setSnapDimenRanges()
+            }
             recycle()
             this.scaleLevel = scaleLevel
             val pageBounds = page.pageBounds
             val pageMaxSize = max(pageBounds.getWidth(), pageBounds.getHeight()).roundToInt()
-            var sdFactor:Float = 1F
+            var sdFactor: Float = 1F
 
             // scale down the algorithm.
-            if(pageMaxSize > snapDimenRanges.last().second.last) {
+            if (pageMaxSize > snapDimenRanges.last().second.last) {
                 val displayMetrics = page.documentRenderView.context.resources.displayMetrics
-                sdFactor = pageMaxSize / min(displayMetrics.widthPixels,displayMetrics.heightPixels).toFloat()
+                sdFactor = pageMaxSize / min(
+                    displayMetrics.widthPixels,
+                    displayMetrics.heightPixels
+                ).toFloat()
             } else {
-                loop@ for(pair:Pair<Float,IntRange> in snapDimenRanges) {
+                loop@ for (pair: Pair<Float, IntRange> in snapDimenRanges) {
                     if (pageMaxSize in pair.second) {
                         sdFactor = pair.first
                         break@loop
@@ -113,21 +120,20 @@ open class PageSnapShotElementImpl(
     }
 
     companion object {
-        val snapDimenRanges = mutableListOf<Pair<Float, IntRange>>().apply {
-            addAll(
-                arrayOf(
-                    Pair(1.5f, IntRange(500, 1000)),
-                    Pair(2.5f, IntRange(1001, 2000)),
-                    Pair(3.5f, IntRange(2001, 3000)),
-                    Pair(4.5f, IntRange(3001, 4000)),
-                    Pair(5.5f, IntRange(4001, 5000)),
-                    Pair(6.5f, IntRange(5001, 6000)),
-                    Pair(7.5f, IntRange(6001, 7000)),
-                    Pair(8.5f, IntRange(7001, 8000)),
-                    Pair(9.5f, IntRange(8001, 9000)),
-                    Pair(10.5f, IntRange(9001, 10000))
+        val snapDimenRanges: MutableList<Pair<Float, IntRange>> =
+            mutableListOf()
+        fun setSnapDimenRanges(level: Int = DocumentRenderView.MAXIMUM_ZOOM.roundToInt(),pageStartSize:Int = 500, pageSizeDifference:Int = 1000,divisionFactor:Float = 1.5F) {
+            for(i:Int in 0 until  level) {
+                val i1 =
+                    if (i == 0) pageStartSize  else snapDimenRanges[(i - 1)].second.last + 1
+                val df = divisionFactor + i
+                val pair = Pair(
+                    df,
+                    IntRange(i1 , (pageSizeDifference * (i+1)))
                 )
-            )
+                snapDimenRanges.add(pair)
+            }
+            DocumentRenderView.MAXIMUM_ZOOM = level.toFloat()
         }
     }
 }
