@@ -1,39 +1,41 @@
-package com.tanodxyz.generaldocumentrenderer
+package com.tanodxyz.documentrenderer.elements
 
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Typeface
 import android.os.Build
-import android.text.*
-import android.text.TextUtils.TruncateAt
+import android.text.Layout
+import android.text.StaticLayout
+import android.text.TextDirectionHeuristic
+import android.text.TextDirectionHeuristics
+import android.text.TextPaint
+import android.text.TextUtils
 import android.util.SparseArray
 import androidx.annotation.RequiresApi
-import com.tanodxyz.documentrenderer.elements.PageElement
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 import com.tanodxyz.documentrenderer.getHeight
 import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.page.DocumentPage
-import com.tanodxyz.documentrenderer.spToPx
+import com.tanodxyz.documentrenderer.pagesizecalculator.PageSizeCalculator
 import java.lang.Exception
 import java.lang.reflect.Constructor
 import kotlin.math.roundToInt
 
-@Deprecated(message = "for tutorial only", level = DeprecationLevel.WARNING)
-class SimpleStaticTextElement(page: DocumentPage) : PageElement(page = page) {
-    private var normalized: Boolean = false
+class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
+    protected var appliedLineBreaking = false
     protected lateinit var charSequence: CharSequence
-    protected var textPaint: TextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+    protected var textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { 
         this.color = DEFAULT_TEXT_COLOR
         this.textSize = DEFAULT_TEXT_SIZE
     }
-
-
-    var textSizePixels: Float = DEFAULT_TEXT_SIZE
-    var ellipseSize = TruncateAt.END
+    var textSizePixels: Float = textPaint.textSize
+    var ellipseSize = TextUtils.TruncateAt.END
     var alignment = Layout.Alignment.ALIGN_NORMAL
     var textDirectionHeuristics = TextDirectionHeuristics.LTR
     var spacingmult = 1.0F
     var spacingAdd = 2.0F
     var includePadding = false
-
     @RequiresApi(Build.VERSION_CODES.M)
     var lineBreakingStrategy = Layout.BREAK_STRATEGY_SIMPLE
 
@@ -43,20 +45,22 @@ class SimpleStaticTextElement(page: DocumentPage) : PageElement(page = page) {
     @RequiresApi(Build.VERSION_CODES.P)
     var useLineSpacingFromFallbacks = false
 
+    var applySimpleLineBreaking = true
+
     protected var layout: StaticLayout? = null
 
     override var type = "TextElement"
+
     fun setText(text: CharSequence) {
         this.charSequence = text
     }
-
-    fun normalizeText() {
-        if(!normalized) {
-            normalized = true
-            val wordsList = this.charSequence.split(' ')
+    
+    fun applySimpleLineBreaking() {
+        if(!appliedLineBreaking && applySimpleLineBreaking) {
+            appliedLineBreaking = true
+            val wordsList = this.charSequence.split(' ','\n')
             val stringBuilder = java.lang.StringBuilder(charSequence.length)
             val availableLineWidth = calculateWidth(false) - 200
-
             var lineWidthConsumed = 0F
             wordsList.forEach { word ->
                 val wordWidth = StaticLayout.getDesiredWidth(word, textPaint)
@@ -72,28 +76,19 @@ class SimpleStaticTextElement(page: DocumentPage) : PageElement(page = page) {
         }
     }
 
-    fun setTextSize(sp: Float) {
-        textSizePixels = if (sp <= 0) {
-            DEFAULT_TEXT_SIZE
-        } else {
-            page?.documentRenderView?.resources?.spToPx(sp) ?: DEFAULT_TEXT_SIZE
-        }
-    }
-
-
     fun setTypeFace(typeface: Typeface) {
         textPaint.typeface = typeface
     }
 
-    private fun calculateHeight(drawFromOrigin: Boolean): Int {
+    protected fun calculateHeight(drawFromOrigin: Boolean): Int {
         return getBoundsRelativeToPage(drawFromOrigin).getHeight().roundToInt()
     }
 
-    private fun calculateWidth(drawFromOrigin: Boolean): Int {
+    protected fun calculateWidth(drawFromOrigin: Boolean): Int {
         return getBoundsRelativeToPage(drawFromOrigin).getWidth().roundToInt()
     }
 
-    private fun initTextLayout(drawFromOrigin: Boolean) {
+    protected fun initTextLayout(drawFromOrigin: Boolean) {
         val oldTextSize = textPaint.textSize
         val newTextSize = page.documentRenderView.toCurrentScale(textSizePixels)
         if (!drawFromOrigin && oldTextSize == newTextSize && layout != null) {
@@ -107,7 +102,7 @@ class SimpleStaticTextElement(page: DocumentPage) : PageElement(page = page) {
             )
         val width = calculateWidth(drawFromOrigin)
         val height = calculateHeight(drawFromOrigin)
-        normalizeText()
+        applySimpleLineBreaking()
         val maxLinesByInspection =
             getMaxLinesByInspection(
                 makeStaticLayout(width, Int.MAX_VALUE),
@@ -148,7 +143,7 @@ class SimpleStaticTextElement(page: DocumentPage) : PageElement(page = page) {
                     Float::class.javaPrimitiveType,
                     Float::class.javaPrimitiveType,
                     Boolean::class.javaPrimitiveType,
-                    TruncateAt::class.java,
+                    TextUtils.TruncateAt::class.java,
                     Int::class.javaPrimitiveType,
                     Int::class.javaPrimitiveType
                 )
@@ -179,9 +174,12 @@ class SimpleStaticTextElement(page: DocumentPage) : PageElement(page = page) {
             textPaint.color = color
         }
 
-    override fun onEvent(iMotionEventMarker: IMotionEventMarker?): Boolean {
-        super.onEvent(iMotionEventMarker)
-        return true
+    private fun getMaxLinesByInspection(staticLayout: StaticLayout, maxHeight: Int): Int {
+        var line = staticLayout.lineCount - 1
+        while (line >= 0 && staticLayout.getLineBottom(line) >= maxHeight) {
+            line--
+        }
+        return line + 1
     }
 
     override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
@@ -196,18 +194,15 @@ class SimpleStaticTextElement(page: DocumentPage) : PageElement(page = page) {
                 layout?.draw(canvas)
                 restore()
             }
-        }catch (ex:Exception) {
+        }catch (ex: Exception) {
             ex.printStackTrace()
         }
 
     }
 
-    private fun getMaxLinesByInspection(staticLayout: StaticLayout, maxHeight: Int): Int {
-        var line = staticLayout.lineCount - 1
-        while (line >= 0 && staticLayout.getLineBottom(line) >= maxHeight) {
-            line--
-        }
-        return line + 1
+    override fun onEvent(iMotionEventMarker: IMotionEventMarker?): Boolean {
+        super.onEvent(iMotionEventMarker)
+        return true
     }
 
     companion object {
