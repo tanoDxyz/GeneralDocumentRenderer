@@ -53,6 +53,8 @@ class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
 
     fun setText(text: CharSequence) {
         this.charSequence = text
+        appliedLineBreaking = false
+        layout = null
     }
     
     fun applySimpleLineBreaking() {
@@ -88,18 +90,14 @@ class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
         return getBoundsRelativeToPage(drawFromOrigin).getWidth().roundToInt()
     }
 
-    protected fun initTextLayout(drawFromOrigin: Boolean) {
+    protected fun initTextLayout(args: SparseArray<Any>?) {
+        val drawFromOrigin = args.shouldDrawFromOrigin()
         val oldTextSize = textPaint.textSize
         val newTextSize = page.documentRenderView.toCurrentScale(textSizePixels)
         if (!drawFromOrigin && oldTextSize == newTextSize && layout != null) {
             return
         }
-        textPaint.textSize =
-            page.documentRenderView.toCurrentScale(
-                if (drawFromOrigin) textSizePixels.div(
-                    page.snapScaleDownFactor
-                ) else textSizePixels
-            )
+        textPaint.textSize = args.textSizeRelativeToSnap(textSizePixels)
         val width = calculateWidth(drawFromOrigin)
         val height = calculateHeight(drawFromOrigin)
         applySimpleLineBreaking()
@@ -110,6 +108,7 @@ class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
             )
         layout = makeStaticLayout(width, maxLinesByInspection)
     }
+
 
     protected fun makeStaticLayout(
         width: Int,
@@ -186,7 +185,7 @@ class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
         super.draw(canvas, args)
         try {
             val drawFromOrigin = args.shouldDrawFromOrigin()
-            initTextLayout(drawFromOrigin)
+            initTextLayout(args)
             canvas.apply {
                 save()
                 val leftAndTop = args.getLeftAndTop()
