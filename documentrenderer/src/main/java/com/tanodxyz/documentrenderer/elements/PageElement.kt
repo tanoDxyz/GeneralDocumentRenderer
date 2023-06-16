@@ -1,5 +1,8 @@
 package com.tanodxyz.documentrenderer.elements
 
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.PointF
 import android.graphics.RectF
 import android.util.Log
@@ -57,6 +60,11 @@ open class PageElement(
     @VisibleForTesting
     val elementBoundsRelativeToOrigin = RectF()
 
+    val debugPaint = Paint().apply {
+        color = Color.RED
+        style = Paint.Style.STROKE
+        strokeWidth = 8F
+    }
     open fun onEvent(iMotionEventMarker: IMotionEventMarker?): Boolean {
         if (debug) {
             iMotionEventMarker?.apply {
@@ -155,12 +163,21 @@ open class PageElement(
                 right = if (startEndSymmetric) {
                     (left + scaleDownWidth) - scaledDownLeftMargin.times(2)
                 } else {
-                    (left + scaleDownWidth) - (scaledDownRightMargin + scaledDownLeftMargin)
+                    if(isWidthMatchParent()) {
+                        (left + scaleDownWidth) - (scaledDownRightMargin + scaledDownLeftMargin)
+                    } else {
+                        (left + scaleDownWidth) - (scaledDownRightMargin)
+                    }
                 }
                 bottom = if (topBottomSymmetric) {
                     (top + scaledDownHeight) - scaledDownTopMargin.times(2)
                 } else {
-                    (top + scaledDownHeight) - (scaledDownBottomMargin + scaledDownTopMargin)
+                    (top + scaledDownHeight) - (scaledDownBottomMargin)
+                    if(isHeightMatchParent()) {
+                        (top + scaledDownHeight) - (scaledDownBottomMargin + scaledDownTopMargin)
+                    } else {
+                        (top + scaledDownHeight) - (scaledDownBottomMargin)
+                    }
                 }
                 elementBoundsRelativeToOrigin.apply {
                     this.left = left
@@ -180,12 +197,20 @@ open class PageElement(
                 right = if (startEndSymmetric) {
                     (left + getWidth()) - scaledMarginLeft.times(2)
                 } else {
-                    (left + getWidth()) - (scaledMarginRight + scaledMarginLeft )
+                    if(isWidthMatchParent()) {
+                        (left + getWidth()) - (scaledMarginRight + scaledMarginLeft)
+                    } else {
+                        (left + getWidth()) - (scaledMarginRight)
+                    }
                 }
                 bottom = if (topBottomSymmetric) {
                     (top + getHeight()) - scaledMarginTop.times(2)
                 } else {
-                    (top + getHeight()) - (scaledMarginBottom + scaledMarginTop )
+                    if(isHeightMatchParent()) {
+                        (top + getHeight()) - (scaledMarginBottom + scaledMarginTop)
+                    } else {
+                        (top + getHeight()) - (scaledMarginBottom)
+                    }
                 }
                 elementBoundsRelativeToPage.apply {
                     this.left = left
@@ -208,9 +233,34 @@ open class PageElement(
 
     @Thread(description = "will be called on worker thread.")
     open fun pageMeasurementDone(pageSizeCalculator: PageSizeCalculator) {
-        val elementSizeRelativePage = pageSizeCalculator.calculateElementSizeRelative(Size(layoutParams.desiredWidth,layoutParams.desiredHeight))
-        layoutParams.desiredWidth = elementSizeRelativePage.width
-        layoutParams.desiredHeight = elementSizeRelativePage.height
+        val shouldMakeChangeToElementWidth = !layoutParams.isWidthMatchParent() && (!layoutParams.startEndSymmetric)
+        val shouldMakeChangeToElementHeight = !layoutParams.isHeightMatchParent() && (!layoutParams.topBottomSymmetric)
+
+        var elementSizeRelativePage = Size(0,0)
+        if(shouldMakeChangeToElementWidth || shouldMakeChangeToElementHeight) {
+            elementSizeRelativePage = pageSizeCalculator.calculateElementSizeRelative(
+                Size(
+                    layoutParams.desiredWidth,
+                    layoutParams.desiredHeight
+                )
+            )
+        }
+        if(shouldMakeChangeToElementWidth) {
+            layoutParams.desiredWidth = elementSizeRelativePage.width
+        }
+
+        if(shouldMakeChangeToElementHeight) {
+            layoutParams.desiredHeight = elementSizeRelativePage.height
+        }
+    }
+
+    override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
+        super.draw(canvas, args)
+        if(debug) {
+            getBoundsRelativeToPage(args.shouldDrawFromOrigin()).apply {
+                canvas.drawRect(this, debugPaint)
+            }
+        }
     }
 
     data class LayoutParams(
@@ -232,6 +282,13 @@ open class PageElement(
         }
     }
 
+    fun SparseArray<Any>?.textSizeRelativeToSnap(textSizePixels: Float): Float {
+        return page.documentRenderView.toCurrentScale(
+            if (shouldDrawFromOrigin()) textSizePixels.div(
+                page.snapScaleDownFactor
+            ) else textSizePixels
+        )
+    }
 
     companion object {
         const val DEFAULT_WIDTH = 64

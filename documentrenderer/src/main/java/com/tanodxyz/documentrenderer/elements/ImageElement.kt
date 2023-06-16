@@ -21,6 +21,8 @@ open class ImageElement(page: DocumentPage) : PageElement(page = page) {
     var unloadedBitmapRectangleBorderSize = 2F // pixels
     var unloadedBitmapTextSize = 14F // pixels
     var unloadedBitmapTextMessage = "Image"
+    override var type = "ImageElement"
+
     private var paint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         color = unloadedBitmapRectangleAndTextColor
         textSize = unloadedBitmapTextSize
