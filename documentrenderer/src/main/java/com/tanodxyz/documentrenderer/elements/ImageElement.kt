@@ -12,23 +12,34 @@ import androidx.core.graphics.toRect
 import com.tanodxyz.documentrenderer.dpToPx
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 import com.tanodxyz.documentrenderer.getHeight
+import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import kotlin.math.roundToInt
 
-open class ImageElement(page: DocumentPage) : PageElement(page = page) {
+open class ImageElement(
+    page: DocumentPage,
+    var unloadedBitmapRectangleColor: Int = Color.BLACK,
+    var unloadedBitmapRectangleTextColor: Int = Color.BLACK,
+    var unloadedBitmapRectangleBorderSize: Float = 2F, // pixels
+    var unloadedBitmapTextSize: Float = 14F, // pixels
+    var unloadedBitmapTextMessage: String = "Image",
+    var drawUnloadedBitmapBox: Boolean = true
+) : PageElement(page = page) {
+
     private var bitmap: Bitmap? = null
-    var unloadedBitmapRectangleAndTextColor = Color.BLACK
-    var unloadedBitmapRectangleBorderSize = 2F // pixels
-    var unloadedBitmapTextSize = 14F // pixels
-    var unloadedBitmapTextMessage = "Image"
+
     override var type = "ImageElement"
 
     private var paint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = unloadedBitmapRectangleAndTextColor
-        textSize = unloadedBitmapTextSize
+        color = unloadedBitmapRectangleColor
         strokeWidth = unloadedBitmapRectangleBorderSize
         style = Paint.Style.STROKE
 
+    }
+    var textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = unloadedBitmapRectangleTextColor
+        textSize = unloadedBitmapTextSize
+        style = Paint.Style.FILL
     }
 
     // image
@@ -44,30 +55,42 @@ open class ImageElement(page: DocumentPage) : PageElement(page = page) {
     ) {
         canvas.drawRect(boundsRelativeToPage, paint)
         val textSizeRelativeToSnap = args.textSizeRelativeToSnap(unloadedBitmapTextSize)
-        paint.textSize = textSizeRelativeToSnap
-        val textWidth = paint.measureText(unloadedBitmapTextMessage)
-        val halfWidth = actualWidth.div(2)
-        val textDrawX = (halfWidth - (textWidth.div(2))) + boundsRelativeToPage.left
+        textPaint.textSize = textSizeRelativeToSnap
+        val fm: Paint.FontMetrics = textPaint.getFontMetrics()
+        val textHeight = fm.bottom - fm.top + fm.leading
+        val textDrawX =
+            boundsRelativeToPage.left + page.documentRenderView.context.resources.dpToPx(8)
         val textDrawY =
-            boundsRelativeToPage.top + boundsRelativeToPage.getHeight().div(2)
-        canvas.drawText(unloadedBitmapTextMessage, textDrawX, textDrawY, paint)
+            boundsRelativeToPage.top + textHeight
+        canvas.drawText(unloadedBitmapTextMessage, textDrawX, textDrawY, textPaint)
     }
 
     override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
         super.draw(canvas, args)
         val boundsRelativeToPage = getBoundsRelativeToPage(args.shouldDrawFromOrigin())
         synchronized(this) {
-            if (bitmap == null) {
+            if (bitmap == null && drawUnloadedBitmapBox) {
                 drawUnloadedBitmapBox(canvas, boundsRelativeToPage, args)
             } else {
                 val leftAndTop = args.getLeftAndTop()
-                val srcRect = Rect(leftAndTop.x.roundToInt(),leftAndTop.y.roundToInt(),bitmap!!.width,bitmap!!.height)
-                drawBitmap(canvas,bitmap!!,srcRect,boundsRelativeToPage.toRect(),paint)
+                val srcRect = Rect(
+                    leftAndTop.x.roundToInt(),
+                    leftAndTop.y.roundToInt(),
+                    bitmap!!.width,
+                    bitmap!!.height
+                )
+                drawBitmap(canvas, bitmap!!, srcRect, boundsRelativeToPage.toRect(), paint)
             }
         }
     }
 
-    open fun drawBitmap(canvas: Canvas, bitmap: Bitmap, srcRect: Rect?, targetRect: Rect, paint: Paint) {
+    open fun drawBitmap(
+        canvas: Canvas,
+        bitmap: Bitmap,
+        srcRect: Rect?,
+        targetRect: Rect,
+        paint: Paint
+    ) {
         canvas.drawBitmap(bitmap!!, null, targetRect, null)
     }
 
