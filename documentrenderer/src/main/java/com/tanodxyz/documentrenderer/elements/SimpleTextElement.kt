@@ -146,7 +146,7 @@ class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
                     Int::class.javaPrimitiveType,
                     Int::class.javaPrimitiveType
                 )
-            constructor.setAccessible(true)
+            constructor.isAccessible = true
             constructor.newInstance(
                 charSequence,
                 0,

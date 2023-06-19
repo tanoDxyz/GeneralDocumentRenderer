@@ -40,6 +40,7 @@ import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.page.ObjectViewState
 import com.tanodxyz.documentrenderer.pagesizecalculator.PageSizeCalculator
 import org.jetbrains.annotations.TestOnly
+import java.lang.Thread
 import java.util.BitSet
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadPoolExecutor
@@ -882,7 +883,11 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     override fun redraw() {
-        invalidate()
+        if(isMainThread()) {
+            invalidate()
+        } else {
+            postInvalidate()
+        }
     }
 
     override fun isSwipeVertical(): Boolean {
@@ -1134,7 +1139,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     companion object {
         var MINIMUM_ZOOM = 1.0F
-        var MAXIMUM_ZOOM = 100F
+        var MAXIMUM_ZOOM = 5F
         val DEFAULT_MAX_SCALE = MAXIMUM_ZOOM
         val DEFAULT_MID_SCALE = MAXIMUM_ZOOM.div(2)
         val DEFAULT_MIN_SCALE = MINIMUM_ZOOM

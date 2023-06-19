@@ -38,6 +38,12 @@ open class DocumentPage(
         this.pageSnapShotElementImpl = pageSnapshotElement
     }
 
+    open fun redraw() {
+        if(this::documentRenderView.isInitialized) {
+            documentRenderView.redraw()
+        }
+    }
+
     open fun draw(view: DocumentRenderView, canvas: Canvas, pageViewState: ObjectViewState) {
         this.documentRenderView = view
         if(drawPageSnapShot) {

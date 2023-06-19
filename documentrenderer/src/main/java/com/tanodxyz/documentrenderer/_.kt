@@ -5,6 +5,7 @@ import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.RectF
 import android.os.Build
+import android.os.Looper
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
@@ -203,4 +204,6 @@ fun Closeable?.closeResource() {
         ex.printStackTrace()
     }
 }
+
+fun isMainThread(): Boolean = Looper.myLooper() == Looper.getMainLooper()
 

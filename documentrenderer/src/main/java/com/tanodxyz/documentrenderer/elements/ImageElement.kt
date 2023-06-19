@@ -46,6 +46,7 @@ open class ImageElement(
     @Synchronized
     fun load(bitmap: Bitmap) {
         this.bitmap = bitmap
+        page.redraw()
     }
 
     open fun drawUnloadedBitmapBox(
@@ -72,14 +73,7 @@ open class ImageElement(
             if (bitmap == null && drawUnloadedBitmapBox) {
                 drawUnloadedBitmapBox(canvas, boundsRelativeToPage, args)
             } else {
-                val leftAndTop = args.getLeftAndTop()
-                val srcRect = Rect(
-                    leftAndTop.x.roundToInt(),
-                    leftAndTop.y.roundToInt(),
-                    bitmap!!.width,
-                    bitmap!!.height
-                )
-                drawBitmap(canvas, bitmap!!, srcRect, boundsRelativeToPage.toRect(), paint)
+                drawBitmap(canvas, bitmap!!, boundsRelativeToPage.toRect(), paint)
             }
         }
     }
@@ -87,11 +81,10 @@ open class ImageElement(
     open fun drawBitmap(
         canvas: Canvas,
         bitmap: Bitmap,
-        srcRect: Rect?,
         targetRect: Rect,
         paint: Paint
     ) {
-        canvas.drawBitmap(bitmap!!, null, targetRect, null)
+        canvas.drawBitmap(bitmap, null, targetRect, null)
     }
 
     override fun onEvent(iMotionEventMarker: IMotionEventMarker?): Boolean {

@@ -78,7 +78,6 @@ open class PageElement(
                 "onEvent: elementType = $type , eventType = $iMotionEventMarker"
             )
         }
-
         return false
     }
 
@@ -121,8 +120,8 @@ open class PageElement(
         }
     }
 
-    val actualWidth: Float get() = elementBoundsRelativeToPage.getWidth()
-    val actualHeight: Float get() = elementBoundsRelativeToPage.getHeight()
+    val actualWidth: Float get() = getBoundsRelativeToPage(false).getWidth()
+    val actualHeight: Float get() = getBoundsRelativeToPage(false).getHeight()
 
     fun SparseArray<Any>?.shouldDrawFromOrigin(): Boolean {
         return this != null && this[DocumentPage.RE_DRAW_WITH_RELATIVE_TO_ORIGIN_SNAPSHOT_] == true
