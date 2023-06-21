@@ -1,31 +1,40 @@
 package com.tanodxyz.documentrenderer.elements
 
+import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.os.Build
 import android.text.Layout
+import android.text.Spannable
+import android.text.SpannableString
 import android.text.StaticLayout
 import android.text.TextDirectionHeuristic
 import android.text.TextDirectionHeuristics
 import android.text.TextPaint
 import android.text.TextUtils
 import android.util.SparseArray
+import android.view.View
+import android.widget.EditText
 import androidx.annotation.RequiresApi
+import androidx.core.text.toSpannable
+import com.tanodxyz.documentrenderer.R
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
+import com.tanodxyz.documentrenderer.events.LongPressEvent
 import com.tanodxyz.documentrenderer.getHeight
 import com.tanodxyz.documentrenderer.getWidth
+import com.tanodxyz.documentrenderer.misc.DialogHandle
 import com.tanodxyz.documentrenderer.page.DocumentPage
-import com.tanodxyz.documentrenderer.pagesizecalculator.PageSizeCalculator
 import java.lang.Exception
 import java.lang.reflect.Constructor
 import kotlin.math.roundToInt
 
-class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
+open class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
+    private var editTextDialog: EditTextDialog? = null
     protected var appliedLineBreaking = false
-    protected lateinit var charSequence: CharSequence
-    protected var textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { 
+    protected lateinit var spannable: Spannable
+    protected var textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         this.color = DEFAULT_TEXT_COLOR
         this.textSize = DEFAULT_TEXT_SIZE
     }
@@ -36,6 +45,8 @@ class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
     var spacingmult = 1.0F
     var spacingAdd = 2.0F
     var includePadding = false
+    var allowTextEditing = true
+
     @RequiresApi(Build.VERSION_CODES.M)
     var lineBreakingStrategy = Layout.BREAK_STRATEGY_SIMPLE
 
@@ -45,23 +56,24 @@ class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
     @RequiresApi(Build.VERSION_CODES.P)
     var useLineSpacingFromFallbacks = false
 
-    var applySimpleLineBreaking = true
+    var applySimpleLineBreaking = false
 
     protected var layout: StaticLayout? = null
 
     override var type = "TextElement"
 
-    fun setText(text: CharSequence) {
-        this.charSequence = text
+    fun setText(text: Spannable) {
+        this.spannable = text
         appliedLineBreaking = false
         layout = null
+        page.redraw()
     }
-    
+
     fun applySimpleLineBreaking() {
-        if(!appliedLineBreaking && applySimpleLineBreaking) {
+        if (!appliedLineBreaking && applySimpleLineBreaking) {
             appliedLineBreaking = true
-            val wordsList = this.charSequence.split(' ','\n')
-            val stringBuilder = java.lang.StringBuilder(charSequence.length)
+            val wordsList = this.spannable.split(' ', '\n')
+            val stringBuilder = java.lang.StringBuilder(spannable.length)
             val availableLineWidth = calculateWidth(false) - 200
             var lineWidthConsumed = 0F
             wordsList.forEach { word ->
@@ -70,11 +82,11 @@ class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
                 if (lineWidthConsumed < availableLineWidth) {
                     stringBuilder.append(word).append(' ')
                 } else {
-                    stringBuilder.append('\n').append(word).append( ' ')
+                    stringBuilder.append('\n').append(word).append(' ')
                     lineWidthConsumed = 0F
                 }
             }
-            charSequence = stringBuilder.toString()
+            spannable = SpannableString(stringBuilder.toString())
         }
     }
 
@@ -82,24 +94,24 @@ class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
         textPaint.typeface = typeface
     }
 
-    protected fun calculateHeight(drawFromOrigin: Boolean): Int {
-        return getBoundsRelativeToPage(drawFromOrigin).getHeight().roundToInt()
+    protected fun calculateHeight(drawSnapShot: Boolean): Int {
+        return getBoundsRelativeToPage(drawSnapShot).getHeight().roundToInt()
     }
 
-    protected fun calculateWidth(drawFromOrigin: Boolean): Int {
-        return getBoundsRelativeToPage(drawFromOrigin).getWidth().roundToInt()
+    protected fun calculateWidth(drawSnapShot: Boolean): Int {
+        return getBoundsRelativeToPage(drawSnapShot).getWidth().roundToInt()
     }
 
     protected fun initTextLayout(args: SparseArray<Any>?) {
-        val drawFromOrigin = args.shouldDrawFromOrigin()
+        val drawSnapShot = args.shouldDrawSnapShot()
         val oldTextSize = textPaint.textSize
         val newTextSize = page.documentRenderView.toCurrentScale(textSizePixels)
-        if (!drawFromOrigin && oldTextSize == newTextSize && layout != null) {
+        if (!drawSnapShot && oldTextSize == newTextSize && layout != null) {
             return
         }
         textPaint.textSize = args.textSizeRelativeToSnap(textSizePixels)
-        val width = calculateWidth(drawFromOrigin)
-        val height = calculateHeight(drawFromOrigin)
+        val width = calculateWidth(drawSnapShot)
+        val height = calculateHeight(drawSnapShot)
         applySimpleLineBreaking()
         val maxLinesByInspection =
             getMaxLinesByInspection(
@@ -117,7 +129,7 @@ class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 
             val builder =
-                StaticLayout.Builder.obtain(charSequence, 0, charSequence.length, textPaint, width)
+                StaticLayout.Builder.obtain(spannable, 0, spannable.length, textPaint, width)
                     .setMaxLines(maxLines).setAlignment(alignment)
                     .setEllipsize(ellipseSize)
                     .setTextDirection(textDirectionHeuristics)
@@ -148,9 +160,9 @@ class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
                 )
             constructor.isAccessible = true
             constructor.newInstance(
-                charSequence,
+                spannable,
                 0,
-                charSequence.length,
+                spannable.length,
                 textPaint,
                 width,
                 alignment,
@@ -184,7 +196,6 @@ class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
     override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
         super.draw(canvas, args)
         try {
-            val drawFromOrigin = args.shouldDrawFromOrigin()
             initTextLayout(args)
             canvas.apply {
                 save()
@@ -193,7 +204,7 @@ class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
                 layout?.draw(canvas)
                 restore()
             }
-        }catch (ex: Exception) {
+        } catch (ex: Exception) {
             ex.printStackTrace()
         }
 
@@ -201,11 +212,77 @@ class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
 
     override fun onEvent(iMotionEventMarker: IMotionEventMarker?): Boolean {
         super.onEvent(iMotionEventMarker)
-        return true
+        return if (allowTextEditing) {
+            handleOnClick(iMotionEventMarker)
+        } else {
+            false
+        }
+    }
+
+    open fun handleOnClick(iMotionEventMarker: IMotionEventMarker?): Boolean {
+        if (iMotionEventMarker is LongPressEvent) {
+            val eventOccurredWithInBounds = isEventOccurredWithInBounds(iMotionEventMarker, true)
+            if (eventOccurredWithInBounds) {
+                showTextEditDialog()
+            }
+            return eventOccurredWithInBounds
+        }
+        return false
+    }
+
+    open fun showTextEditDialog() {
+        if (editTextDialog == null) {
+            editTextDialog = EditTextDialog(page.documentRenderView.context, false) { changedText ->
+                changedText?.let { setText(it) }
+            }
+        }
+        editTextDialog?.setTextAndShow(spannable)
     }
 
     companion object {
         const val DEFAULT_TEXT_SIZE = 22F //px
         const val DEFAULT_TEXT_COLOR = Color.BLACK
     }
+
+    inner class EditTextDialog(
+        windowContext: Context,
+        cancelOnTouchOutSide: Boolean = true,
+        val textChangeCallback: (Spannable?) -> Unit
+    ) :
+        DialogHandle(windowContext, cancelOnTouchOutSide) {
+        init {
+
+            createDialog()
+            setListeners()
+
+            setOnShowListener {
+                page.documentRenderView.canRecieveTouchEvents = false
+            }
+
+            setOnDismissListener {
+                page.documentRenderView.canRecieveTouchEvents = true
+            }
+        }
+
+        fun setListeners() {
+            findViewViaId<View>(R.id.okButton)?.setOnClickListener {
+                textChangeCallback(findViewViaId<EditText>(R.id.inputView)?.text?.toSpannable())
+                hide()
+            }
+            findViewViaId<View>(R.id.cancelButton)?.setOnClickListener {
+                hide()
+            }
+        }
+
+        fun setTextAndShow(spannable: Spannable) {
+            findViewViaId<EditText>(R.id.inputView)?.setText(spannable)
+            show()
+        }
+
+        override fun getContainerLayout(): Int {
+            return R.layout.text_edit_dialog
+        }
+
+    }
+
 }

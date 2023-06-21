@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:background="@drawable/dialog_bg"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:textSize="16sp"
+        android:textColor="#000000"
+        android:fontFamily="sans-serif-condensed-medium"
+        android:text="@string/edit_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <View
+        android:background="#a0a0a0"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"/>
+    <EditText
+        android:id="@+id/inputView"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp"
+        android:padding="8dp"
+        android:maxHeight="450dp"
+        android:minHeight="100dp"
+        android:gravity="top|start"
+        android:background="@drawable/rounded_edit_text_bg"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <LinearLayout
+        android:layout_gravity="end"
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:layout_marginEnd="12dp"
+            android:text="@string/cancel"
+            android:id="@+id/cancelButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:text="@string/ok"
+            android:id="@+id/okButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+</LinearLayout>
