@@ -1,7 +1,9 @@
 package com.tanodxyz.documentrenderer.page
 
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.RectF
+import android.util.Log
 import android.util.SparseArray
 import android.view.MotionEvent
 import com.tanodxyz.documentrenderer.*
@@ -9,6 +11,9 @@ import com.tanodxyz.documentrenderer.elements.PageElement
 import com.tanodxyz.documentrenderer.elements.PageSnapShotElementImpl
 import com.tanodxyz.documentrenderer.events.*
 import com.tanodxyz.documentrenderer.pagesizecalculator.PageSizeCalculator
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.IOException
 import java.io.Serializable
 
 open class DocumentPage(
@@ -39,14 +44,14 @@ open class DocumentPage(
     }
 
     open fun redraw() {
-        if(this::documentRenderView.isInitialized) {
+        if (this::documentRenderView.isInitialized) {
             documentRenderView.redraw()
         }
     }
 
     open fun draw(view: DocumentRenderView, canvas: Canvas, pageViewState: ObjectViewState) {
         this.documentRenderView = view
-        if(drawPageSnapShot) {
+        if (drawPageSnapShot) {
             if (pageViewState.isObjectPartiallyOrCompletelyVisible()) {
                 if (documentRenderView.isScaling) {
                     if (pageSnapShotElementImpl.isEmpty()) {
@@ -62,7 +67,7 @@ open class DocumentPage(
                 pageSnapShotElementImpl.recycle()
             }
         } else {
-            dispatchDrawCallToIndividualElements(canvas,argsToElements)
+            dispatchDrawCallToIndividualElements(canvas, argsToElements)
         }
     }
 
@@ -96,6 +101,32 @@ open class DocumentPage(
 
     open fun onMeasurementDone(pageSizeCalculator: PageSizeCalculator) {
         elements.forEach { it.pageMeasurementDone(pageSizeCalculator) }
+    }
+
+    fun getSnapShot(callback: (Bitmap?) -> Unit) {
+        pageSnapShotElementImpl.getBitmap(callback)
+    }
+
+    fun saveSnapShot(filePath: String, callback: (Boolean, String) -> Unit) {
+        println("sanko: yes one ")
+        getSnapShot { snap->
+            println("sanko: yes got snap ")
+            if(snap == null) {
+                callback(false,"Failed to create snap!")
+            } else {
+                try {
+                    val fos = FileOutputStream(filePath)
+                    snap.compress(Bitmap.CompressFormat.PNG, 100, fos)
+                    fos.close()
+                    snap.recycleSafely()
+                    callback(true,"Done!")
+                } catch (e: FileNotFoundException) {
+                    callback(false,"File not found! -> ${e.message}")
+                } catch (e: IOException) {
+                    callback(false,"Error accessing file -> ${e.message}")
+                }
+            }
+        }
     }
 
     companion object {

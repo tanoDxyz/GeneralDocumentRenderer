@@ -106,7 +106,7 @@ open class PageElement(
         return PointF(boundsRelativeToPage.left, boundsRelativeToPage.top)
     }
 
-    private fun getWidth(): Int {
+    protected fun getWidth(): Int {
         return if (layoutParams.isWidthMatchParent() || layoutParams.startEndSymmetric) {
             page.pageBounds.getWidth().roundToInt()
         } else {
@@ -115,7 +115,7 @@ open class PageElement(
     }
 
 
-    private fun getHeight(): Int {
+    protected fun getHeight(): Int {
         return if (layoutParams.isHeightMatchParent() || layoutParams.topBottomSymmetric) {
             page.pageBounds.getHeight().roundToInt()
         } else {
@@ -295,7 +295,7 @@ open class PageElement(
         )
     }
 
-    fun isEventOccurredWithInBounds(
+    open fun isEventOccurredWithInBounds(
         eventMarker: IMotionEventMarker?,
         checkBasedOnLastDrawCallType: Boolean = false
     ): Boolean {
@@ -310,6 +310,7 @@ open class PageElement(
             }
         return (boundRelativeToPage.contains(eventMarker.getX(), eventMarker.getY()))
     }
+
 
     companion object {
         const val DEFAULT_WIDTH = 64

@@ -30,6 +30,30 @@ open class PageSnapShotElementImpl(
         this[DocumentPage.RE_DRAW_WITH_RELATIVE_TO_ORIGIN_SNAPSHOT_] = true
     }
 
+    // worker thread
+    override fun getBitmap(callback: (Bitmap?) -> Unit) {
+        val pageBounds = page.pageBounds
+        val threadPool = page.documentRenderView.threadPoolExecutor
+        if (threadPool == null) {
+            callback(null)
+        } else {
+            threadPool.submit {
+                val bitmap = Bitmap.createBitmap(
+                    pageBounds.getWidth()
+                        .roundToInt(),
+                    pageBounds.getHeight()
+                        .roundToInt(),
+                    Bitmap.Config.ARGB_8888
+                )
+                canvas = Canvas(bitmap)
+                this.bitmap = bitmap
+                canvas?.let { page.dispatchDrawCallToIndividualElements(it, args) }
+                callback(bitmap)
+            }
+        }
+    }
+
+
     private fun createSnap(scaleLevel: Float) {
         future = page.documentRenderView.threadPoolExecutor?.submit {
             create(scaleLevel)
@@ -63,33 +87,37 @@ open class PageSnapShotElementImpl(
         }
     }
 
+    open fun getScaleDownFactor(pageMaxSize: Int): Float {
+        // scale down the algorithm.
+        var sdFactor = 1F
+        if (pageMaxSize > snapDimenRanges.last().second.last) {
+            val displayMetrics = page.documentRenderView.context.resources.displayMetrics
+            sdFactor = pageMaxSize / min(
+                displayMetrics.widthPixels,
+                displayMetrics.heightPixels
+            ).toFloat()
+        } else {
+            loop@ for (pair: Pair<Float, IntRange> in snapDimenRanges) {
+                if (pageMaxSize in pair.second) {
+                    sdFactor = pair.first
+                    break@loop
+                }
+            }
+        }
+        return sdFactor
+    }
+
     protected fun create(scaleLevel: Float) {
         busyCreatingSnap.set(true)
         if (scaleLevel != this.scaleLevel || bitmap == null) {
-            if(snapDimenRanges.isEmpty()) {
+            if (snapDimenRanges.isEmpty()) {
                 setSnapDimenRanges()
             }
             recycle()
             this.scaleLevel = scaleLevel
             val pageBounds = page.pageBounds
             val pageMaxSize = max(pageBounds.getWidth(), pageBounds.getHeight()).roundToInt()
-            var sdFactor: Float = 1F
-
-            // scale down the algorithm.
-            if (pageMaxSize > snapDimenRanges.last().second.last) {
-                val displayMetrics = page.documentRenderView.context.resources.displayMetrics
-                sdFactor = pageMaxSize / min(
-                    displayMetrics.widthPixels,
-                    displayMetrics.heightPixels
-                ).toFloat()
-            } else {
-                loop@ for (pair: Pair<Float, IntRange> in snapDimenRanges) {
-                    if (pageMaxSize in pair.second) {
-                        sdFactor = pair.first
-                        break@loop
-                    }
-                }
-            }
+            val sdFactor: Float = getScaleDownFactor(pageMaxSize)
             page.snapScaleDownFactor = sdFactor
             val bitmap = Bitmap.createBitmap(
                 pageBounds.getWidth().div(sdFactor)
@@ -122,14 +150,21 @@ open class PageSnapShotElementImpl(
     companion object {
         val snapDimenRanges: MutableList<Pair<Float, IntRange>> =
             mutableListOf()
-        fun setSnapDimenRanges(level: Int = DocumentRenderView.MAXIMUM_ZOOM.roundToInt(),pageStartSize:Int = 500, pageSizeDifference:Int = 1000,divisionFactor:Float = 1.5F) {
-            for(i:Int in 0 until  level) {
+
+        @Synchronized
+        fun setSnapDimenRanges(
+            level: Int = DocumentRenderView.MAXIMUM_ZOOM.roundToInt(),
+            pageStartSize: Int = 500,
+            pageSizeDifference: Int = 1000,
+            divisionFactor: Float = 1.5F
+        ) {
+            for (i: Int in 0 until level) {
                 val i1 =
-                    if (i == 0) pageStartSize  else snapDimenRanges[(i - 1)].second.last + 1
+                    if (i == 0) pageStartSize else snapDimenRanges[(i - 1)].second.last + 1
                 val df = divisionFactor + i
                 val pair = Pair(
                     df,
-                    IntRange(i1 , (pageSizeDifference * (i+1)))
+                    IntRange(i1, (pageSizeDifference * (i + 1)))
                 )
                 snapDimenRanges.add(pair)
             }
