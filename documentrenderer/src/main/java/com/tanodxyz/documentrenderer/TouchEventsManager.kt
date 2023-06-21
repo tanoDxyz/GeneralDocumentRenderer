@@ -169,6 +169,7 @@ class TouchEventsManager(val context: Context) :
         }
         if (scalingEnabled) {
             eventsListener?.apply {
+                this.onDoubleTap(e)
                 if (getCurrentZoom() < getMidZoom()) {
                     // zoom with animation
                     zoomWithAnimation(e!!.x, e.y, getMidZoom())
@@ -178,7 +179,6 @@ class TouchEventsManager(val context: Context) :
                 } else {
                     resetZoomWithAnimation()
                 }
-                this.onDoubleTap(e)
             }
             return true
         } else {

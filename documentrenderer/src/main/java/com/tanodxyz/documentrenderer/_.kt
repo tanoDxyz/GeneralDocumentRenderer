@@ -207,3 +207,11 @@ fun Closeable?.closeResource() {
 
 fun isMainThread(): Boolean = Looper.myLooper() == Looper.getMainLooper()
 
+fun IMotionEventMarker?.hasGenericMotionEvent():Boolean {
+    return if(this == null) {
+        false
+    } else {
+        !this.hasNoMotionEvent()
+    }
+}
+

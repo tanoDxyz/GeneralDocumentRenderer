@@ -11,10 +11,7 @@ import android.util.SparseArray
 import androidx.core.graphics.toRect
 import com.tanodxyz.documentrenderer.dpToPx
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
-import com.tanodxyz.documentrenderer.getHeight
-import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.page.DocumentPage
-import kotlin.math.roundToInt
 
 open class ImageElement(
     page: DocumentPage,
@@ -68,7 +65,7 @@ open class ImageElement(
 
     override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
         super.draw(canvas, args)
-        val boundsRelativeToPage = getBoundsRelativeToPage(args.shouldDrawFromOrigin())
+        val boundsRelativeToPage = getBoundsRelativeToPage(args.shouldDrawSnapShot())
         synchronized(this) {
             if (bitmap == null && drawUnloadedBitmapBox) {
                 drawUnloadedBitmapBox(canvas, boundsRelativeToPage, args)

@@ -51,6 +51,7 @@ open class PageElement(
         LayoutParams(desiredWidth = width, desiredHeight = height)
     )
 
+    private var mostRecentArgs: SparseArray<Any>? = null
     open var type = PAGE_ELEMENT
     var debug = false
 
@@ -65,6 +66,7 @@ open class PageElement(
         style = Paint.Style.STROKE
         strokeWidth = 8F
     }
+
     open fun onEvent(iMotionEventMarker: IMotionEventMarker?): Boolean {
         if (debug) {
             iMotionEventMarker?.apply {
@@ -77,6 +79,7 @@ open class PageElement(
                 PageElement.TAG,
                 "onEvent: elementType = $type , eventType = $iMotionEventMarker"
             )
+
         }
         return false
     }
@@ -98,8 +101,8 @@ open class PageElement(
     }
 
     open fun SparseArray<Any>?.getLeftAndTop(): PointF {
-        val drawFromOrigin = this.shouldDrawFromOrigin()
-        val boundsRelativeToPage = getBoundsRelativeToPage(drawFromOrigin)
+        val drawSnapShot = this.shouldDrawSnapShot()
+        val boundsRelativeToPage = getBoundsRelativeToPage(drawSnapShot)
         return PointF(boundsRelativeToPage.left, boundsRelativeToPage.top)
     }
 
@@ -123,7 +126,7 @@ open class PageElement(
     val actualWidth: Float get() = getBoundsRelativeToPage(false).getWidth()
     val actualHeight: Float get() = getBoundsRelativeToPage(false).getHeight()
 
-    fun SparseArray<Any>?.shouldDrawFromOrigin(): Boolean {
+    fun SparseArray<Any>?.shouldDrawSnapShot(): Boolean {
         return this != null && this[DocumentPage.RE_DRAW_WITH_RELATIVE_TO_ORIGIN_SNAPSHOT_] == true
     }
 
@@ -133,7 +136,7 @@ open class PageElement(
 
 
     open fun getBoundsRelativeToPage(
-        drawFromOrigin: Boolean = false
+        drawSnapShot: Boolean = false
     ): RectF {
         var boundsRelative: RectF? = null
         layoutParams.apply {
@@ -143,7 +146,7 @@ open class PageElement(
             var bottom = 0f
             val pageBounds = page.pageBounds
 
-            if (drawFromOrigin) {
+            if (drawSnapShot) {
                 val scaledDownHeight =
                     getHeight().div(page.snapScaleDownFactor)
                 val scaleDownWidth =
@@ -162,7 +165,7 @@ open class PageElement(
                 right = if (startEndSymmetric) {
                     (left + scaleDownWidth) - scaledDownLeftMargin.times(2)
                 } else {
-                    if(isWidthMatchParent()) {
+                    if (isWidthMatchParent()) {
                         (left + scaleDownWidth) - (scaledDownRightMargin + scaledDownLeftMargin)
                     } else {
                         (left + scaleDownWidth) - (scaledDownRightMargin)
@@ -172,7 +175,7 @@ open class PageElement(
                     (top + scaledDownHeight) - scaledDownTopMargin.times(2)
                 } else {
                     (top + scaledDownHeight) - (scaledDownBottomMargin)
-                    if(isHeightMatchParent()) {
+                    if (isHeightMatchParent()) {
                         (top + scaledDownHeight) - (scaledDownBottomMargin + scaledDownTopMargin)
                     } else {
                         (top + scaledDownHeight) - (scaledDownBottomMargin)
@@ -196,7 +199,7 @@ open class PageElement(
                 right = if (startEndSymmetric) {
                     (left + getWidth()) - scaledMarginLeft.times(2)
                 } else {
-                    if(isWidthMatchParent()) {
+                    if (isWidthMatchParent()) {
                         (left + getWidth()) - (scaledMarginRight + scaledMarginLeft)
                     } else {
                         (left + getWidth()) - (scaledMarginRight)
@@ -205,7 +208,7 @@ open class PageElement(
                 bottom = if (topBottomSymmetric) {
                     (top + getHeight()) - scaledMarginTop.times(2)
                 } else {
-                    if(isHeightMatchParent()) {
+                    if (isHeightMatchParent()) {
                         (top + getHeight()) - (scaledMarginBottom + scaledMarginTop)
                     } else {
                         (top + getHeight()) - (scaledMarginBottom)
@@ -232,11 +235,13 @@ open class PageElement(
 
     @Thread(description = "will be called on worker thread.")
     open fun pageMeasurementDone(pageSizeCalculator: PageSizeCalculator) {
-        val shouldMakeChangeToElementWidth = !layoutParams.isWidthMatchParent() && (!layoutParams.startEndSymmetric)
-        val shouldMakeChangeToElementHeight = !layoutParams.isHeightMatchParent() && (!layoutParams.topBottomSymmetric)
+        val shouldMakeChangeToElementWidth =
+            !layoutParams.isWidthMatchParent() && (!layoutParams.startEndSymmetric)
+        val shouldMakeChangeToElementHeight =
+            !layoutParams.isHeightMatchParent() && (!layoutParams.topBottomSymmetric)
 
-        var elementSizeRelativePage = Size(0,0)
-        if(shouldMakeChangeToElementWidth || shouldMakeChangeToElementHeight) {
+        var elementSizeRelativePage = Size(0, 0)
+        if (shouldMakeChangeToElementWidth || shouldMakeChangeToElementHeight) {
             elementSizeRelativePage = pageSizeCalculator.calculateElementSizeRelative(
                 Size(
                     layoutParams.desiredWidth,
@@ -244,19 +249,20 @@ open class PageElement(
                 )
             )
         }
-        if(shouldMakeChangeToElementWidth) {
+        if (shouldMakeChangeToElementWidth) {
             layoutParams.desiredWidth = elementSizeRelativePage.width
         }
 
-        if(shouldMakeChangeToElementHeight) {
+        if (shouldMakeChangeToElementHeight) {
             layoutParams.desiredHeight = elementSizeRelativePage.height
         }
     }
 
     override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
         super.draw(canvas, args)
-        if(debug) {
-            getBoundsRelativeToPage(args.shouldDrawFromOrigin()).apply {
+        this.mostRecentArgs = args
+        if (debug) {
+            getBoundsRelativeToPage(args.shouldDrawSnapShot()).apply {
                 canvas.drawRect(this, debugPaint)
             }
         }
@@ -283,10 +289,26 @@ open class PageElement(
 
     fun SparseArray<Any>?.textSizeRelativeToSnap(textSizePixels: Float): Float {
         return page.documentRenderView.toCurrentScale(
-            if (shouldDrawFromOrigin()) textSizePixels.div(
+            if (shouldDrawSnapShot()) textSizePixels.div(
                 page.snapScaleDownFactor
             ) else textSizePixels
         )
+    }
+
+    fun isEventOccurredWithInBounds(
+        eventMarker: IMotionEventMarker?,
+        checkBasedOnLastDrawCallType: Boolean = false
+    ): Boolean {
+        if (eventMarker == null || eventMarker.hasNoMotionEvent()) {
+            return false
+        }
+        val boundRelativeToPage =
+            if (checkBasedOnLastDrawCallType && mostRecentArgs != null) {
+                getBoundsRelativeToPage(mostRecentArgs.shouldDrawSnapShot())
+            } else {
+                getBoundsRelativeToPage(false)
+            }
+        return (boundRelativeToPage.contains(eventMarker.getX(), eventMarker.getY()))
     }
 
     companion object {

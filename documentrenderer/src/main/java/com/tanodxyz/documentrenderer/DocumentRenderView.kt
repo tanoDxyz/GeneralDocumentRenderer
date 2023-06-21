@@ -20,7 +20,6 @@ import android.view.View.OnLayoutChangeListener
 import android.widget.FrameLayout
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.elements.IElement
-import com.tanodxyz.documentrenderer.elements.PageSnapShotElementImpl.Companion.snapDimenRanges
 import com.tanodxyz.documentrenderer.events.DoubleTapCompleteEvent
 import com.tanodxyz.documentrenderer.events.DoubleTapEvent
 import com.tanodxyz.documentrenderer.events.FlingEndEvent
@@ -40,7 +39,6 @@ import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.page.ObjectViewState
 import com.tanodxyz.documentrenderer.pagesizecalculator.PageSizeCalculator
 import org.jetbrains.annotations.TestOnly
-import java.lang.Thread
 import java.util.BitSet
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadPoolExecutor
@@ -94,6 +92,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         style = Paint.Style.FILL
         strokeCap = Paint.Cap.ROUND
     }
+    var canRecieveTouchEvents = true
     var idleStateCallback: IdleStateCallback? = null
     var pageNumberDisplayBoxXAndYMargin = resources.dpToPx(16)
     val _16Dp = resources.dpToPx(16)
@@ -124,7 +123,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         viewSize = Size(w, h)
-        if (isInEditMode || !isInitalized()) {
+        if (isInEditMode || !isInitialized()) {
             return
         }
         recalculatePageSizesAndSetDefaultXYOffsets(w, h) {
@@ -522,13 +521,16 @@ open class DocumentRenderView @JvmOverloads constructor(
                 absoluteY
             )
         )
-
-        moveTo(absoluteX, absoluteY)
+        if (canRecieveTouchEvents) {
+            moveTo(absoluteX, absoluteY)
+        }
     }
 
     override fun onScrollEnd(motionEvent: MotionEvent?) {
         dispatchEventToThePagesInFocus(ScrollEndEvent(motionEvent))
-        hideScrollHandleAndPageCountBox()
+        if (canRecieveTouchEvents) {
+            hideScrollHandleAndPageCountBox()
+        }
     }
 
     override fun flingFinished(motionEvent: MotionEvent?) {
@@ -562,7 +564,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     override fun canViewReceiveTouchEvents(): Boolean {
-        return isInitalized()
+        return isInitialized()
     }
 
     override fun onSingleTapConfirmed(e: MotionEvent?) {
@@ -597,31 +599,39 @@ open class DocumentRenderView @JvmOverloads constructor(
         velocityX: Float,
         velocityY: Float
     ): Boolean {
-        if (document.pageFling && !document.swipeVertical) {
-            pageFling(velocityX, velocityY)
-            return true
+        if (canRecieveTouchEvents) {
+            if (document.pageFling && !document.swipeVertical) {
+                pageFling(velocityX, velocityY)
+                return true
+            }
+            val minY: Float
+            val minX: Float
+            if (document.swipeVertical) {
+                minY = -(getRenderedDocLen(zoom))
+                minX = -(toCurrentScale(document.getMaxPageWidth()))
+            } else {
+                minX = -(document.getDocLen(getCurrentZoom()) - width)
+                minY = -(toCurrentScale(document.getMaxPageHeight()) - height)
+            }
+            dispatchEventToThePagesInFocus(
+                FlingStartEvent(
+                    downEvent,
+                    moveEvent,
+                    velocityX,
+                    velocityY
+                )
+            )
+            animationManager.startFlingAnimation(
+                contentDrawOffsetX.toInt(),
+                contentDrawOffsetY.toInt(),
+                velocityX.toInt(),
+                velocityY.toInt(),
+                minX.toInt(),
+                0,
+                minY.toInt(),
+                0
+            )
         }
-        val minY: Float
-        val minX: Float
-        if (document.swipeVertical) {
-            minY = -(getRenderedDocLen(zoom))
-            minX = -(toCurrentScale(document.getMaxPageWidth()))
-        } else {
-            minX = -(document.getDocLen(getCurrentZoom()) - width)
-            minY = -(toCurrentScale(document.getMaxPageHeight()) - height)
-        }
-        dispatchEventToThePagesInFocus(FlingStartEvent(downEvent, moveEvent, velocityX, velocityY))
-        animationManager.startFlingAnimation(
-            contentDrawOffsetX.toInt(),
-            contentDrawOffsetY.toInt(),
-            velocityX.toInt(),
-            velocityY.toInt(),
-            minX.toInt(),
-            0,
-            minY.toInt(),
-            0
-        )
-
         return true
     }
 
@@ -632,7 +642,9 @@ open class DocumentRenderView @JvmOverloads constructor(
 
 
     override fun zoomCenteredRelativeTo(dr: Float, pointF: PointF) {
-        zoomCenteredTo(zoom * dr, pointF)
+        if(canRecieveTouchEvents) {
+            zoomCenteredTo(zoom * dr, pointF)
+        }
     }
 
     fun getPageViewState(pageBounds: RectF): ObjectViewState {
@@ -883,7 +895,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     override fun redraw() {
-        if(isMainThread()) {
+        if (isMainThread()) {
             invalidate()
         } else {
             postInvalidate()
@@ -915,7 +927,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     fun getPageCount(): Int = document.getPagesCount()
 
-    private fun isInitalized(): Boolean {
+    private fun isInitialized(): Boolean {
         return this::document.isInitialized
     }
 
@@ -924,7 +936,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (BuildConfig.DEBUG) {
             idleStateCallback?.renderViewState(isFree())
         }
-        if (isInEditMode || !isInitalized()) {
+        if (isInEditMode || !isInitialized()) {
             return
         }
         canvas?.let { drawBackground(it) }
@@ -1118,18 +1130,24 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     override fun resetZoomWithAnimation() {
-        zoomWithAnimation(minZoom)
+        if(canRecieveTouchEvents) {
+            zoomWithAnimation(minZoom)
+        }
     }
 
     override fun zoomWithAnimation(centerX: Float, centerY: Float, scale: Float) {
-        animationManager.startZoomAnimation(centerX, centerY, zoom, scale)
+        if(canRecieveTouchEvents) {
+            animationManager.startZoomAnimation(centerX, centerY, zoom, scale)
+        }
     }
 
     override fun zoomWithAnimation(scale: Float) {
-        animationManager.startZoomAnimation(
-            (width.div(2)).toFloat(),
-            (height.div(2)).toFloat(), zoom, scale
-        )
+        if(canRecieveTouchEvents) {
+            animationManager.startZoomAnimation(
+                (width.div(2)).toFloat(),
+                (height.div(2)).toFloat(), zoom, scale
+            )
+        }
     }
 
     interface IdleStateCallback {

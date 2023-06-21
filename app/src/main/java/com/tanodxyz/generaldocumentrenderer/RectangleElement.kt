@@ -25,7 +25,7 @@ class RectangleElement(page: DocumentPage): PageElement(page) {
 
     override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
         super.draw(canvas, args)
-        val boundsRelativeToPage = getBoundsRelativeToPage(args.shouldDrawFromOrigin())
+        val boundsRelativeToPage = getBoundsRelativeToPage(args.shouldDrawSnapShot())
         canvas.drawRect(boundsRelativeToPage,paint)
     }
 }
