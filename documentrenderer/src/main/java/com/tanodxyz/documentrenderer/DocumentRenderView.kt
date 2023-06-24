@@ -1157,7 +1157,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     companion object {
         var MINIMUM_ZOOM = 1.0F
-        var MAXIMUM_ZOOM = 5F
+        var MAXIMUM_ZOOM = 10f
         val DEFAULT_MAX_SCALE = MAXIMUM_ZOOM
         val DEFAULT_MID_SCALE = MAXIMUM_ZOOM.div(2)
         val DEFAULT_MIN_SCALE = MINIMUM_ZOOM

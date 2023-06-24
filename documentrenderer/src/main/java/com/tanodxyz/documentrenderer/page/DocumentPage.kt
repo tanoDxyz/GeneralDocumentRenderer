@@ -108,9 +108,7 @@ open class DocumentPage(
     }
 
     fun saveSnapShot(filePath: String, callback: (Boolean, String) -> Unit) {
-        println("sanko: yes one ")
         getSnapShot { snap->
-            println("sanko: yes got snap ")
             if(snap == null) {
                 callback(false,"Failed to create snap!")
             } else {

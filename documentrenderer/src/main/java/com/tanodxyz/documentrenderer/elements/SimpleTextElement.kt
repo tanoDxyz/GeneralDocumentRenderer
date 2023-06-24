@@ -284,5 +284,4 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
         }
 
     }
-
 }

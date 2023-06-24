@@ -31,17 +31,23 @@ open class PageSnapShotElementImpl(
     }
 
     // worker thread
-    override fun getBitmap(callback: (Bitmap?) -> Unit) {
+    override fun getBitmap(scaleDown: Boolean, callback: (Bitmap?) -> Unit) {
         val pageBounds = page.pageBounds
         val threadPool = page.documentRenderView.threadPoolExecutor
         if (threadPool == null) {
             callback(null)
         } else {
             threadPool.submit {
+                var sdFactor = 1F
+                if(scaleDown) {
+                    val pageMaxSize =
+                        max(pageBounds.getWidth(), pageBounds.getHeight()).roundToInt()
+                    sdFactor = getScaleDownFactor(pageMaxSize)
+                }
                 val bitmap = Bitmap.createBitmap(
-                    pageBounds.getWidth()
+                    pageBounds.getWidth().div(sdFactor)
                         .roundToInt(),
-                    pageBounds.getHeight()
+                    pageBounds.getHeight().div(sdFactor)
                         .roundToInt(),
                     Bitmap.Config.ARGB_8888
                 )
