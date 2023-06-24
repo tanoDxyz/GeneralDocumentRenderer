@@ -103,29 +103,30 @@ open class DocumentPage(
         elements.forEach { it.pageMeasurementDone(pageSizeCalculator) }
     }
 
-    fun getSnapShot(callback: (Bitmap?) -> Unit) {
-        pageSnapShotElementImpl.getBitmap(callback)
+    fun getSnapShot(scaleDown: Boolean, callback: (Bitmap?) -> Unit) {
+        pageSnapShotElementImpl.getBitmap(scaleDown, callback)
     }
 
-    fun saveSnapShot(filePath: String, callback: (Boolean, String) -> Unit) {
-        getSnapShot { snap->
-            if(snap == null) {
-                callback(false,"Failed to create snap!")
+    fun saveSnapShot(filePath: String, scaleDown: Boolean, callback: (Boolean, String) -> Unit) {
+        getSnapShot(scaleDown) { snap ->
+            if (snap == null) {
+                callback(false, "Failed to create snap!")
             } else {
                 try {
                     val fos = FileOutputStream(filePath)
                     snap.compress(Bitmap.CompressFormat.PNG, 100, fos)
                     fos.close()
                     snap.recycleSafely()
-                    callback(true,"Done!")
+                    callback(true, "Done!")
                 } catch (e: FileNotFoundException) {
-                    callback(false,"File not found! -> ${e.message}")
+                    callback(false, "File not found! -> ${e.message}")
                 } catch (e: IOException) {
-                    callback(false,"Error accessing file -> ${e.message}")
+                    callback(false, "Error accessing file -> ${e.message}")
                 }
             }
         }
     }
+
 
     companion object {
         const val RE_DRAW_WITH_NEW_PAGE_BOUNDS = 0xcafe
