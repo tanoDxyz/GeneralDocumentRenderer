@@ -21,16 +21,15 @@ import androidx.annotation.RequiresApi
 import androidx.core.text.toSpannable
 import com.tanodxyz.documentrenderer.R
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
-import com.tanodxyz.documentrenderer.events.LongPressEvent
 import com.tanodxyz.documentrenderer.getHeight
 import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.misc.DialogHandle
 import com.tanodxyz.documentrenderer.page.DocumentPage
-import java.lang.Exception
 import java.lang.reflect.Constructor
 import kotlin.math.roundToInt
 
-open class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
+open class SimpleTextElement(page: DocumentPage) : PageElement(page = page),
+    PageElement.OnLongPressListener {
     private var editTextDialog: EditTextDialog? = null
     protected var appliedLineBreaking = false
     protected lateinit var spannable: Spannable
@@ -47,6 +46,9 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
     var includePadding = false
     var allowTextEditing = true
 
+    private var widthInCaseWrapContent = 0
+    private var heightInCaseWrapContent = 0
+
     @RequiresApi(Build.VERSION_CODES.M)
     var lineBreakingStrategy = Layout.BREAK_STRATEGY_SIMPLE
 
@@ -61,6 +63,10 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
     protected var layout: StaticLayout? = null
 
     override var type = "TextElement"
+
+    init {
+        longPressListener = this
+    }
 
     fun setText(text: Spannable) {
         this.spannable = text
@@ -94,12 +100,66 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
         textPaint.typeface = typeface
     }
 
+    override fun contentWidthInCaseOfWrapContent(): Int {
+        return widthInCaseWrapContent
+    }
+
+    override fun contentHeightInCaseOfWrapContent(): Int {
+        return heightInCaseWrapContent
+    }
+
     protected fun calculateHeight(drawSnapShot: Boolean): Int {
-        return getBoundsRelativeToPage(drawSnapShot).getHeight().roundToInt()
+        val height = if (layoutParams.isHeightWrapContent()) {
+            val scaledMargins = getScaledMargins(drawSnapShot)
+            val pageHeight = page.pageBounds.getHeight()
+            var calculatedHeight =
+                makeStaticLayout(
+                    spannable,
+                    widthInCaseWrapContent,
+                    Int.MAX_VALUE
+                ).height
+
+            if (calculatedHeight >= pageHeight) {
+                calculatedHeight = pageHeight.roundToInt()
+            }
+            calculatedHeight += (longestLineHeight(drawSnapShot)) // we are adding it cause
+            heightInCaseWrapContent = calculatedHeight
+            heightInCaseWrapContent - scaledMargins.bottom.roundToInt() - scaledMargins.top.roundToInt()
+        } else {
+            getBoundsRelativeToPage(drawSnapShot).getHeight().roundToInt()
+        }
+        return height
+    }
+
+    fun longestLineHeight(drawSnapShot: Boolean): Int {
+        val layout = makeStaticLayout(spannable, calculateWidth(drawSnapShot), Int.MAX_VALUE)
+        var longestLineHeight = 0
+        layout.apply {
+            val lineCount: Int = lineCount
+            for (i in 0 until lineCount) {
+                val lineHeight: Int = getLineBottom(i) - getLineTop(i)
+                if (lineHeight > longestLineHeight) {
+                    longestLineHeight = lineHeight
+                }
+            }
+        }
+        return longestLineHeight
     }
 
     protected fun calculateWidth(drawSnapShot: Boolean): Int {
-        return getBoundsRelativeToPage(drawSnapShot).getWidth().roundToInt()
+        val width = if (layoutParams.isWidthWrapContent()) {
+            val scaledMargins = getScaledMargins(drawSnapShot)
+            val pageWidth = page.pageBounds.getWidth()
+            var calculatedWidth = (StaticLayout.getDesiredWidth(spannable, textPaint)).roundToInt()
+            if (calculatedWidth >= pageWidth) {
+                calculatedWidth = pageWidth.roundToInt()
+            }
+            widthInCaseWrapContent = calculatedWidth
+            widthInCaseWrapContent - scaledMargins.right.roundToInt() - scaledMargins.left.roundToInt()
+        } else {
+            getBoundsRelativeToPage(drawSnapShot).getWidth().roundToInt()
+        }
+        return width
     }
 
     protected fun initTextLayout(args: SparseArray<Any>?) {
@@ -110,19 +170,21 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
             return
         }
         textPaint.textSize = args.textSizeRelativeToSnap(textSizePixels)
+
         val width = calculateWidth(drawSnapShot)
+
         val height = calculateHeight(drawSnapShot)
         applySimpleLineBreaking()
         val maxLinesByInspection =
             getMaxLinesByInspection(
-                makeStaticLayout(width, Int.MAX_VALUE),
+                makeStaticLayout(spannable, width, Int.MAX_VALUE),
                 height
             )
-        layout = makeStaticLayout(width, maxLinesByInspection)
+        layout = makeStaticLayout(spannable, width, maxLinesByInspection)
     }
 
-
     protected fun makeStaticLayout(
+        spannable: Spannable,
         width: Int,
         maxLines: Int
     ): StaticLayout {
@@ -210,26 +272,6 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
 
     }
 
-    override fun onEvent(iMotionEventMarker: IMotionEventMarker?): Boolean {
-        super.onEvent(iMotionEventMarker)
-        return if (allowTextEditing) {
-            handleOnClick(iMotionEventMarker)
-        } else {
-            false
-        }
-    }
-
-    open fun handleOnClick(iMotionEventMarker: IMotionEventMarker?): Boolean {
-        if (iMotionEventMarker is LongPressEvent) {
-            val eventOccurredWithInBounds = isEventOccurredWithInBounds(iMotionEventMarker, true)
-            if (eventOccurredWithInBounds) {
-                showTextEditDialog()
-            }
-            return eventOccurredWithInBounds
-        }
-        return false
-    }
-
     open fun showTextEditDialog() {
         if (editTextDialog == null) {
             editTextDialog = EditTextDialog(page.documentRenderView.context, false) { changedText ->
@@ -242,6 +284,23 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
     companion object {
         const val DEFAULT_TEXT_SIZE = 22F //px
         const val DEFAULT_TEXT_COLOR = Color.BLACK
+        fun newInstance(
+            page: DocumentPage,
+            text: Spannable,
+            textSizePixels: Float,
+            textColor: Int,
+            typeface: Typeface? = null
+        ): SimpleTextElement {
+            return SimpleTextElement(page).apply {
+                typeface?.let { setTypeFace(it) }
+                this.textColor = textColor
+                this.textSizePixels = textSizePixels
+                textPaint.textSize = this.textSizePixels
+                setText(text)
+                layoutParams.desiredHeight = WRAP_CONTENT
+                layoutParams.desiredWidth = WRAP_CONTENT
+            }
+        }
     }
 
     inner class EditTextDialog(
@@ -256,11 +315,11 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
             setListeners()
 
             setOnShowListener {
-                page.documentRenderView.canRecieveTouchEvents = false
+                page.documentRenderView.canProcessTouchEvents = false
             }
 
             setOnDismissListener {
-                page.documentRenderView.canRecieveTouchEvents = true
+                page.documentRenderView.canProcessTouchEvents = true
             }
         }
 
@@ -283,5 +342,11 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page = page) {
             return R.layout.text_edit_dialog
         }
 
+    }
+
+    override fun onLongPress(eventMarker: IMotionEventMarker?, pageElement: PageElement) {
+        if (allowTextEditing) {
+            showTextEditDialog()
+        }
     }
 }

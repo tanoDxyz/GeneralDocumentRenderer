@@ -24,6 +24,9 @@ open class ScrollStartEvent(
         return moveEvent == null
     }
 
+    override val event: MotionEvent?
+        get() = moveEvent
+
     override fun toString(): String {
         return "ScrollStartEvent: leftMargin=${getX()} | topMargin=${getY()} | distanceTraveledX=$distanceTraveledX | distanceTraveledY=$distanceTraveledY"
     }

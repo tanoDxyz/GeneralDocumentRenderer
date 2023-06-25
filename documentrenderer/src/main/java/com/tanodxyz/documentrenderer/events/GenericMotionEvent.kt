@@ -15,6 +15,9 @@ open class GenericMotionEvent(var motionEvent: MotionEvent? = null) : IMotionEve
         return motionEvent == null
     }
 
+    override val event: MotionEvent?
+        get() = motionEvent
+
     override fun toString(): String {
         return "GenericMotionEvent: leftMargin=${getX()} | topMargin=${getY()} action=${motionEvent?.action}"
     }

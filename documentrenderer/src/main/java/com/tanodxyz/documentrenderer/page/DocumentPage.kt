@@ -28,7 +28,7 @@ open class DocumentPage(
     var argsToElements = SparseArray<Any>()
     var modifiedSize: Size = originalSize
     var snapScaleDownFactor = 1f
-    var drawPageSnapShot = true
+    var drawPageSnapShot = false
     lateinit var documentRenderView: DocumentRenderView
     protected var pageSnapShotElementImpl: PageSnapshotElement = PageSnapShotElementImpl(this)
     open fun getWidth(): Float {

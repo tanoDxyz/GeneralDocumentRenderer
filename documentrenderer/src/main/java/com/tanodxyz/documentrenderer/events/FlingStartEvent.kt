@@ -20,6 +20,9 @@ open class FlingStartEvent(
         return moveEvent == null
     }
 
+    override val event: MotionEvent?
+        get() = moveEvent
+
     override fun toString(): String {
         return "FlingStartEvent: leftMargin=${getX()} | topMargin=${getY()}"
     }

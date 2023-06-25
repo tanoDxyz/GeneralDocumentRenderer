@@ -92,7 +92,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         style = Paint.Style.FILL
         strokeCap = Paint.Cap.ROUND
     }
-    var canRecieveTouchEvents = true
+    var canProcessTouchEvents = true
     var idleStateCallback: IdleStateCallback? = null
     var pageNumberDisplayBoxXAndYMargin = resources.dpToPx(16)
     val _16Dp = resources.dpToPx(16)
@@ -499,6 +499,11 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     override fun onTouch(v: View?, event: MotionEvent): Boolean {
         dispatchEventToThePagesInFocus(GenericMotionEvent(event))
+        // touch events will be dispatched to pages and elements and since view can't process
+        // touch events so it won't draw.
+        if(!canProcessTouchEvents) {
+            redraw()
+        }
         return touchEventMgr.onTouchEvent(event)
     }
 
@@ -521,14 +526,14 @@ open class DocumentRenderView @JvmOverloads constructor(
                 absoluteY
             )
         )
-        if (canRecieveTouchEvents) {
+        if (canProcessTouchEvents) {
             moveTo(absoluteX, absoluteY)
         }
     }
 
     override fun onScrollEnd(motionEvent: MotionEvent?) {
         dispatchEventToThePagesInFocus(ScrollEndEvent(motionEvent))
-        if (canRecieveTouchEvents) {
+        if (canProcessTouchEvents) {
             hideScrollHandleAndPageCountBox()
         }
     }
@@ -599,7 +604,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         velocityX: Float,
         velocityY: Float
     ): Boolean {
-        if (canRecieveTouchEvents) {
+        if (canProcessTouchEvents) {
             if (document.pageFling && !document.swipeVertical) {
                 pageFling(velocityX, velocityY)
                 return true
@@ -642,7 +647,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 
 
     override fun zoomCenteredRelativeTo(dr: Float, pointF: PointF) {
-        if(canRecieveTouchEvents) {
+        if(canProcessTouchEvents) {
             zoomCenteredTo(zoom * dr, pointF)
         }
     }
@@ -1130,19 +1135,19 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     override fun resetZoomWithAnimation() {
-        if(canRecieveTouchEvents) {
+        if(canProcessTouchEvents) {
             zoomWithAnimation(minZoom)
         }
     }
 
     override fun zoomWithAnimation(centerX: Float, centerY: Float, scale: Float) {
-        if(canRecieveTouchEvents) {
+        if(canProcessTouchEvents) {
             animationManager.startZoomAnimation(centerX, centerY, zoom, scale)
         }
     }
 
     override fun zoomWithAnimation(scale: Float) {
-        if(canRecieveTouchEvents) {
+        if(canProcessTouchEvents) {
             animationManager.startZoomAnimation(
                 (width.div(2)).toFloat(),
                 (height.div(2)).toFloat(), zoom, scale

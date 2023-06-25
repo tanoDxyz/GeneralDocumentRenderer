@@ -7,10 +7,13 @@ import android.graphics.PointF
 import android.graphics.RectF
 import android.util.Log
 import android.util.SparseArray
+import android.view.View.OnLongClickListener
 import androidx.annotation.VisibleForTesting
 import com.tanodxyz.documentrenderer.Size
 import com.tanodxyz.documentrenderer.Thread
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
+import com.tanodxyz.documentrenderer.events.LongPressEvent
+import com.tanodxyz.documentrenderer.events.SingleTapConfirmedEvent
 import com.tanodxyz.documentrenderer.getHeight
 import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.page.DocumentPage
@@ -53,13 +56,17 @@ open class PageElement(
 
     private var mostRecentArgs: SparseArray<Any>? = null
     open var type = PAGE_ELEMENT
-    var debug = false
+    var debug = true
 
     @VisibleForTesting
     val elementBoundsRelativeToPage = RectF()
 
     @VisibleForTesting
     val elementBoundsRelativeToOrigin = RectF()
+
+    var clickListener: OnClickListener? = null
+
+    var longPressListener: OnLongPressListener? = null
 
     val debugPaint = Paint().apply {
         color = Color.RED
@@ -79,8 +86,28 @@ open class PageElement(
                 PageElement.TAG,
                 "onEvent: elementType = $type , eventType = $iMotionEventMarker"
             )
-
         }
+        // simple click listener
+        clickListener?.apply {
+            if (isEventOccurredWithInBounds(
+                    iMotionEventMarker,
+                    true
+                ) && iMotionEventMarker is SingleTapConfirmedEvent
+            ) {
+                onClick(iMotionEventMarker, this@PageElement)
+            }
+        }
+
+        longPressListener?.apply {
+            if (isEventOccurredWithInBounds(
+                    iMotionEventMarker,
+                    true
+                ) && iMotionEventMarker is LongPressEvent
+            ) {
+                longPressListener?.onLongPress(iMotionEventMarker, this@PageElement)
+            }
+        }
+
         return false
     }
 
@@ -109,15 +136,26 @@ open class PageElement(
     protected fun getWidth(): Int {
         return if (layoutParams.isWidthMatchParent() || layoutParams.startEndSymmetric) {
             page.pageBounds.getWidth().roundToInt()
+        } else if (layoutParams.isWidthWrapContent()) {
+            contentWidthInCaseOfWrapContent()
         } else {
             page.documentRenderView.toCurrentScale(layoutParams.desiredWidth).roundToInt()
         }
     }
 
+    open fun contentWidthInCaseOfWrapContent():Int {
+        return 1
+    }
+
+    open fun contentHeightInCaseOfWrapContent():Int {
+        return 1
+    }
 
     protected fun getHeight(): Int {
         return if (layoutParams.isHeightMatchParent() || layoutParams.topBottomSymmetric) {
             page.pageBounds.getHeight().roundToInt()
+        } else if (layoutParams.isHeightWrapContent()) {
+            contentHeightInCaseOfWrapContent()
         } else {
             page.documentRenderView.toCurrentScale(layoutParams.desiredHeight).roundToInt()
         }
@@ -135,6 +173,42 @@ open class PageElement(
     }
 
 
+    open fun getScaledMargins(drawSnapShot: Boolean):RectF {
+        val margins = RectF()
+        val lm = layoutParams.leftMargin
+        val tm = layoutParams.topMargin
+        val rm = layoutParams.rightMargin
+        val bm = layoutParams.bottomMargin
+        var slm = 0F
+        var stm = 0F
+        var srm = 0F
+        var sbm = 0F
+        if(drawSnapShot) {
+            slm =
+                page.documentRenderView.toCurrentScale(lm.div(page.snapScaleDownFactor))
+            stm =
+                page.documentRenderView.toCurrentScale(tm.div(page.snapScaleDownFactor))
+            srm =
+                page.documentRenderView.toCurrentScale(rm.div(page.snapScaleDownFactor))
+            sbm =
+                page.documentRenderView.toCurrentScale(bm.div(page.snapScaleDownFactor))
+            margins.apply {
+
+            }
+        } else {
+            slm = page.documentRenderView.toCurrentScale(lm)
+            stm = page.documentRenderView.toCurrentScale(tm)
+            srm = page.documentRenderView.toCurrentScale(rm)
+            sbm = page.documentRenderView.toCurrentScale(bm)
+        }
+        margins.apply {
+            left = slm
+            top = stm
+            right = srm
+            bottom = sbm
+        }
+        return margins
+    }
     open fun getBoundsRelativeToPage(
         drawSnapShot: Boolean = false
     ): RectF {
@@ -165,7 +239,7 @@ open class PageElement(
                 right = if (startEndSymmetric) {
                     (left + scaleDownWidth) - scaledDownLeftMargin.times(2)
                 } else {
-                    if (isWidthMatchParent()) {
+                    if (isWidthMatchParent() || isWidthWrapContent()) {
                         (left + scaleDownWidth) - (scaledDownRightMargin + scaledDownLeftMargin)
                     } else {
                         (left + scaleDownWidth) - (scaledDownRightMargin)
@@ -175,7 +249,7 @@ open class PageElement(
                     (top + scaledDownHeight) - scaledDownTopMargin.times(2)
                 } else {
                     (top + scaledDownHeight) - (scaledDownBottomMargin)
-                    if (isHeightMatchParent()) {
+                    if (isHeightMatchParent() || isHeightWrapContent()) {
                         (top + scaledDownHeight) - (scaledDownBottomMargin + scaledDownTopMargin)
                     } else {
                         (top + scaledDownHeight) - (scaledDownBottomMargin)
@@ -199,7 +273,7 @@ open class PageElement(
                 right = if (startEndSymmetric) {
                     (left + getWidth()) - scaledMarginLeft.times(2)
                 } else {
-                    if (isWidthMatchParent()) {
+                    if (isWidthMatchParent() || isWidthWrapContent()) {
                         (left + getWidth()) - (scaledMarginRight + scaledMarginLeft)
                     } else {
                         (left + getWidth()) - (scaledMarginRight)
@@ -208,7 +282,7 @@ open class PageElement(
                 bottom = if (topBottomSymmetric) {
                     (top + getHeight()) - scaledMarginTop.times(2)
                 } else {
-                    if (isHeightMatchParent()) {
+                    if (isHeightMatchParent() || isHeightWrapContent()) {
                         (top + getHeight()) - (scaledMarginBottom + scaledMarginTop)
                     } else {
                         (top + getHeight()) - (scaledMarginBottom)
@@ -236,9 +310,9 @@ open class PageElement(
     @Thread(description = "will be called on worker thread.")
     open fun pageMeasurementDone(pageSizeCalculator: PageSizeCalculator) {
         val shouldMakeChangeToElementWidth =
-            !layoutParams.isWidthMatchParent() && (!layoutParams.startEndSymmetric)
+            !layoutParams.isWidthMatchParent() && (!layoutParams.startEndSymmetric) && (!layoutParams.isWidthWrapContent())
         val shouldMakeChangeToElementHeight =
-            !layoutParams.isHeightMatchParent() && (!layoutParams.topBottomSymmetric)
+            !layoutParams.isHeightMatchParent() && (!layoutParams.topBottomSymmetric) && (!layoutParams.isHeightWrapContent())
 
         var elementSizeRelativePage = Size(0, 0)
         if (shouldMakeChangeToElementWidth || shouldMakeChangeToElementHeight) {
@@ -285,6 +359,14 @@ open class PageElement(
         fun isHeightMatchParent(): Boolean {
             return desiredHeight == MATCH_PARENT
         }
+
+        fun isWidthWrapContent(): Boolean {
+            return desiredWidth == WRAP_CONTENT
+        }
+
+        fun isHeightWrapContent(): Boolean {
+            return desiredHeight == WRAP_CONTENT
+        }
     }
 
     fun SparseArray<Any>?.textSizeRelativeToSnap(textSizePixels: Float): Float {
@@ -316,7 +398,16 @@ open class PageElement(
         const val DEFAULT_WIDTH = 64
         const val DEFAULT_HEIGHT = 64
         const val MATCH_PARENT = -1
+        const val WRAP_CONTENT = -2
         private const val PAGE_ELEMENT = "pageElement"
         val TAG = PAGE_ELEMENT
+    }
+
+    interface OnClickListener {
+        fun onClick(eventMarker: IMotionEventMarker?, pageElement: PageElement)
+    }
+
+    interface OnLongPressListener {
+        fun onLongPress(eventMarker: IMotionEventMarker?, pageElement: PageElement)
     }
 }
