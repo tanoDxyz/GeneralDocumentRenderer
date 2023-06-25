@@ -7,18 +7,24 @@ import android.graphics.Paint
 import android.graphics.PointF
 import android.util.SparseArray
 import android.view.MotionEvent
+import androidx.core.text.toSpannable
 import com.tanodxyz.documentrenderer.dpToPx
-import com.tanodxyz.documentrenderer.elements.PageElement
-import com.tanodxyz.documentrenderer.elements.SimpleTextElement
+import com.tanodxyz.documentrenderer.elements.PageElementImpl
+import com.tanodxyz.documentrenderer.elements.SimpleTextElementImpl
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 import com.tanodxyz.documentrenderer.hasGenericMotionEvent
 import com.tanodxyz.documentrenderer.page.DocumentPage
 
-class SimpleDrawingElement(resources: Resources, page: DocumentPage, width: Int, height: Int) :
-    PageElement(page, width, height) {
+class SimpleDrawingElementImpl(resources: Resources, page: DocumentPage, width: Int, height: Int) :
+    PageElementImpl(page, width, height) {
     var points = mutableListOf<PointF>()
 
-    var textElement = SimpleTextElement(page)
+    var textElement = SimpleTextElementImpl(page).apply {
+        setText(TAP_TO_ENABLE_CANVAS.toSpannable())
+        textColor = Color.BLACK
+        layoutParams.desiredHeight = WRAP_CONTENT
+        layoutParams.desiredWidth = WRAP_CONTENT
+    }
     init {
         this.debugPaint.apply {
             color = Color.GREEN
@@ -26,6 +32,7 @@ class SimpleDrawingElement(resources: Resources, page: DocumentPage, width: Int,
             strokeCap = Paint.Cap.ROUND
             style = Paint.Style.FILL
         }
+
 
     }
 
@@ -67,4 +74,10 @@ class SimpleDrawingElement(resources: Resources, page: DocumentPage, width: Int,
             )
         }
     }
+
+    companion object {
+        const val TAP_TO_ENABLE_CANVAS = "Tap to Enable Canvas"
+        const val TAP_TO_Disable_CANVAS = "Tap to Disable Canvas"
+    }
+
 }

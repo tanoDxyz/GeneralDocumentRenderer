@@ -8,7 +8,7 @@ import androidx.test.espresso.UiController
 import androidx.test.espresso.ViewAction
 import androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom
 import com.tanodxyz.documentrenderer.DocumentRenderView
-import com.tanodxyz.documentrenderer.elements.PageElement
+import com.tanodxyz.documentrenderer.elements.PageElementImpl
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import org.hamcrest.Matcher
 import org.junit.Assert
@@ -77,9 +77,9 @@ class ViewNightModeSwipe(var night: Boolean = true) :
     }
 }
 
-class PageElementCoordinatesAction : ViewAction {
+class PageElementImplCoordinatesAction : ViewAction {
     private lateinit var documentPage: DocumentPage
-    private lateinit var pageElement: PageElement
+    private lateinit var pageElementImpl: PageElementImpl
 
 
     override fun getDescription(): String {
@@ -94,11 +94,11 @@ class PageElementCoordinatesAction : ViewAction {
         val renderView: DocumentRenderView = view as DocumentRenderView
         val document = renderView.__getDocument()
         documentPage = document.getPage(0)!!
-        pageElement = documentPage.elements[0]
-        pageElement.layoutParams.widthSpec = 200
-        pageElement.layoutParams.heightSpec = 200
-        pageElement.layoutParams.leftMargin = 1F
-        pageElement.layoutParams.topMargin = 1F
+        pageElementImpl = documentPage.elements[0]
+        pageElementImpl.layoutParams.widthSpec = 200
+        pageElementImpl.layoutParams.heightSpec = 200
+        pageElementImpl.layoutParams.leftMargin = 1F
+        pageElementImpl.layoutParams.topMargin = 1F
         renderView.redraw()
     }
 
@@ -107,17 +107,17 @@ class PageElementCoordinatesAction : ViewAction {
         Log.i(
             TAG,
             "pageElementDrawnRelativeToPageCoordinates: PageBounds = ${documentPage.pageBounds} " +
-                    "|||||| elementBoundsRelativeToPage = ${pageElement.elementBoundsRelativeToPage}"
+                    "|||||| elementBoundsRelativeToPage = ${pageElementImpl.elementBoundsRelativeToPage}"
         )
-        return pageElement.elementBoundsRelativeToPage.left >= documentPage.pageBounds.left &&
-                pageElement.elementBoundsRelativeToPage.top >= documentPage.pageBounds.top
+        return pageElementImpl.elementBoundsRelativeToPage.left >= documentPage.pageBounds.left &&
+                pageElementImpl.elementBoundsRelativeToPage.top >= documentPage.pageBounds.top
     }
 }
 
 
-class PageElementScaleAction : ViewAction {
+class PageElementImplScaleAction : ViewAction {
     private lateinit var documentPage: DocumentPage
-    private lateinit var pageElement: PageElement
+    private lateinit var pageElementImpl: PageElementImpl
 
 
     override fun getDescription(): String {
@@ -132,10 +132,10 @@ class PageElementScaleAction : ViewAction {
         val renderView: DocumentRenderView = view as DocumentRenderView
         val document = renderView.__getDocument()
         documentPage = document.getPage(0)!!
-        pageElement = documentPage.elements[0]
+        pageElementImpl = documentPage.elements[0]
 
-        val xBeforeZoom = pageElement.elementBoundsRelativeToPage.left
-        val yBeforeZoom = pageElement.elementBoundsRelativeToPage.top
+        val xBeforeZoom = pageElementImpl.elementBoundsRelativeToPage.left
+        val yBeforeZoom = pageElementImpl.elementBoundsRelativeToPage.top
         val xPage = documentPage.pageBounds.left
         val yPage = documentPage.pageBounds.top
         if(xBeforeZoom < xPage || yBeforeZoom < yPage) {
@@ -143,8 +143,8 @@ class PageElementScaleAction : ViewAction {
         }
         renderView.zoomTo(DocumentRenderView.MAXIMUM_ZOOM)
         renderView.redraw()
-        val xAfterZoom = pageElement.elementBoundsRelativeToPage.left
-        val yAfterZoom = pageElement.elementBoundsRelativeToPage.top
+        val xAfterZoom = pageElementImpl.elementBoundsRelativeToPage.left
+        val yAfterZoom = pageElementImpl.elementBoundsRelativeToPage.top
         val xPageAfterZoom = documentPage.pageBounds.left
         val yPageAfterZoom = documentPage.pageBounds.top
         if(xAfterZoom < xPageAfterZoom || yAfterZoom < yPageAfterZoom) {
@@ -158,10 +158,10 @@ class PageElementScaleAction : ViewAction {
         Log.i(
             TAG,
             "pageElementDrawnRelativeToPageCoordinates: PageBounds = ${documentPage.pageBounds} " +
-                    "|||||| elementBoundsRelativeToPage = ${pageElement.elementBoundsRelativeToPage}"
+                    "|||||| elementBoundsRelativeToPage = ${pageElementImpl.elementBoundsRelativeToPage}"
         )
-        return pageElement.elementBoundsRelativeToPage.left >= documentPage.pageBounds.left &&
-                pageElement.elementBoundsRelativeToPage.top >= documentPage.pageBounds.top
+        return pageElementImpl.elementBoundsRelativeToPage.left >= documentPage.pageBounds.left &&
+                pageElementImpl.elementBoundsRelativeToPage.top >= documentPage.pageBounds.top
     }
 }
 

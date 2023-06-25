@@ -13,7 +13,7 @@ import com.tanodxyz.documentrenderer.dpToPx
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 import com.tanodxyz.documentrenderer.page.DocumentPage
 
-open class ImageElement(
+open class ImageElementImpl(
     page: DocumentPage,
     var unloadedBitmapRectangleColor: Int = Color.BLACK,
     var unloadedBitmapRectangleTextColor: Int = Color.BLACK,
@@ -21,7 +21,7 @@ open class ImageElement(
     var unloadedBitmapTextSize: Float = 14F, // pixels
     var unloadedBitmapTextMessage: String = "Image",
     var drawUnloadedBitmapBox: Boolean = true
-) : PageElement(page = page) {
+) : PageElementImpl(page = page) {
 
     private var bitmap: Bitmap? = null
 

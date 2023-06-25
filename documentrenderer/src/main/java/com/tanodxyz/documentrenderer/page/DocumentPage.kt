@@ -3,12 +3,12 @@ package com.tanodxyz.documentrenderer.page
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.RectF
-import android.util.Log
 import android.util.SparseArray
 import android.view.MotionEvent
 import com.tanodxyz.documentrenderer.*
 import com.tanodxyz.documentrenderer.elements.PageElement
-import com.tanodxyz.documentrenderer.elements.PageSnapShotElementImpl
+import com.tanodxyz.documentrenderer.elements.PageElementImpl
+import com.tanodxyz.documentrenderer.elements.PageSnapShotElementImplImpl
 import com.tanodxyz.documentrenderer.events.*
 import com.tanodxyz.documentrenderer.pagesizecalculator.PageSizeCalculator
 import java.io.FileNotFoundException
@@ -28,9 +28,9 @@ open class DocumentPage(
     var argsToElements = SparseArray<Any>()
     var modifiedSize: Size = originalSize
     var snapScaleDownFactor = 1f
-    var drawPageSnapShot = false
+    var drawPageSnapShot = true
     lateinit var documentRenderView: DocumentRenderView
-    protected var pageSnapShotElementImpl: PageSnapshotElement = PageSnapShotElementImpl(this)
+    protected var pageSnapShotElementImpl: PageSnapshotElementImpl = PageSnapShotElementImplImpl(this)
     open fun getWidth(): Float {
         return pageBounds.getWidth()
     }
@@ -39,7 +39,7 @@ open class DocumentPage(
         return pageBounds.getHeight()
     }
 
-    open fun setPageSnapShotImpl(pageSnapshotElement: PageSnapshotElement) {
+    open fun setPageSnapShotImpl(pageSnapshotElement: PageSnapshotElementImpl) {
         this.pageSnapShotElementImpl = pageSnapshotElement
     }
 

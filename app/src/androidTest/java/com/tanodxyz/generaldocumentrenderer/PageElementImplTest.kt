@@ -10,7 +10,7 @@ import org.junit.Before
 
 import org.junit.Test
 
-class PageElementTest {
+class PageElementImplTest {
     private lateinit var activityScenario: ActivityScenario<MainActivity>
     private lateinit var activity: MainActivity
     private lateinit var idlingResource: SimpleIdlingResource
@@ -35,7 +35,7 @@ class PageElementTest {
     @Test
     fun pageElement__Coordinates__should__be__relative__to__page() {
         sleep(5)
-        val pageElementCoordinatesAction = PageElementCoordinatesAction()
+        val pageElementCoordinatesAction = PageElementImplCoordinatesAction()
         Espresso.onView(ViewMatchers.withId(R.id.documentRenderView)).perform(pageElementCoordinatesAction)
         sleep(5)
         Assert.assertEquals(true, pageElementCoordinatesAction.pageElementDrawnRelativeToPageCoordinates())
@@ -45,7 +45,7 @@ class PageElementTest {
     @Test
     fun pageElement__zoomInZoomOut___relative__to__pageSize() {
         sleep(5)
-        val pageElementScaleAction = PageElementScaleAction()
+        val pageElementScaleAction = PageElementImplScaleAction()
         Espresso.onView(ViewMatchers.withId(R.id.documentRenderView)).perform(pageElementScaleAction)
         sleep(5)
     }

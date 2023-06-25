@@ -28,8 +28,8 @@ import com.tanodxyz.documentrenderer.page.DocumentPage
 import java.lang.reflect.Constructor
 import kotlin.math.roundToInt
 
-open class SimpleTextElement(page: DocumentPage) : PageElement(page = page),
-    PageElement.OnLongPressListener {
+open class SimpleTextElementImpl(page: DocumentPage) : PageElementImpl(page = page),
+    PageElementImpl.OnLongPressListener {
     private var editTextDialog: EditTextDialog? = null
     protected var appliedLineBreaking = false
     protected lateinit var spannable: Spannable
@@ -290,8 +290,8 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page = page),
             textSizePixels: Float,
             textColor: Int,
             typeface: Typeface? = null
-        ): SimpleTextElement {
-            return SimpleTextElement(page).apply {
+        ): SimpleTextElementImpl {
+            return SimpleTextElementImpl(page).apply {
                 typeface?.let { setTypeFace(it) }
                 this.textColor = textColor
                 this.textSizePixels = textSizePixels
@@ -344,7 +344,7 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page = page),
 
     }
 
-    override fun onLongPress(eventMarker: IMotionEventMarker?, pageElement: PageElement) {
+    override fun onLongPress(eventMarker: IMotionEventMarker?, pageElementImpl: PageElementImpl) {
         if (allowTextEditing) {
             showTextEditDialog()
         }

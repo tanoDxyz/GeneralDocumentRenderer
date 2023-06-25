@@ -8,18 +8,17 @@ import com.tanodxyz.documentrenderer.DocumentRenderView
 import com.tanodxyz.documentrenderer.getHeight
 import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.page.DocumentPage
-import com.tanodxyz.documentrenderer.page.PageSnapshotElement
+import com.tanodxyz.documentrenderer.page.PageSnapshotElementImpl
 import com.tanodxyz.documentrenderer.recycleSafely
-import java.util.Collections.addAll
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-open class PageSnapShotElementImpl(
+open class PageSnapShotElementImplImpl(
     page: DocumentPage,
-) : PageSnapshotElement(page) {
+) : PageSnapshotElementImpl(page) {
     protected var future: Future<*>? = null
     protected var canvas: Canvas? = null
     protected val busyCreatingSnap = AtomicBoolean(false)
