@@ -6,9 +6,8 @@ import android.graphics.RectF
 import android.util.SparseArray
 import android.view.MotionEvent
 import com.tanodxyz.documentrenderer.*
-import com.tanodxyz.documentrenderer.elements.PageElement
-import com.tanodxyz.documentrenderer.elements.PageElementImpl
-import com.tanodxyz.documentrenderer.elements.PageSnapShotElementImplImpl
+import com.tanodxyz.documentrenderer.elements.InteractiveElement
+import com.tanodxyz.documentrenderer.elements.PageSnapShotElementImpl
 import com.tanodxyz.documentrenderer.events.*
 import com.tanodxyz.documentrenderer.pagesizecalculator.PageSizeCalculator
 import java.io.FileNotFoundException
@@ -18,7 +17,7 @@ import java.io.Serializable
 
 open class DocumentPage(
     val uniqueId: Int = -1,
-    val elements: MutableList<PageElement> = mutableListOf(),
+    val elements: MutableList<InteractiveElement> = mutableListOf(),
     val originalSize: Size = Size(
         0,
         0
@@ -28,9 +27,9 @@ open class DocumentPage(
     var argsToElements = SparseArray<Any>()
     var modifiedSize: Size = originalSize
     var snapScaleDownFactor = 1f
-    var drawPageSnapShot = true
+    var drawPageSnapShot = false
     lateinit var documentRenderView: DocumentRenderView
-    protected var pageSnapShotElementImpl: PageSnapshotElementImpl = PageSnapShotElementImplImpl(this)
+    protected var pageSnapShotElement: PageSnapshotElement = PageSnapShotElementImpl(this)
     open fun getWidth(): Float {
         return pageBounds.getWidth()
     }
@@ -39,8 +38,8 @@ open class DocumentPage(
         return pageBounds.getHeight()
     }
 
-    open fun setPageSnapShotImpl(pageSnapshotElement: PageSnapshotElementImpl) {
-        this.pageSnapShotElementImpl = pageSnapshotElement
+    open fun setPageSnapShotImpl(pageSnapshotElement: PageSnapshotElement) {
+        this.pageSnapShotElement = pageSnapshotElement
     }
 
     open fun redraw() {
@@ -49,22 +48,26 @@ open class DocumentPage(
         }
     }
 
+    open fun pageViewState():ObjectViewState {
+        return documentRenderView.getPageViewState(pageBounds)
+    }
+
     open fun draw(view: DocumentRenderView, canvas: Canvas, pageViewState: ObjectViewState) {
         this.documentRenderView = view
         if (drawPageSnapShot) {
             if (pageViewState.isObjectPartiallyOrCompletelyVisible()) {
                 if (documentRenderView.isScaling) {
-                    if (pageSnapShotElementImpl.isEmpty()) {
-                        pageSnapShotElementImpl.preparePageSnapshot(documentRenderView.getCurrentZoom())
+                    if (pageSnapShotElement.isEmpty()) {
+                        pageSnapShotElement.preparePageSnapshot(documentRenderView.getCurrentZoom())
                         canvas.dispatchDrawCallToIndividualElements()
                     } else {
-                        pageSnapShotElementImpl.draw(canvas)
+                        pageSnapShotElement.draw(canvas)
                     }
                 } else {
                     canvas.dispatchDrawCallToIndividualElements()
                 }
             } else {
-                pageSnapShotElementImpl.recycle()
+                pageSnapShotElement.recycle()
             }
         } else {
             dispatchDrawCallToIndividualElements(canvas, argsToElements)
@@ -85,7 +88,9 @@ open class DocumentPage(
         event?.apply {
             if (this is GenericMotionEvent && !this.hasNoMotionEvent()) {
                 if (this.motionEvent?.action == MotionEvent.ACTION_DOWN) {
-                    pageSnapShotElementImpl.preparePageSnapshot(documentRenderView.getCurrentZoom())
+                    if(drawPageSnapShot) {
+                        pageSnapShotElement.preparePageSnapshot(documentRenderView.getCurrentZoom())
+                    }
                 } else if (this.motionEvent?.action == MotionEvent.ACTION_UP) {
                     documentRenderView.redraw()
                 }
@@ -96,15 +101,16 @@ open class DocumentPage(
 
     open fun resetPageBounds() {
         pageBounds.reset()
-        elements.forEach { it.resetBounds() }
+        elements.forEach { it.reset() }
     }
 
-    open fun onMeasurementDone(pageSizeCalculator: PageSizeCalculator) {
-        elements.forEach { it.pageMeasurementDone(pageSizeCalculator) }
+    open fun onMeasurementDone(documentRenderView: DocumentRenderView) {
+        this.documentRenderView = documentRenderView
+        elements.forEach { it.pageMeasurementDone(this.documentRenderView) }
     }
 
     fun getSnapShot(scaleDown: Boolean, callback: (Bitmap?) -> Unit) {
-        pageSnapShotElementImpl.getBitmap(scaleDown, callback)
+        pageSnapShotElement.getBitmap(scaleDown, callback)
     }
 
     fun saveSnapShot(filePath: String, scaleDown: Boolean, callback: (Boolean, String) -> Unit) {
@@ -127,9 +133,14 @@ open class DocumentPage(
         }
     }
 
+    fun clearSnapShot() {
+        pageSnapShotElement.recycle()
+    }
+
 
     companion object {
         const val RE_DRAW_WITH_NEW_PAGE_BOUNDS = 0xcafe
         const val RE_DRAW_WITH_RELATIVE_TO_ORIGIN_SNAPSHOT_ = 0xbc
+        const val FORCE_CALCULATE = 0xbabe
     }
 }

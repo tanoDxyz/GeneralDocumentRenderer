@@ -17,4 +17,12 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
+
+    <TextView
+        android:paddingLeft="8dp"
+        android:paddingEnd="8dp"
+        android:background="#cf0"
+        android:text="this is text amigo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

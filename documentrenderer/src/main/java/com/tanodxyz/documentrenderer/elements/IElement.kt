@@ -6,5 +6,5 @@ import android.util.SparseArray
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 
 interface IElement {
-    fun draw(canvas: Canvas, args: SparseArray<Any>? = null) {}
+    fun draw(canvas: Canvas, args: SparseArray<Any>? = null)
 }

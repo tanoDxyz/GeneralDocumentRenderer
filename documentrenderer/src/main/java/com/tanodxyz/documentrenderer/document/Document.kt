@@ -125,7 +125,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
     }
 
     @Synchronized
-    open fun setup(viewSize: Size) {
+    open fun setup(documentRenderView: DocumentRenderView) {
         documentPageData.forEach { documentPage ->
             val pageSize = documentPage.originalSize
             if (pageSize.width > originalMaxPageWidth.width) {
@@ -135,7 +135,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
                 originalMaxPageHeight = pageSize
             }
         }
-        recalculatePageSizesAndIndexes(viewSize)
+        recalculatePageSizesAndIndexes(documentRenderView)
     }
 
     @Synchronized
@@ -154,7 +154,8 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
     }
 
     @Synchronized
-    open fun recalculatePageSizesAndIndexes(viewSize: Size) {
+    open fun recalculatePageSizesAndIndexes(documentRenderView: DocumentRenderView) {
+        val viewSize = Size(documentRenderView.width,documentRenderView.height)
         if (documentPageData.isEmpty()) {
             return
         }
@@ -209,7 +210,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
                 pageIndexes.add(PointF(indexX, 0F))
                 indexX += documentPage.modifiedSize.width
             }
-            documentPage.onMeasurementDone(pageSizeCalculator!!)
+            documentPage.onMeasurementDone(documentRenderView)
         }
     }
 

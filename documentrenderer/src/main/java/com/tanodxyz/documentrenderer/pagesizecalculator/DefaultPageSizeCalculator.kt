@@ -18,7 +18,6 @@ class DefaultPageSizeCalculator : PageSizeCalculator() {
     private lateinit var optimalMaxWidthSize: Size
     private lateinit var optimalMaxHeightSize: Size
 
-
     override fun setup(args: HashMap<String, Any>) {
         val fitPolicy = args[FIT_POLICY] as PageFitPolicy? ?: Document.PageFitPolicy.BOTH
         val fitEachPage: Boolean = args[FIT_EACH_PAGE] as? Boolean ?: true

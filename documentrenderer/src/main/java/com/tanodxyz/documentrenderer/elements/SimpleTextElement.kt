@@ -25,11 +25,12 @@ import com.tanodxyz.documentrenderer.getHeight
 import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.misc.DialogHandle
 import com.tanodxyz.documentrenderer.page.DocumentPage
+import java.lang.Exception
 import java.lang.reflect.Constructor
 import kotlin.math.roundToInt
 
-open class SimpleTextElementImpl(page: DocumentPage) : PageElementImpl(page = page),
-    PageElementImpl.OnLongPressListener {
+open class SimpleTextElement(page: DocumentPage) : PageElement(page),
+    PageElement.OnLongPressListener {
     private var editTextDialog: EditTextDialog? = null
     protected var appliedLineBreaking = false
     protected lateinit var spannable: Spannable
@@ -38,17 +39,17 @@ open class SimpleTextElementImpl(page: DocumentPage) : PageElementImpl(page = pa
         this.textSize = DEFAULT_TEXT_SIZE
     }
     var textSizePixels: Float = textPaint.textSize
+    private var scaleLevelForWhichSizeMeasured = -1F
     var ellipseSize = TextUtils.TruncateAt.END
     var alignment = Layout.Alignment.ALIGN_NORMAL
     var textDirectionHeuristics = TextDirectionHeuristics.LTR
     var spacingmult = 1.0F
     var spacingAdd = 2.0F
+
+    var textColor:Int = textPaint.color
     var includePadding = false
-    var allowTextEditing = true
-
-    private var widthInCaseWrapContent = 0
-    private var heightInCaseWrapContent = 0
-
+    var allowTextEditing = false
+    override var moveable = !allowTextEditing
     @RequiresApi(Build.VERSION_CODES.M)
     var lineBreakingStrategy = Layout.BREAK_STRATEGY_SIMPLE
 
@@ -58,7 +59,7 @@ open class SimpleTextElementImpl(page: DocumentPage) : PageElementImpl(page = pa
     @RequiresApi(Build.VERSION_CODES.P)
     var useLineSpacingFromFallbacks = false
 
-    var applySimpleLineBreaking = false
+    var applySimpleLineBreaking = true
 
     protected var layout: StaticLayout? = null
 
@@ -75,12 +76,21 @@ open class SimpleTextElementImpl(page: DocumentPage) : PageElementImpl(page = pa
         page.redraw()
     }
 
+    override fun onLongPress(
+        eventMarker: IMotionEventMarker?,
+        pageElementImpl: PageElement
+    ) {
+        if (allowTextEditing) {
+            showTextEditDialog()
+        }
+    }
+
     fun applySimpleLineBreaking() {
         if (!appliedLineBreaking && applySimpleLineBreaking) {
             appliedLineBreaking = true
             val wordsList = this.spannable.split(' ', '\n')
             val stringBuilder = java.lang.StringBuilder(spannable.length)
-            val availableLineWidth = calculateWidth(false) - 200
+            val availableLineWidth = getContentWidth(mostRecentArgs) - 200
             var lineWidthConsumed = 0F
             wordsList.forEach { word ->
                 val wordWidth = StaticLayout.getDesiredWidth(word, textPaint)
@@ -100,87 +110,88 @@ open class SimpleTextElementImpl(page: DocumentPage) : PageElementImpl(page = pa
         textPaint.typeface = typeface
     }
 
-    override fun contentWidthInCaseOfWrapContent(): Int {
-        return widthInCaseWrapContent
+    protected fun initTextLayout(args: SparseArray<Any>?) {
+        if (shouldCalculate(args)) {
+            textPaint.textSize = args.textSizeRelativeToSnap(textSizePixels)
+            textPaint.color = textColor
+            val boundsRelativeToPage = this.getContentBoundsRelativeToPage(args.shouldDrawSnapShot())
+            val width = boundsRelativeToPage.getWidth()
+            val height = boundsRelativeToPage.getHeight()
+            scaleLevelForWhichSizeMeasured = page.documentRenderView.getCurrentZoom()
+            applySimpleLineBreaking()
+            val maxLinesByInspection =
+                getMaxLinesByInspection(
+                    makeStaticLayout(spannable, width.roundToInt(), Int.MAX_VALUE),
+                    height
+                )
+            layout = makeStaticLayout(spannable, width.roundToInt(), maxLinesByInspection)
+        }
     }
 
-    override fun contentHeightInCaseOfWrapContent(): Int {
-        return heightInCaseWrapContent
+    private fun getMaxLinesByInspection(staticLayout: StaticLayout, maxHeight: Float): Int {
+        var line = staticLayout.lineCount - 1
+        while (line >= 0 && staticLayout.getLineBottom(line) >= maxHeight) {
+            line--
+        }
+        return line + 1
     }
 
-    protected fun calculateHeight(drawSnapShot: Boolean): Int {
-        val height = if (layoutParams.isHeightWrapContent()) {
-            val scaledMargins = getScaledMargins(drawSnapShot)
+    override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
+        super.draw(canvas, args)
+        try {
+            initTextLayout(args)
+            canvas.apply {
+                save()
+                val leftAndTop = args.getLeftAndTop(true)
+                translate(leftAndTop.x , leftAndTop.y )
+                layout?.draw(this)
+                restore()
+            }
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+        }
+    }
+
+
+    override fun getContentHeight(args: SparseArray<Any>?): Float {
+        if (desiredHeight > 0) {
+            return super.getContentHeight(args)
+        }
+        return if (scaleLevelForWhichSizeMeasured != page.documentRenderView.getCurrentZoom()) {
             val pageHeight = page.pageBounds.getHeight()
+            val width = getContentWidth(args).roundToInt()
             var calculatedHeight =
                 makeStaticLayout(
                     spannable,
-                    widthInCaseWrapContent,
+                    width,
                     Int.MAX_VALUE
                 ).height
-
             if (calculatedHeight >= pageHeight) {
                 calculatedHeight = pageHeight.roundToInt()
             }
-            calculatedHeight += (longestLineHeight(drawSnapShot)) // we are adding it cause
-            heightInCaseWrapContent = calculatedHeight
-            heightInCaseWrapContent - scaledMargins.bottom.roundToInt() - scaledMargins.top.roundToInt()
+            calculatedHeight += (longestLineHeight(args))
+            actualHeight = calculatedHeight.toFloat()
+            actualHeight
         } else {
-            getBoundsRelativeToPage(drawSnapShot).getHeight().roundToInt()
+            actualHeight
         }
-        return height
     }
 
-    fun longestLineHeight(drawSnapShot: Boolean): Int {
-        val layout = makeStaticLayout(spannable, calculateWidth(drawSnapShot), Int.MAX_VALUE)
-        var longestLineHeight = 0
-        layout.apply {
-            val lineCount: Int = lineCount
-            for (i in 0 until lineCount) {
-                val lineHeight: Int = getLineBottom(i) - getLineTop(i)
-                if (lineHeight > longestLineHeight) {
-                    longestLineHeight = lineHeight
-                }
-            }
+    override fun getContentWidth(args: SparseArray<Any>?): Float {
+        if (desiredWidth > 0) {
+            return super.getContentWidth(args)
         }
-        return longestLineHeight
-    }
-
-    protected fun calculateWidth(drawSnapShot: Boolean): Int {
-        val width = if (layoutParams.isWidthWrapContent()) {
-            val scaledMargins = getScaledMargins(drawSnapShot)
+        return if (scaleLevelForWhichSizeMeasured != page.documentRenderView.getCurrentZoom()) {
             val pageWidth = page.pageBounds.getWidth()
             var calculatedWidth = (StaticLayout.getDesiredWidth(spannable, textPaint)).roundToInt()
             if (calculatedWidth >= pageWidth) {
                 calculatedWidth = pageWidth.roundToInt()
             }
-            widthInCaseWrapContent = calculatedWidth
-            widthInCaseWrapContent - scaledMargins.right.roundToInt() - scaledMargins.left.roundToInt()
+            actualWidth = (calculatedWidth.toFloat())
+            actualWidth
         } else {
-            getBoundsRelativeToPage(drawSnapShot).getWidth().roundToInt()
+            actualWidth
         }
-        return width
-    }
-
-    protected fun initTextLayout(args: SparseArray<Any>?) {
-        val drawSnapShot = args.shouldDrawSnapShot()
-        val oldTextSize = textPaint.textSize
-        val newTextSize = page.documentRenderView.toCurrentScale(textSizePixels)
-        if (!drawSnapShot && oldTextSize == newTextSize && layout != null) {
-            return
-        }
-        textPaint.textSize = args.textSizeRelativeToSnap(textSizePixels)
-
-        val width = calculateWidth(drawSnapShot)
-
-        val height = calculateHeight(drawSnapShot)
-        applySimpleLineBreaking()
-        val maxLinesByInspection =
-            getMaxLinesByInspection(
-                makeStaticLayout(spannable, width, Int.MAX_VALUE),
-                height
-            )
-        layout = makeStaticLayout(spannable, width, maxLinesByInspection)
     }
 
     protected fun makeStaticLayout(
@@ -239,37 +250,19 @@ open class SimpleTextElementImpl(page: DocumentPage) : PageElementImpl(page = pa
         }
     }
 
-    var textColor: Int
-        get() {
-            return textPaint.color
-        }
-        set(color) {
-            textPaint.color = color
-        }
-
-    private fun getMaxLinesByInspection(staticLayout: StaticLayout, maxHeight: Int): Int {
-        var line = staticLayout.lineCount - 1
-        while (line >= 0 && staticLayout.getLineBottom(line) >= maxHeight) {
-            line--
-        }
-        return line + 1
-    }
-
-    override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
-        super.draw(canvas, args)
-        try {
-            initTextLayout(args)
-            canvas.apply {
-                save()
-                val leftAndTop = args.getLeftAndTop()
-                translate(leftAndTop.x, leftAndTop.y)
-                layout?.draw(canvas)
-                restore()
+    fun longestLineHeight(args: SparseArray<Any>?): Int {
+        val layout = makeStaticLayout(spannable, getContentWidth(args).roundToInt(), Int.MAX_VALUE)
+        var longestLineHeight = 0
+        layout.apply {
+            val lineCount: Int = lineCount
+            for (i in 0 until lineCount) {
+                val lineHeight: Int = getLineBottom(i) - getLineTop(i)
+                if (lineHeight > longestLineHeight) {
+                    longestLineHeight = lineHeight
+                }
             }
-        } catch (ex: Exception) {
-            ex.printStackTrace()
         }
-
+        return longestLineHeight
     }
 
     open fun showTextEditDialog() {
@@ -281,26 +274,11 @@ open class SimpleTextElementImpl(page: DocumentPage) : PageElementImpl(page = pa
         editTextDialog?.setTextAndShow(spannable)
     }
 
-    companion object {
-        const val DEFAULT_TEXT_SIZE = 22F //px
-        const val DEFAULT_TEXT_COLOR = Color.BLACK
-        fun newInstance(
-            page: DocumentPage,
-            text: Spannable,
-            textSizePixels: Float,
-            textColor: Int,
-            typeface: Typeface? = null
-        ): SimpleTextElementImpl {
-            return SimpleTextElementImpl(page).apply {
-                typeface?.let { setTypeFace(it) }
-                this.textColor = textColor
-                this.textSizePixels = textSizePixels
-                textPaint.textSize = this.textSizePixels
-                setText(text)
-                layoutParams.desiredHeight = WRAP_CONTENT
-                layoutParams.desiredWidth = WRAP_CONTENT
-            }
-        }
+    fun shouldCalculate(args: SparseArray<Any>?): Boolean {
+        val drawSnapShot = args.shouldDrawSnapShot()
+        val oldTextSize = textPaint.textSize
+        val newTextSize = page.documentRenderView.toCurrentScale(textSizePixels)
+        return (drawSnapShot || oldTextSize != newTextSize || layout == null)
     }
 
     inner class EditTextDialog(
@@ -344,9 +322,8 @@ open class SimpleTextElementImpl(page: DocumentPage) : PageElementImpl(page = pa
 
     }
 
-    override fun onLongPress(eventMarker: IMotionEventMarker?, pageElementImpl: PageElementImpl) {
-        if (allowTextEditing) {
-            showTextEditDialog()
-        }
+    companion object {
+        const val DEFAULT_TEXT_SIZE = 22F //px
+        const val DEFAULT_TEXT_COLOR = Color.BLACK
     }
 }

@@ -54,7 +54,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     private var layoutChangeListener =
         OnLayoutChangeListener { view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             if (left != oldLeft || top != oldTop || right != oldRight || bottom != oldBottom) {
-                println("marko: config changed")
+                onConfigurationChanged()
             }
         }
 
@@ -112,7 +112,19 @@ open class DocumentRenderView @JvmOverloads constructor(
         this.setOnTouchListener(this)
         touchEventMgr = TouchEventsManager(this.context)
         touchEventMgr.registerListener(this)
-        addOnLayoutChangeListener(layoutChangeListener)
+        this.addOnLayoutChangeListener(layoutChangeListener)
+    }
+
+    final override fun addOnLayoutChangeListener(listener: OnLayoutChangeListener?) {
+        super.addOnLayoutChangeListener(listener)
+    }
+
+    open fun onConfigurationChanged() {
+
+    }
+
+    final override fun setOnTouchListener(l: OnTouchListener?) {
+        super.setOnTouchListener(l)
     }
 
     @TestOnly
@@ -261,7 +273,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         animationManager.stopAll()
         buzy()
         threadPoolExecutor?.submit {
-            document.recalculatePageSizesAndIndexes(Size(width, height))
+            document.recalculatePageSizesAndIndexes(this)
             _handler?.post {
                 free()
                 setDefaultContentDrawOffsets()
@@ -920,7 +932,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         }
         buzy()
         threadPoolExecutor?.submit {
-            this.document.setup(Size(width, height))
+            this.document.setup(this)
             _handler?.post {
                 free()
                 setDefaultContentDrawOffsets()

@@ -13,7 +13,7 @@ import com.tanodxyz.documentrenderer.dpToPx
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 import com.tanodxyz.documentrenderer.page.DocumentPage
 
-open class ImageElementImpl(
+open class ImageElement(
     page: DocumentPage,
     var unloadedBitmapRectangleColor: Int = Color.BLACK,
     var unloadedBitmapRectangleTextColor: Int = Color.BLACK,
@@ -21,7 +21,7 @@ open class ImageElementImpl(
     var unloadedBitmapTextSize: Float = 14F, // pixels
     var unloadedBitmapTextMessage: String = "Image",
     var drawUnloadedBitmapBox: Boolean = true
-) : PageElementImpl(page = page) {
+) : PageElement(page = page) {
 
     private var bitmap: Bitmap? = null
 
@@ -63,9 +63,25 @@ open class ImageElementImpl(
         canvas.drawText(unloadedBitmapTextMessage, textDrawX, textDrawY, textPaint)
     }
 
+    override fun getContentHeight(args: SparseArray<Any>?): Float {
+        return if(bitmap != null) {
+            page.documentRenderView.toCurrentScale(bitmap!!.height.toFloat())
+        } else {
+            page.documentRenderView.toCurrentScale(DEFAULT_HEIGHT)
+        }
+    }
+
+    override fun getContentWidth(args: SparseArray<Any>?): Float {
+        return if(bitmap != null) {
+            page.documentRenderView.toCurrentScale(bitmap!!.width.toFloat())
+        } else {
+            page.documentRenderView.toCurrentScale(DEFAULT_WIDTH)
+        }
+    }
+
     override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
         super.draw(canvas, args)
-        val boundsRelativeToPage = getBoundsRelativeToPage(args.shouldDrawSnapShot())
+        val boundsRelativeToPage = this.getContentBoundsRelativeToPage(args.shouldDrawSnapShot())
         synchronized(this) {
             if (bitmap == null && drawUnloadedBitmapBox) {
                 drawUnloadedBitmapBox(canvas, boundsRelativeToPage, args)

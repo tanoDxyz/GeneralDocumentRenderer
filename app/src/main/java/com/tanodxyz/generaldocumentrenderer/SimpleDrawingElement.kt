@@ -9,22 +9,23 @@ import android.util.SparseArray
 import android.view.MotionEvent
 import androidx.core.text.toSpannable
 import com.tanodxyz.documentrenderer.dpToPx
-import com.tanodxyz.documentrenderer.elements.PageElementImpl
-import com.tanodxyz.documentrenderer.elements.SimpleTextElementImpl
+import com.tanodxyz.documentrenderer.elements.PageElement
+import com.tanodxyz.documentrenderer.elements.SimpleTextElement
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
+import com.tanodxyz.documentrenderer.getHeight
+import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.hasGenericMotionEvent
 import com.tanodxyz.documentrenderer.page.DocumentPage
 
-class SimpleDrawingElementImpl(resources: Resources, page: DocumentPage, width: Int, height: Int) :
-    PageElementImpl(page, width, height) {
+class SimpleDrawingElement(resources: Resources, page: DocumentPage) :
+    PageElement(page) {
     var points = mutableListOf<PointF>()
 
-    var textElement = SimpleTextElementImpl(page).apply {
+    var textElement = SimpleTextElement(page).apply {
         setText(TAP_TO_ENABLE_CANVAS.toSpannable())
         textColor = Color.BLACK
-        layoutParams.desiredHeight = WRAP_CONTENT
-        layoutParams.desiredWidth = WRAP_CONTENT
     }
+
     init {
         this.debugPaint.apply {
             color = Color.GREEN
@@ -34,6 +35,14 @@ class SimpleDrawingElementImpl(resources: Resources, page: DocumentPage, width: 
         }
 
 
+    }
+
+    override fun getContentHeight(args: SparseArray<Any>?): Float {
+        return page.pageBounds.getHeight()
+    }
+
+    override fun getContentWidth(args: SparseArray<Any>?): Float {
+        return page.pageBounds.getWidth()
     }
 
     override fun onEvent(iMotionEventMarker: IMotionEventMarker?): Boolean {
@@ -65,7 +74,7 @@ class SimpleDrawingElementImpl(resources: Resources, page: DocumentPage, width: 
 
     override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
         super.draw(canvas, args)
-        val boundsRelativeToPage = getBoundsRelativeToPage(args.shouldDrawSnapShot())
+        val boundsRelativeToPage = getContentBoundsRelativeToPage(args.shouldDrawSnapShot())
         points.forEach { point ->
             canvas.drawPoint(
                 point.x + boundsRelativeToPage.left,
