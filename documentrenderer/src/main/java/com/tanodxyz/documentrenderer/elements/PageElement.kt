@@ -10,9 +10,20 @@ import androidx.annotation.VisibleForTesting
 import com.tanodxyz.documentrenderer.DocumentRenderView
 import com.tanodxyz.documentrenderer.Size
 import com.tanodxyz.documentrenderer.Thread
+import com.tanodxyz.documentrenderer.events.DoubleTapCompleteEvent
+import com.tanodxyz.documentrenderer.events.DoubleTapEvent
+import com.tanodxyz.documentrenderer.events.FlingEndEvent
+import com.tanodxyz.documentrenderer.events.FlingStartEvent
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 import com.tanodxyz.documentrenderer.events.LongPressEvent
+import com.tanodxyz.documentrenderer.events.ScaleBeginEvent
+import com.tanodxyz.documentrenderer.events.ScaleEndEvent
+import com.tanodxyz.documentrenderer.events.ScaleEvent
+import com.tanodxyz.documentrenderer.events.ScrollEndEvent
+import com.tanodxyz.documentrenderer.events.ScrollStartEvent
+import com.tanodxyz.documentrenderer.events.ShowPressEvent
 import com.tanodxyz.documentrenderer.events.SingleTapConfirmedEvent
+import com.tanodxyz.documentrenderer.events.SingleTapUpEvent
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.reset
 import java.security.SecureRandom
@@ -20,10 +31,22 @@ import kotlin.math.roundToInt
 
 open class PageElement(var page: DocumentPage) : InteractiveElement {
     open var moveable = true
-    var debug = false
+    var debug = true
     protected var mobileModeActivated = false
     var clickListener: OnClickListener? = null
     var longPressListener: OnLongPressListener? = null
+    var doubleTapCompleteListener:OnDoubleTapCompleteListener? = null
+    var doubleTapListener:OnDoubleTapListener? = null
+    var onFlingStartListener:OnFlingStartListener? = null
+    var onFlingEndListener:OnFlingEndListener? = null
+    var onScaleBeginListener:OnScaleBeginListener? = null
+    var onScaleListener:OnScaleListener? = null
+    var onScaleEndListener:OnScaleEndListener? = null
+    var onScrollStartListener:OnScrollStartListener? = null
+    var onScrollEndListener:OnScrollEndListener? = null
+    var onShowPressListener:OnShowPressListener? = null
+    var onSingleTapUpListener:OnSingleTapUpListener? = null
+
     var shouldChangeSizeBasedOnPageSizeCalculator = true
     var mostRecentArgs: SparseArray<Any>? = null
     protected var actualWidth = -1F
@@ -38,10 +61,8 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
         strokeWidth = 8F
     }
     open var type: String = TAG
-    @VisibleForTesting
-    val elementsContainerBounds = RectF()
 
-    @VisibleForTesting
+
     val elementContentBounds = RectF()
 
     open fun getContentWidth(args: SparseArray<Any>?): Float {
@@ -52,7 +73,7 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
         return page.documentRenderView.toCurrentScale(desiredHeight)
     }
 
-    override fun onEvent(iMotionEventMarker: IMotionEventMarker?): Boolean {
+    private fun dispatchCallbacksToListenersIfAttached(iMotionEventMarker: IMotionEventMarker?) {
         clickListener?.apply {
             if (isEventOccurredWithInBounds(
                     iMotionEventMarker, true
@@ -71,6 +92,107 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
             }
         }
 
+        doubleTapCompleteListener?.apply {
+            if (isEventOccurredWithInBounds(
+                    iMotionEventMarker, true
+                ) && iMotionEventMarker is DoubleTapCompleteEvent
+            ) {
+                doubleTapCompleteListener?.onDoubleTapComplete(iMotionEventMarker, this@PageElement)
+            }
+        }
+
+        doubleTapListener?.apply {
+            if (isEventOccurredWithInBounds(
+                    iMotionEventMarker, true
+                ) && iMotionEventMarker is DoubleTapEvent
+            ) {
+                doubleTapListener?.onDoubleTap(iMotionEventMarker, this@PageElement)
+            }
+        }
+
+        onFlingStartListener?.apply {
+            if (isEventOccurredWithInBounds(
+                    iMotionEventMarker, true
+                ) && iMotionEventMarker is FlingStartEvent
+            ) {
+                onFlingStartListener?.onFlingStart(iMotionEventMarker, this@PageElement)
+            }
+        }
+
+        onFlingEndListener?.apply {
+            if (isEventOccurredWithInBounds(
+                    iMotionEventMarker, true
+                ) && iMotionEventMarker is FlingEndEvent
+            ) {
+                onFlingEndListener?.onFlingEnd(iMotionEventMarker, this@PageElement)
+            }
+        }
+
+        onScaleBeginListener?.apply {
+            if (isEventOccurredWithInBounds(
+                    iMotionEventMarker, true
+                ) && iMotionEventMarker is ScaleBeginEvent
+            ) {
+                onScaleBeginListener?.onScaleBegin(iMotionEventMarker, this@PageElement)
+            }
+        }
+
+        onScaleEndListener?.apply {
+            if (isEventOccurredWithInBounds(
+                    iMotionEventMarker, true
+                ) && iMotionEventMarker is ScaleEndEvent
+            ) {
+                onScaleEndListener?.onScaleEnd(iMotionEventMarker, this@PageElement)
+            }
+        }
+
+        onScaleListener?.apply {
+            if (isEventOccurredWithInBounds(
+                    iMotionEventMarker, true
+                ) && iMotionEventMarker is ScaleEvent
+            ) {
+                onScaleListener?.onScale(iMotionEventMarker, this@PageElement)
+            }
+        }
+
+        onScrollStartListener?.apply {
+            if (isEventOccurredWithInBounds(
+                    iMotionEventMarker, true
+                ) && iMotionEventMarker is ScrollStartEvent
+            ) {
+                onScrollStartListener?.onScrollStart(iMotionEventMarker, this@PageElement)
+            }
+        }
+
+        onScaleEndListener?.apply {
+            if (isEventOccurredWithInBounds(
+                    iMotionEventMarker, true
+                ) && iMotionEventMarker is ScrollEndEvent
+            ) {
+                onScrollEndListener?.onScrollEnd(iMotionEventMarker, this@PageElement)
+            }
+        }
+        onShowPressListener?.apply {
+            if (isEventOccurredWithInBounds(
+                    iMotionEventMarker, true
+                ) && iMotionEventMarker is ShowPressEvent
+            ) {
+                onShowPressListener?.onShowPress(iMotionEventMarker, this@PageElement)
+            }
+        }
+
+        onSingleTapUpListener?.apply {
+            if (isEventOccurredWithInBounds(
+                    iMotionEventMarker, true
+                ) && iMotionEventMarker is SingleTapUpEvent
+            ) {
+                onSingleTapUpListener?.onSingleTapUp(iMotionEventMarker, this@PageElement)
+            }
+        }
+    }
+
+    override fun onEvent(iMotionEventMarker: IMotionEventMarker?): Boolean {
+        dispatchCallbacksToListenersIfAttached(iMotionEventMarker)
         if (moveable) {
             handleElementMovement(iMotionEventMarker)
         }
@@ -102,7 +224,7 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
     }
 
     override fun reset() {
-        elementsContainerBounds.reset()
+        elementContentBounds.reset()
         elementContentBounds.reset()
     }
 
@@ -165,6 +287,13 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
     }
 
 
+    open fun setContentBoundsRelativeToPage(bounds: RectF) {
+        elementContentBounds.left = bounds.left
+        elementContentBounds.top = bounds.top
+        elementContentBounds.right = bounds.right
+        elementContentBounds.bottom = bounds.bottom
+    }
+
     open fun getContentBoundsRelativeToPage(drawSnapShot: Boolean): RectF {
         val scaledMargins = getScaledMargins(drawSnapShot)
 
@@ -197,13 +326,13 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
             right = (left + getContentWidth(mostRecentArgs))
             bottom = (top + getContentHeight(mostRecentArgs))
         }
-        elementsContainerBounds.apply {
+        elementContentBounds.apply {
             this.left = left
             this.right = right
             this.bottom = bottom
             this.top = top
         }
-        return elementsContainerBounds
+        return elementContentBounds
     }
 
     open fun getScaledMargins(drawSnapShot: Boolean): RectF {
@@ -296,21 +425,66 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
         return (boundRelativeToPage.contains(eventMarker.getX(), eventMarker.getY()))
     }
 
-    fun SparseArray<Any>?.getLeftAndTop(content: Boolean): PointF {
+    fun SparseArray<Any>?.getLeftAndTop(): PointF {
         val drawSnapShot = this.shouldDrawSnapShot()
         val boundsRelativeToPage =
-            if (content) this@PageElement.getContentBoundsRelativeToPage(drawSnapShot) else this@PageElement.getContentBoundsRelativeToPage(
+            this@PageElement.getContentBoundsRelativeToPage(
                 drawSnapShot
             )
         return PointF(boundsRelativeToPage.left, boundsRelativeToPage.top)
     }
 
     interface OnClickListener {
-        fun onClick(eventMarker: IMotionEventMarker?, pageElement: PageElement)
+        fun onClick(eventMarker: SingleTapConfirmedEvent?, pageElement: PageElement)
     }
 
     interface OnLongPressListener {
-        fun onLongPress(eventMarker: IMotionEventMarker?, pageElement: PageElement)
+        fun onLongPress(eventMarker: LongPressEvent?, pageElement: PageElement)
+    }
+
+    interface OnDoubleTapCompleteListener {
+        fun onDoubleTapComplete(eventMarker: DoubleTapCompleteEvent?, pageElement: PageElement)
+    }
+
+    interface OnDoubleTapListener {
+        fun onDoubleTap(eventMarker: DoubleTapEvent?, pageElement: PageElement)
+    }
+
+    interface OnFlingStartListener {
+        fun onFlingStart(eventMarker: FlingStartEvent?, pageElement: PageElement)
+    }
+
+    interface OnFlingEndListener {
+        fun onFlingEnd(eventMarker: FlingEndEvent?, pageElement: PageElement)
+    }
+
+    interface OnScaleBeginListener {
+        fun onScaleBegin(eventMarker: ScaleBeginEvent?, pageElement: PageElement)
+    }
+
+    interface OnScaleListener {
+        fun onScale(eventMarker: ScaleEvent?, pageElement: PageElement)
+    }
+
+    interface OnScaleEndListener {
+        fun onScaleEnd(eventMarker: ScaleEndEvent?, PageElement: PageElement)
+    }
+
+
+    interface OnScrollStartListener {
+        fun onScrollStart(eventMarker: ScrollStartEvent?, pageElement: PageElement)
+    }
+
+    interface OnScrollEndListener {
+        fun onScrollEnd(eventMarker: ScrollEndEvent?, pageElement: PageElement)
+    }
+
+    interface OnShowPressListener {
+        fun onShowPress(eventMarker: ShowPressEvent?, pageElement: PageElement)
+    }
+
+    interface OnSingleTapUpListener {
+        fun onSingleTapUp(eventMarker: SingleTapUpEvent?,pageElement: PageElement)
     }
 
     companion object {
