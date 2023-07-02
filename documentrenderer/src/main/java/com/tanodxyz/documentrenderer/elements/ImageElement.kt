@@ -41,9 +41,11 @@ open class ImageElement(
 
     // image
     @Synchronized
-    fun load(bitmap: Bitmap) {
+    fun load(bitmap: Bitmap,redraw:Boolean = true) {
         this.bitmap = bitmap
-        page.redraw()
+        if(redraw) {
+            page.redraw()
+        }
     }
 
     open fun drawUnloadedBitmapBox(
@@ -81,7 +83,7 @@ open class ImageElement(
 
     override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
         super.draw(canvas, args)
-        val boundsRelativeToPage = this.getContentBoundsRelativeToPage(args.shouldDrawSnapShot())
+        val boundsRelativeToPage = this.getContentBounds(args.shouldDrawSnapShot())
         synchronized(this) {
             if (bitmap == null && drawUnloadedBitmapBox) {
                 drawUnloadedBitmapBox(canvas, boundsRelativeToPage, args)

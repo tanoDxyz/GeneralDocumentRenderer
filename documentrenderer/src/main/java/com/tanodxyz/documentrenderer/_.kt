@@ -207,6 +207,10 @@ fun Closeable?.closeResource() {
 
 fun isMainThread(): Boolean = Looper.myLooper() == Looper.getMainLooper()
 
+fun RectF.copy():RectF {
+    return RectF(this.left,this.top,this.right,this.bottom)
+}
+
 fun IMotionEventMarker?.hasGenericMotionEvent():Boolean {
     return if(this == null) {
         false

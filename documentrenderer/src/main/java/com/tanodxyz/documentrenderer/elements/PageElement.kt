@@ -6,7 +6,6 @@ import android.graphics.Paint
 import android.graphics.PointF
 import android.graphics.RectF
 import android.util.SparseArray
-import androidx.annotation.VisibleForTesting
 import com.tanodxyz.documentrenderer.DocumentRenderView
 import com.tanodxyz.documentrenderer.Size
 import com.tanodxyz.documentrenderer.Thread
@@ -31,21 +30,22 @@ import kotlin.math.roundToInt
 
 open class PageElement(var page: DocumentPage) : InteractiveElement {
     open var moveable = true
-    var debug = true
+    var debug = false
     protected var mobileModeActivated = false
     var clickListener: OnClickListener? = null
     var longPressListener: OnLongPressListener? = null
-    var doubleTapCompleteListener:OnDoubleTapCompleteListener? = null
-    var doubleTapListener:OnDoubleTapListener? = null
-    var onFlingStartListener:OnFlingStartListener? = null
-    var onFlingEndListener:OnFlingEndListener? = null
-    var onScaleBeginListener:OnScaleBeginListener? = null
-    var onScaleListener:OnScaleListener? = null
-    var onScaleEndListener:OnScaleEndListener? = null
-    var onScrollStartListener:OnScrollStartListener? = null
-    var onScrollEndListener:OnScrollEndListener? = null
-    var onShowPressListener:OnShowPressListener? = null
-    var onSingleTapUpListener:OnSingleTapUpListener? = null
+    var doubleTapCompleteListener: OnDoubleTapCompleteListener? = null
+    var doubleTapListener: OnDoubleTapListener? = null
+    var onFlingStartListener: OnFlingStartListener? = null
+    var onFlingEndListener: OnFlingEndListener? = null
+    var onScaleBeginListener: OnScaleBeginListener? = null
+    var onScaleListener: OnScaleListener? = null
+    var onScaleEndListener: OnScaleEndListener? = null
+    var onScrollStartListener: OnScrollStartListener? = null
+    var onScrollEndListener: OnScrollEndListener? = null
+    var onShowPressListener: OnShowPressListener? = null
+    var onSingleTapUpListener: OnSingleTapUpListener? = null
+    protected var usePreCalculatedBounds: Boolean = false
 
     var shouldChangeSizeBasedOnPageSizeCalculator = true
     var mostRecentArgs: SparseArray<Any>? = null
@@ -65,11 +65,11 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
 
     val elementContentBounds = RectF()
 
-    open fun getContentWidth(args: SparseArray<Any>?): Float {
+    override fun getContentWidth(args: SparseArray<Any>?): Float {
         return page.documentRenderView.toCurrentScale(desiredWidth)
     }
 
-    open fun getContentHeight(args: SparseArray<Any>?): Float {
+    override fun getContentHeight(args: SparseArray<Any>?): Float {
         return page.documentRenderView.toCurrentScale(desiredHeight)
     }
 
@@ -201,7 +201,7 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
     }
 
     open fun handleElementMovement(iMotionEventMarker: IMotionEventMarker?) {
-        val elementBounds = this.getContentBoundsRelativeToPage(mostRecentArgs.shouldDrawSnapShot())
+        val elementBounds = this.getContentBounds(mostRecentArgs.shouldDrawSnapShot())
         val eventOccurredWithInBounds = isEventOccurredWithInBounds(iMotionEventMarker, true)
         if (iMotionEventMarker is LongPressEvent && eventOccurredWithInBounds) {
             mobileModeActivated = true
@@ -226,6 +226,7 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
     override fun reset() {
         elementContentBounds.reset()
         elementContentBounds.reset()
+        usePreCalculatedBounds = false
     }
 
     override fun recycle() {
@@ -250,7 +251,7 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
     override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
         this.mostRecentArgs = args
         if (debug) {
-            this.getContentBoundsRelativeToPage(args.shouldDrawSnapShot()).apply {
+            this.getContentBounds(args.shouldDrawSnapShot()).apply {
                 debugPaint.color = Color.RED
                 canvas.drawRect(this, debugPaint)
             }
@@ -261,7 +262,7 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
     open fun showIndicationIfMobileModeActive(canvas: Canvas, args: SparseArray<Any>?) {
         if (mobileModeActivated) {
             if (page.pageViewState().isObjectPartiallyOrCompletelyVisible()) {
-                this.getContentBoundsRelativeToPage(args.shouldDrawSnapShot()).apply {
+                this.getContentBounds(args.shouldDrawSnapShot()).apply {
                     debugPaint.color = colors[secureRandom.nextInt(colors.size)]
                     canvas.drawRect(this, debugPaint)
                 }
@@ -287,14 +288,18 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
     }
 
 
-    open fun setContentBoundsRelativeToPage(bounds: RectF) {
+    override fun setContentBounds(bounds: RectF) {
         elementContentBounds.left = bounds.left
         elementContentBounds.top = bounds.top
         elementContentBounds.right = bounds.right
         elementContentBounds.bottom = bounds.bottom
+        usePreCalculatedBounds = true
     }
 
-    open fun getContentBoundsRelativeToPage(drawSnapShot: Boolean): RectF {
+    override fun getContentBounds(drawSnapShot: Boolean): RectF {
+        if(usePreCalculatedBounds) {
+            return elementContentBounds
+        }
         val scaledMargins = getScaledMargins(drawSnapShot)
 
         var left = 0F
@@ -335,7 +340,7 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
         return elementContentBounds
     }
 
-    open fun getScaledMargins(drawSnapShot: Boolean): RectF {
+    override fun getScaledMargins(drawSnapShot: Boolean): RectF {
         val scaledMargins = RectF()
         val lm = margins.left
         val tm = margins.top
@@ -418,9 +423,9 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
             return false
         }
         val boundRelativeToPage = if (checkBasedOnLastDrawCallType && mostRecentArgs != null) {
-            this.getContentBoundsRelativeToPage(mostRecentArgs.shouldDrawSnapShot())
+            this.getContentBounds(mostRecentArgs.shouldDrawSnapShot())
         } else {
-            this.getContentBoundsRelativeToPage(false)
+            this.getContentBounds(false)
         }
         return (boundRelativeToPage.contains(eventMarker.getX(), eventMarker.getY()))
     }
@@ -428,7 +433,7 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
     fun SparseArray<Any>?.getLeftAndTop(): PointF {
         val drawSnapShot = this.shouldDrawSnapShot()
         val boundsRelativeToPage =
-            this@PageElement.getContentBoundsRelativeToPage(
+            this@PageElement.getContentBounds(
                 drawSnapShot
             )
         return PointF(boundsRelativeToPage.left, boundsRelativeToPage.top)
@@ -484,12 +489,12 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
     }
 
     interface OnSingleTapUpListener {
-        fun onSingleTapUp(eventMarker: SingleTapUpEvent?,pageElement: PageElement)
+        fun onSingleTapUp(eventMarker: SingleTapUpEvent?, pageElement: PageElement)
     }
 
     companion object {
-        const val DEFAULT_WIDTH = 200F
-        const val DEFAULT_HEIGHT = 100F
+        const val DEFAULT_WIDTH = 200
+        const val DEFAULT_HEIGHT = 100
         private const val PAGE_ELEMENT = "pageElement"
         val TAG = PAGE_ELEMENT
         val colors = mutableListOf<Int>().apply {

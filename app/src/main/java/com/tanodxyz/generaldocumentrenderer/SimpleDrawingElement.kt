@@ -1,14 +1,18 @@
 package com.tanodxyz.generaldocumentrenderer
 
 import android.content.res.Resources
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.PointF
 import android.util.SparseArray
-import android.view.MotionEvent
+import androidx.core.graphics.plus
+import androidx.core.graphics.toRect
+import androidx.core.graphics.toRegion
 import androidx.core.text.toSpannable
+import com.tanodxyz.documentrenderer.copy
 import com.tanodxyz.documentrenderer.dpToPx
+import com.tanodxyz.documentrenderer.elements.ImageElement
 import com.tanodxyz.documentrenderer.elements.PageElement
 import com.tanodxyz.documentrenderer.elements.SimpleTextElement
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
@@ -16,20 +20,27 @@ import com.tanodxyz.documentrenderer.getHeight
 import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.hasGenericMotionEvent
 import com.tanodxyz.documentrenderer.page.DocumentPage
+import kotlin.math.roundToInt
 
 class SimpleDrawingElement(resources: Resources, page: DocumentPage) :
     PageElement(page) {
-    var points = mutableListOf<PointF>()
-
+    private var bitmap: Bitmap? = null
+    private var canvas: Canvas? = null
+    private var _10Dp = 0F
     var textElement = SimpleTextElement(page).apply {
-        setText(TAP_TO_ENABLE_CANVAS.toSpannable())
+        setText("Simple Canvas".toSpannable())
         textColor = Color.BLACK
     }
 
+    var imageElement = ImageElement(page)
+
     init {
+        moveable = true
+        debug = false
+        _10Dp = resources.dpToPx(10)
         this.debugPaint.apply {
             color = Color.GREEN
-            strokeWidth = resources.dpToPx(10)
+            strokeWidth = _10Dp
             strokeCap = Paint.Cap.ROUND
             style = Paint.Style.FILL
         }
@@ -46,27 +57,16 @@ class SimpleDrawingElement(resources: Resources, page: DocumentPage) :
     }
 
     override fun onEvent(iMotionEventMarker: IMotionEventMarker?): Boolean {
-        val eventOccurredWithInBounds = isEventOccurredWithInBounds(iMotionEventMarker, true)
-        if (iMotionEventMarker.hasGenericMotionEvent()) {
-            val genericMotionEvent = iMotionEventMarker?.event
-
-            if (eventOccurredWithInBounds) {
-                iMotionEventMarker.apply {
-                    if (page.documentRenderView.canProcessTouchEvents && genericMotionEvent?.action == MotionEvent.ACTION_DOWN) {
-                        page.documentRenderView.canProcessTouchEvents = false
-                    }
-                    val x = this?.getX() ?: 0f
-                    val y = this?.getY() ?: 0f
-                    points.add(PointF(x, y))
-                }
-
-            }
-
-            // just whenever action up is triggered we will assume user stopped drawing.
-            if (genericMotionEvent?.action == MotionEvent.ACTION_UP) {
-                page.documentRenderView.canProcessTouchEvents = true
-            }
-
+        super.onEvent(iMotionEventMarker)
+        if (iMotionEventMarker.hasGenericMotionEvent() && isEventOccurredWithInBounds(
+                iMotionEventMarker,
+                true
+            )
+        ) {
+            val contentBounds = getContentBounds(mostRecentArgs.shouldDrawSnapShot())
+            val x = (iMotionEventMarker?.getX() ?: 0f) - contentBounds.left
+            val y = (iMotionEventMarker?.getY() ?: 0f) - contentBounds.top
+            canvas?.drawPoint(x, y, debugPaint)
         }
 
         return true;
@@ -74,19 +74,14 @@ class SimpleDrawingElement(resources: Resources, page: DocumentPage) :
 
     override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
         super.draw(canvas, args)
-        val boundsRelativeToPage = getContentBoundsRelativeToPage(args.shouldDrawSnapShot())
-        points.forEach { point ->
-            canvas.drawPoint(
-                point.x + boundsRelativeToPage.left,
-                point.y + boundsRelativeToPage.top,
-                debugPaint
-            )
+        val contentBounds = getContentBounds(args.shouldDrawSnapShot())
+        if (bitmap == null) {
+            bitmap = Bitmap.createBitmap(getContentWidth(args).roundToInt(), getContentWidth(args).roundToInt(), Bitmap.Config.ARGB_8888)
+            this.canvas = Canvas(bitmap!!)
+            imageElement.load(bitmap!!, false)
         }
+        imageElement.setContentBounds(contentBounds)
+        imageElement.draw(canvas,args)
+        textElement.draw(canvas, args)
     }
-
-    companion object {
-        const val TAP_TO_ENABLE_CANVAS = "Tap to Enable Canvas"
-        const val TAP_TO_Disable_CANVAS = "Tap to Disable Canvas"
-    }
-
 }

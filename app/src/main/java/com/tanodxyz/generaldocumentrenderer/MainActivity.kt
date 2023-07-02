@@ -11,6 +11,7 @@ import android.text.SpannableString
 import android.text.style.RelativeSizeSpan
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.text.toSpannable
 import com.tanodxyz.documentrenderer.*
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.elements.DefaultCircularProgressBarElement
@@ -108,7 +109,7 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
                     com.mta.tehreer.graphics.Typeface(context.assets, "fonts/cavier_dreams.ttf")
                 var ii = true
                 thread(start = true) {
-                    for (i: Int in 0 until 5000) {
+                    for (i: Int in 0 until 1) {
                         val elements = mutableListOf<InteractiveElement>()
 
                         val documentPage = DocumentPage(
@@ -125,7 +126,8 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
 //                            elements.add(this)
 //                        }
 
-                        SimpleDrawingElement(context.resources,documentPage).apply {
+
+                        SimpleDrawingElement(context.resources, documentPage).apply {
                             elements.add(this)
                         }
                         document!!.addPage(

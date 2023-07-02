@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RectF
 import android.graphics.Typeface
 import android.os.Build
 import android.text.Layout
@@ -21,6 +22,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.text.toSpannable
 import com.tanodxyz.documentrenderer.R
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
+import com.tanodxyz.documentrenderer.events.LongPressEvent
 import com.tanodxyz.documentrenderer.getHeight
 import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.misc.DialogHandle
@@ -59,7 +61,6 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page),
     @RequiresApi(Build.VERSION_CODES.P)
     var useLineSpacingFromFallbacks = false
 
-    var applySimpleLineBreaking = true
 
     protected var layout: StaticLayout? = null
 
@@ -77,7 +78,7 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page),
     }
 
     override fun onLongPress(
-        eventMarker: IMotionEventMarker?,
+        eventMarker: LongPressEvent?,
         pageElementImpl: PageElement
     ) {
         if (allowTextEditing) {
@@ -85,40 +86,25 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page),
         }
     }
 
-    fun applySimpleLineBreaking() {
-        if (!appliedLineBreaking && applySimpleLineBreaking) {
-            appliedLineBreaking = true
-            val wordsList = this.spannable.split(' ', '\n')
-            val stringBuilder = java.lang.StringBuilder(spannable.length)
-            val availableLineWidth = getContentWidth(mostRecentArgs) - 200
-            var lineWidthConsumed = 0F
-            wordsList.forEach { word ->
-                val wordWidth = StaticLayout.getDesiredWidth(word, textPaint)
-                lineWidthConsumed += wordWidth
-                if (lineWidthConsumed < availableLineWidth) {
-                    stringBuilder.append(word).append(' ')
-                } else {
-                    stringBuilder.append('\n').append(word).append(' ')
-                    lineWidthConsumed = 0F
-                }
-            }
-            spannable = SpannableString(stringBuilder.toString())
-        }
-    }
 
     fun setTypeFace(typeface: Typeface) {
         textPaint.typeface = typeface
+    }
+
+    override fun setContentBounds(bounds: RectF) {
+        super.setContentBounds(bounds)
+        layout = null // as bounds changed so text layout must be recreated.
+        usePreCalculatedBounds = true
     }
 
     protected fun initTextLayout(args: SparseArray<Any>?) {
         if (shouldCalculate(args)) {
             textPaint.textSize = args.textSizeRelativeToSnap(textSizePixels)
             textPaint.color = textColor
-            val boundsRelativeToPage = this.getContentBoundsRelativeToPage(args.shouldDrawSnapShot())
+            val boundsRelativeToPage = this.getContentBounds(args.shouldDrawSnapShot())
             val width = boundsRelativeToPage.getWidth()
             val height = boundsRelativeToPage.getHeight()
             scaleLevelForWhichSizeMeasured = page.documentRenderView.getCurrentZoom()
-            applySimpleLineBreaking()
             val maxLinesByInspection =
                 getMaxLinesByInspection(
                     makeStaticLayout(spannable, width.roundToInt(), Int.MAX_VALUE),
@@ -142,7 +128,7 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page),
             initTextLayout(args)
             canvas.apply {
                 save()
-                val leftAndTop = args.getLeftAndTop(true)
+                val leftAndTop = args.getLeftAndTop()
                 translate(leftAndTop.x , leftAndTop.y )
                 layout?.draw(this)
                 restore()
