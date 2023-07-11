@@ -2,6 +2,9 @@ package com.tanodxyz.generaldocumentrenderer.pdfRenderer
 
 import android.content.res.AssetManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.RectF
 import android.graphics.pdf.PdfRenderer
@@ -17,11 +20,16 @@ import com.tanodxyz.documentrenderer.closeResource
 import com.tanodxyz.documentrenderer.getHeight
 import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.recycleSafely
+import com.tanodxyz.generaldocumentrenderer.pdfRenderer.PdfElement.Companion.isValid
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
-import java.util.concurrent.Future
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.Stack
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.LockSupport
 import kotlin.math.abs
 import kotlin.math.roundToInt
+
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 
@@ -29,6 +37,7 @@ class PDFRenderer(val renderView: DocumentRenderView) {
     private var parcelFileDescriptor: ParcelFileDescriptor? = null
     private var pdfRenderer: PdfRenderer? = null
     private var handler = Handler(Looper.getMainLooper())
+    private var pageRendererThread = PageRendererThread()
 
     @Synchronized
     fun openPdfFile(filePath: String) {
@@ -53,12 +62,14 @@ class PDFRenderer(val renderView: DocumentRenderView) {
     private fun readPdfFile(parcelFileDescriptor: ParcelFileDescriptor) {
         pdfRenderer = PdfRenderer(parcelFileDescriptor)
         this.parcelFileDescriptor = parcelFileDescriptor
+        pageRendererThread.start()
     }
 
     @Synchronized
     fun close() {
         pdfRenderer?.close()
         parcelFileDescriptor?.closeResource()
+        pageRendererThread.shutDown()
         handler.removeCallbacksAndMessages(null)
     }
 
@@ -67,78 +78,73 @@ class PDFRenderer(val renderView: DocumentRenderView) {
         return pdfRenderer?.pageCount ?: 0
     }
 
-    var currentPageAndRemovablePagesDifference =
-        10 // from current page if page is at position (currPage - 10) or (currPage + 10) remove it from cache
-    var maxPageRenderingOperations = 16
-    var runningPageRenderingOperationsCount = AtomicInteger(0)
-    var runningPageRenderingOperations = mutableListOf<Pair<String, Future<*>?>>()
-    fun loadPage(pageNo: Int, pageBounds: RectF, callback: (Bitmap?) -> Unit) {
-        renderView.threadPoolExecutor?.submit {
-            if (runningPageRenderingOperationsCount.get() < maxPageRenderingOperations) {
-                fetchPage(pageNo, pageBounds, callback)
-            } else {
-                removeRunningPageRenderCallbacks(pageNo)
-                fetchPage(pageNo, pageBounds, callback)
+
+    inner class PageRendererThread : java.lang.Thread("PageRenderThread") {
+        private val requestStack = Stack<PageRenderOperationWrapper>()
+        private val iCanRun = AtomicBoolean(true)
+        override fun run() {
+            while (iCanRun.get()) {
+                LockSupport.park(this)
+                synchronized(requestStack) {
+                    val mostRecentPageRequestNumber = if(requestStack.empty().not()) requestStack.peek().pageNumber else -1
+                    while (requestStack.empty().not()) {
+                        val request = requestStack.pop()
+                        if(mostRecentPageRequestNumber <=  -1 ||
+                            abs(request.pageNumber - mostRecentPageRequestNumber) > 10) {
+                            return@synchronized
+                        }
+                        if (request.isValid()) {
+                            val pageBitmap = getPageBitmapFromCacheOrCreateNew(
+                                request.pageNumber,
+                                request.pageBounds
+                            )
+                            postToHandler {
+                                if (pageBitmap.isValid()) {
+                                    request.callback?.invoke(pageBitmap!!)
+                                }
+                            }
+                        }
+                    }
+                    requestStack.clear()
+                }
+            }
+        }
+
+        fun postToHandler(callback: () -> Unit) {
+            handler.post(callback)
+        }
+
+        fun shutDown() {
+            iCanRun.set(false)
+            LockSupport.unpark(this)
+        }
+
+        fun loadPage(pageNumber: Int, pageBounds: RectF, callback: (Bitmap?) -> Unit) {
+            renderView.threadPoolExecutor?.submit {
+                synchronized(requestStack) {
+                    PageRenderOperationWrapper(pageNumber, pageBounds).apply {
+                        this.callback = callback
+                        requestStack.push(this)
+                        LockSupport.unpark(this@PageRendererThread)
+                    }
+                }
             }
         }
     }
 
-    private fun removeRunningPageRenderCallbacks(pageNumber: Int) {
-        synchronized(runningPageRenderingOperations) {
-            val removablePageRenderingCallbacks = mutableListOf<Pair<String, Future<*>?>>()
-            runningPageRenderingOperations.forEach { pair ->
-                val (key, runningOp) = pair
-                if (runningOp != null && (runningOp.isDone || runningOp.isCancelled)) {
-                    removablePageRenderingCallbacks.add(pair)
-                }
-                val (runningOperationPageNumber, _) = key.pageNumberScaleLevelPair()
-                if (abs(runningOperationPageNumber - pageNumber) >= currentPageAndRemovablePagesDifference) {
-                    runningOp?.cancel(true)
-                    removablePageRenderingCallbacks.add(pair)
-                }
-            }
-            runningPageRenderingOperations.removeAll(removablePageRenderingCallbacks)
-        }
-
+    fun loadPageNew(pageNumber: Int, pageBounds: RectF, callback: (Bitmap?) -> Unit) {
+        pageRendererThread.loadPage(pageNumber, pageBounds, callback)
     }
 
-    private fun fetchPage(pageNo: Int, pageBounds: RectF, callback: (Bitmap?) -> Unit) {
-        val rpro = renderView.threadPoolExecutor?.submit {
-            runningPageRenderingOperationsCount.incrementAndGet()
-            val pageBitmap =
-                getPageBitmapFromCacheOrCreateNew(pageNo, pageBounds)
-            handler.post { callback(pageBitmap) }
-            runningPageRenderingOperationsCount.decrementAndGet()
-        }
-        synchronized(runningPageRenderingOperations) {
-            runningPageRenderingOperations.add(Pair(key(pageNo, pageBounds), rpro))
-        }
-
-    }
 
     private fun getPageBitmapFromCacheOrCreateNew(pageNo: Int, pageBounds: RectF): Bitmap? {
         val blob = getFromCache(pageNo, pageBounds)
-        val bitmap = if (blob == null) {
+        val bitmap = if (!blob.isValid()) {
             createNewPage(pageNo, pageBounds)
         } else {
-            blob.getPayLoad() as Bitmap
+            blob?.getPayLoad() as Bitmap
         }
         return bitmap
-    }
-
-    private fun key(pageNumber: Int, pageBounds: RectF): String {
-        return "$pageNumber;$pageBounds"
-    }
-
-    private fun String.pageNumberScaleLevelPair(): Pair<Int, Float> {
-        val scIdx = indexOf(';')
-        return if (scIdx > -1) {
-            val pageNumber = this.substring(0, scIdx).toInt()
-            val scaleLevel = this.substring((scIdx + 1), this.length).toFloat()
-            Pair(pageNumber, scaleLevel)
-        } else {
-            Pair(0, 0F)
-        }
     }
 
     fun getFromCache(pageNumber: Int, pageBounds: RectF): BitmapBlob? {
@@ -146,35 +152,51 @@ class PDFRenderer(val renderView: DocumentRenderView) {
         return cache.get(key(pageNumber, pageBounds)) as BitmapBlob?
     }
 
+
     @Synchronized
     fun createNewPage(pageNumber: Int, pageBounds: RectF, putInCache: Boolean = true): Bitmap? {
         var bitmap: Bitmap? = null
+        var scaledBitmap: Bitmap? = null
         pdfRenderer?.apply {
             val page = openPage(pageNumber)
             val pdfPageWidth = page.width
             val pdfPageHeight = page.height
-            val desiredWidth = pageBounds.getWidth()
-            val desiredHeight = pageBounds.getHeight()
+            val desiredWidth = (pageBounds.getWidth())
+            val desiredHeight = (pageBounds.getHeight())
+            if (desiredWidth > 0 && desiredHeight > 0) {
+                val matrix = Matrix()
+                matrix.setTranslate(0F, 0F)
+                matrix.postScale(desiredWidth / pdfPageWidth, desiredHeight / pdfPageHeight)
+                // Create a bitmap with the desired dimensions
+                bitmap = Bitmap.createBitmap(
+                    desiredWidth.roundToInt(),
+                    desiredHeight.roundToInt(),
+                    Bitmap.Config.ARGB_8888
+                )
+                // Render the page with the transformation matrix
+                page.render(bitmap!!, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
 
-            val matrix = Matrix();
-            matrix.setTranslate(0F, 0F)
-            matrix.postScale(desiredWidth / pdfPageWidth, desiredHeight / pdfPageHeight)
-            // Create a bitmap with the desired dimensions
-            bitmap = Bitmap.createBitmap(
-                desiredWidth.roundToInt(),
-                desiredHeight.roundToInt(),
-                Bitmap.Config.ARGB_8888
-            )
-            // Render the page with the transformation matrix
-            page.render(bitmap!!, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-
-            page.close()
-
-            if (putInCache) {
-                renderView.cache.offer(BitmapBlob(key(pageNumber, pageBounds), bitmap))
+                val compressedBitmap = Bitmap.createBitmap(
+                    bitmap!!.getWidth(),
+                    bitmap!!.getHeight(),
+                    Bitmap.Config.ARGB_8888
+                )
+                val canvas = Canvas(compressedBitmap)
+                canvas.drawBitmap(bitmap!!, 0F, 0F, null)
+                val bos = ByteArrayOutputStream()
+                compressedBitmap!!.compress(Bitmap.CompressFormat.JPEG, 100, bos)
+                scaledBitmap =
+                    BitmapFactory.decodeStream(ByteArrayInputStream(bos.toByteArray()))
+                bos.close()
+                bitmap.recycleSafely()
+                compressedBitmap.recycleSafely()
+                if (putInCache) {
+                    renderView.cache.offer(BitmapBlob(key(pageNumber, pageBounds), scaledBitmap))
+                }
             }
+            page.close()
         }
-        return bitmap
+        return scaledBitmap
     }
 
     @Synchronized
@@ -195,10 +217,17 @@ class PDFRenderer(val renderView: DocumentRenderView) {
         }
     }
 
+    fun remove(key: String) {
+        renderView.threadPoolExecutor?.submit {
+            renderView.cache.remove(key)
+        }
+    }
+
     class BitmapBlob(private val uniqueID: String, private var bitmap: Bitmap?) :
         CacheManager.Blob {
+
         init {
-            println("blober: created $uniqueID")
+            println("zonsa: creatted for $uniqueID")
         }
 
         override fun getUniqueID(): String {
@@ -214,7 +243,7 @@ class PDFRenderer(val renderView: DocumentRenderView) {
         }
 
         override fun onRemove() {
-            println("blobler: remove $uniqueID")
+            println("zonsa: recycle for $uniqueID")
             bitmap.recycleSafely()
             bitmap = null
         }
@@ -222,6 +251,22 @@ class PDFRenderer(val renderView: DocumentRenderView) {
         override fun getPayLoad(): Any? {
             return bitmap
         }
+    }
 
+    class PageRenderOperationWrapper(val pageNumber: Int, val pageBounds: RectF) {
+        var callback: ((Bitmap) -> Unit)? = null
+        fun isValid(): Boolean {
+            return pageNumber > -1 && pageBounds.getWidth() > 0 && pageBounds.getHeight() > 0
+        }
+    }
+
+    companion object {
+        fun key(pageNumber: Int, pageBounds: RectF): String {
+            return "$pageNumber;${pageBounds.getWidth()}- ${pageBounds.getHeight()}"
+        }
+
+        fun BitmapBlob?.isValid(): Boolean {
+            return this != null && this.getPayLoad() != null && this.getPayLoad() is Bitmap && (!(this.getPayLoad() as Bitmap).isRecycled)
+        }
     }
 }

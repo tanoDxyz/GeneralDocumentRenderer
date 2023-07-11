@@ -92,7 +92,7 @@ class PageElementDepCoordinatesAction : ViewAction {
 
     override fun perform(uiController: UiController?, view: View?) {
         val renderView: DocumentRenderView = view as DocumentRenderView
-        val document = renderView.__getDocument()
+        val document = renderView.getDocument()
         documentPage = document.getPage(0)!!
         pageElement = documentPage.elements[0] as PageElement
         renderView.redraw()
@@ -126,7 +126,7 @@ class PageElementDepScaleAction : ViewAction {
 
     override fun perform(uiController: UiController?, view: View?) {
         val renderView: DocumentRenderView = view as DocumentRenderView
-        val document = renderView.__getDocument()
+        val document = renderView.getDocument()
         documentPage = document.getPage(0)!!
         pageElement = documentPage.elements[0] as PageElement
 

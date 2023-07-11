@@ -11,7 +11,7 @@ import com.tanodxyz.documentrenderer.pagesizecalculator.PageSizeCalculator
 import java.util.*
 import kotlin.collections.ArrayList
 // todo code check ok . line check ok . inheritance check ok.
-open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator? = null) {
+open class Document (context: Context, var pageSizeCalculator: PageSizeCalculator? = null) {
     protected var maxHeightPageSize = Size(0, 0)
     protected var maxWidthPageSize = Size(0, 0)
     protected val documentMeta = HashMap<String, Any?>()
@@ -293,5 +293,10 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
             }
         }
         return pagesToBeDrawn
+    }
+
+    @Synchronized
+    open fun close() {
+        documentPageData.forEach { it.recycle() }
     }
 }

@@ -7,4 +7,5 @@ abstract class PageSnapshotElement(page: DocumentPage) : PageElement(page) {
     abstract fun preparePageSnapshot(scaleLevel: Float)
     abstract fun isEmpty(): Boolean
     abstract fun getBitmap(scaleDown:Boolean = true,callback: (Bitmap?) -> Unit)
+    abstract fun useScalingForSnapshot(useScalingForSnapshot: Boolean)
 }

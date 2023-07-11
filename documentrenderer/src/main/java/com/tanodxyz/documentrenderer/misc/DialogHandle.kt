@@ -8,6 +8,7 @@ import android.graphics.drawable.ColorDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.Window
+import com.tanodxyz.documentrenderer.R
 
 abstract class DialogHandle(
     protected val windowContext: Context,

@@ -7,8 +7,9 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.annotation.RequiresApi
-import androidx.core.content.ContextCompat.startActivity
 import com.tanodxyz.documentrenderer.DocumentRenderView
+import com.tanodxyz.documentrenderer.elements.DefaultCircularProgressBarElement
+import com.tanodxyz.documentrenderer.extensions.DefaultScrollHandle
 import com.tanodxyz.documentrenderer.misc.DialogHandle
 import com.tanodxyz.generaldocumentrenderer.R
 
@@ -27,26 +28,36 @@ class PdfViewActivity : AppCompatActivity() {
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     private fun init() {
         documentRenderView = findViewById(R.id.documentRenderView)
+
         progressDialog = ProgressDialog(this)
         progressDialog.show()
         pdfLoader = PdfLoader(documentRenderView)
-        pdfLoader.loadFromAssets(assets,"example.pdf")
+        documentRenderView.setBusyStateIndicator(DefaultCircularProgressBarElement(this))
+        pdfLoader.loadFromAssets(assets, "ad.pdf")
         pdfLoader.prepareDocument(true) {
+            documentRenderView.setScrollHandler(DefaultScrollHandle(this))
             progressDialog.hide()
         }
     }
 
-    class ProgressDialog(windowContext: Context): DialogHandle(windowContext) {
+    class ProgressDialog(windowContext: Context) : DialogHandle(windowContext) {
         init {
             createDialog()
         }
+
         override fun getContainerLayout(): Int {
             return R.layout.progress_dialog
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        pdfLoader.close()
+    }
+
     companion object {
         fun launchActivity(activity: Activity) {
-            Intent(activity,PdfViewActivity::class.java).apply {
+            Intent(activity, PdfViewActivity::class.java).apply {
                 activity.startActivity(this)
             }
         }

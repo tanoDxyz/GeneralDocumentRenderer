@@ -211,12 +211,12 @@ class DefaultScrollHandle @JvmOverloads constructor(
     }
 
 
-    override fun onDraw(canvas: Canvas?) {
+    override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (isInEditMode) {
             return
         }
-        canvas?.also { canvas ->
+        canvas.also { canvas ->
             documentRenderView?.apply {
                 val swipeVertical = isSwipeVertical()
                 oval.left = 0F

@@ -25,6 +25,7 @@ open class PageSnapShotElementImpl(
     protected var bitmap: Bitmap? = null
     protected var scaleLevel = 0f
     protected val lock = Any()
+    protected var useScalingForSnapshot = true
     private var args = SparseArray<Any>(5).apply {
         this[DocumentPage.RE_DRAW_WITH_RELATIVE_TO_ORIGIN_SNAPSHOT_] = true
     }
@@ -41,7 +42,9 @@ open class PageSnapShotElementImpl(
                 if(scaleDown) {
                     val pageMaxSize =
                         max(pageBounds.getWidth(), pageBounds.getHeight()).roundToInt()
-                    sdFactor = getScaleDownFactor(pageMaxSize)
+                    if(useScalingForSnapshot) {
+                        sdFactor = getScaleDownFactor(pageMaxSize)
+                    }
                 }
                 val bitmap = Bitmap.createBitmap(
                     pageBounds.getWidth().div(sdFactor)
@@ -56,6 +59,12 @@ open class PageSnapShotElementImpl(
                 callback(bitmap)
             }
         }
+    }
+
+    override fun useScalingForSnapshot(useScalingForSnapshot: Boolean) {
+        this.useScalingForSnapshot = useScalingForSnapshot
+        recycle()
+        create(scaleLevel)
     }
 
 

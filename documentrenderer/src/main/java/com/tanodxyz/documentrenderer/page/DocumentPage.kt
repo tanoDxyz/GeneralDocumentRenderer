@@ -34,6 +34,10 @@ open class DocumentPage(
         return pageBounds.getWidth()
     }
 
+    fun setUseScalingFactorForSnapshot(useScalingForSnapshot:Boolean) {
+        pageSnapShotElement.useScalingForSnapshot(useScalingForSnapshot)
+    }
+
     open fun getHeight(): Float {
         return pageBounds.getHeight()
     }
@@ -62,6 +66,7 @@ open class DocumentPage(
                         canvas.dispatchDrawCallToIndividualElements()
                     } else {
                         pageSnapShotElement.draw(canvas)
+                        onScale()
                     }
                 } else {
                     canvas.dispatchDrawCallToIndividualElements()
@@ -74,6 +79,12 @@ open class DocumentPage(
         }
     }
 
+    open fun onScale() {
+        elements.forEach { it.onScale(documentRenderView.getCurrentZoom()) }
+    }
+    open fun updatePageSnapShotForLatestScaleLevel() {
+        pageSnapShotElement.preparePageSnapshot(documentRenderView.getCurrentZoom())
+    }
 
     protected fun Canvas.dispatchDrawCallToIndividualElements() {
         argsToElements[RE_DRAW_WITH_NEW_PAGE_BOUNDS] = true
@@ -84,7 +95,7 @@ open class DocumentPage(
         elements.forEach { iElement -> iElement.draw(canvas, args) }
     }
 
-    override fun onEvent(event: IMotionEventMarker?) {
+    override fun onEvent(event: IMotionEventMarker?): Boolean {
         event?.apply {
             if (this is GenericMotionEvent && !this.hasNoMotionEvent()) {
                 if (this.motionEvent?.action == MotionEvent.ACTION_DOWN) {
@@ -97,6 +108,8 @@ open class DocumentPage(
             }
         }
         elements.forEach { iElement -> iElement.onEvent(event) }
+
+        return true
     }
 
     open fun resetPageBounds() {
@@ -131,6 +144,10 @@ open class DocumentPage(
                 }
             }
         }
+    }
+
+    open fun recycle() {
+        elements.forEach { it.recycle() }
     }
 
     fun clearSnapShot() {

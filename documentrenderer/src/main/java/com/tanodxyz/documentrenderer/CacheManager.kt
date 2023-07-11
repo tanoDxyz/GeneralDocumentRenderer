@@ -50,6 +50,10 @@ class CacheManager(memoryFactor: Int) {
         return lruCache.get(key)
     }
 
+    @Synchronized
+    override fun toString(): String {
+        return lruCache.toString() + " -> createCount = ${lruCache.createCount()} -> evictCount = ${lruCache.evictionCount()} -> size${lruCache.size()}"
+    }
 
     interface Blob {
         fun getUniqueID(): String

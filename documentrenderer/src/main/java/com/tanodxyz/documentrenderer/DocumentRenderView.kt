@@ -82,7 +82,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     protected var zoom = MINIMUM_ZOOM
     protected var animationManager: AnimationManager
-    internal var threadPoolExecutor: ThreadPoolExecutor? = null
+    var threadPoolExecutor: ThreadPoolExecutor? = null
     protected var _handler: Handler? = null
     var pageNumberDisplayBoxTextColor = Color.WHITE
     var pageNumberDisplayBoxBackgroundColor = Color.parseColor("#343434")
@@ -102,7 +102,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     private val midZoom = DEFAULT_MID_SCALE
     private val maxZoom = DEFAULT_MAX_SCALE
 
-    internal var cache = CacheManager(CACHE_FACTOR)
+    var cache = CacheManager(CACHE_FACTOR)
 
     init {
         threadPoolExecutor = Executors.newCachedThreadPool() as ThreadPoolExecutor
@@ -119,16 +119,26 @@ open class DocumentRenderView @JvmOverloads constructor(
         super.addOnLayoutChangeListener(listener)
     }
 
-    open fun onConfigurationChanged() {
+    fun putInCache(blob: CacheManager.Blob) {
+        synchronized(cache) {
+            cache.offer(blob)
+        }
+    }
 
+    fun retrieveFromCache(key: String): CacheManager.Blob? {
+        synchronized(cache) {
+            return cache.get(key)
+        }
+    }
+
+    open fun onConfigurationChanged() {
     }
 
     final override fun setOnTouchListener(l: OnTouchListener?) {
         super.setOnTouchListener(l)
     }
 
-    @TestOnly
-    fun __getDocument(): Document {
+    fun getDocument(): Document {
         return document
     }
 
@@ -513,7 +523,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         dispatchEventToThePagesInFocus(GenericMotionEvent(event))
         // touch events will be dispatched to pages and elements and since view can't process
         // touch events so it won't draw.
-        if(!canProcessTouchEvents) {
+        if (!canProcessTouchEvents) {
             redraw()
         }
         return touchEventMgr.onTouchEvent(event)
@@ -659,7 +669,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 
 
     override fun zoomCenteredRelativeTo(dr: Float, pointF: PointF) {
-        if(canProcessTouchEvents) {
+        if (canProcessTouchEvents) {
             zoomCenteredTo(zoom * dr, pointF)
         }
     }
@@ -924,6 +934,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
 
+    @Thread(description = "does not matter on which thread it is called")
     fun loadDocument(document: Document, callback: (() -> Unit)? = null) {
         this.document = document
         pagePaint.apply {
@@ -938,6 +949,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                 setDefaultContentDrawOffsets()
                 redraw()
                 callback?.invoke()
+                gotoPageIfApplicable()
             }
         }
     }
@@ -948,7 +960,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         return this::document.isInitialized
     }
 
-    override fun onDraw(canvas: Canvas?) {
+    override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (BuildConfig.DEBUG) {
             idleStateCallback?.renderViewState(isFree())
@@ -1147,19 +1159,19 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     override fun resetZoomWithAnimation() {
-        if(canProcessTouchEvents) {
+        if (canProcessTouchEvents) {
             zoomWithAnimation(minZoom)
         }
     }
 
     override fun zoomWithAnimation(centerX: Float, centerY: Float, scale: Float) {
-        if(canProcessTouchEvents) {
+        if (canProcessTouchEvents) {
             animationManager.startZoomAnimation(centerX, centerY, zoom, scale)
         }
     }
 
     override fun zoomWithAnimation(scale: Float) {
-        if(canProcessTouchEvents) {
+        if (canProcessTouchEvents) {
             animationManager.startZoomAnimation(
                 (width.div(2)).toFloat(),
                 (height.div(2)).toFloat(), zoom, scale
@@ -1174,15 +1186,14 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     companion object {
         var MINIMUM_ZOOM = 1.0F
-        var MAXIMUM_ZOOM = 10f
+        var MAXIMUM_ZOOM = 5f
+        var CACHE_FACTOR = 1
         val DEFAULT_MAX_SCALE = MAXIMUM_ZOOM
         val DEFAULT_MID_SCALE = MAXIMUM_ZOOM.div(2)
         val DEFAULT_MIN_SCALE = MINIMUM_ZOOM
 
         var REFRESH_RATE_IN_CASE_VIEW_BUZY = 10L // milliseconds
         var SCROLL_HANDLE_AND_PAGE_DISPLAY_BOX_HIDE_DELAY_MILLISECS = 1000L
-
-        var CACHE_FACTOR = 8
     }
 
     class EventsIdentityHelper {
