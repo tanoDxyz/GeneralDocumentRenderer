@@ -51,6 +51,7 @@ open class DocumentRenderView @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyleAttr), View.OnTouchListener,
     TouchEventsManager.TouchEventsListener, AnimationManager.AnimationListener {
 
+    private var viewState: ViewState? = null
     private var layoutChangeListener =
         OnLayoutChangeListener { view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             if (left != oldLeft || top != oldTop || right != oldRight || bottom != oldBottom) {
@@ -68,7 +69,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     internal var eventsIdentityHelper = EventsIdentityHelper()
     protected var touchEventMgr: TouchEventsManager
     protected var enableAntialiasing = true
-
+    protected var isViewInitalized = false
     protected val antialiasFilter =
         PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     protected val pagePaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -148,7 +149,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (isInEditMode || !isInitialized()) {
             return
         }
-        recalculatePageSizesAndSetDefaultXYOffsets(w, h) {
+        recalculatePageSizesAndSetDefaultXYOffsets() {
             gotoPageIfApplicable()
         }
     }
@@ -276,8 +277,6 @@ open class DocumentRenderView @JvmOverloads constructor(
     }
 
     protected fun recalculatePageSizesAndSetDefaultXYOffsets(
-        width: Int,
-        height: Int,
         callback: (() -> Unit)? = null
     ) {
         animationManager.stopAll()
@@ -296,8 +295,10 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (document.swipeVertical) {
             // whenever modifiedSize changes set X
             val scaledPageWidth: Float = toCurrentScale(document.getMaxPageWidth())
-            if (scaledPageWidth < width) {
+            if (scaledPageWidth <= width) {
                 contentDrawOffsetX = width.div(2) - scaledPageWidth.div(2)
+            } else {
+                contentDrawOffsetX = - (scaledPageWidth.div(2) - width.div(2))
             }
             // whenever modifiedSize changes set Y
             val documentHeight = document.getDocLen(zoom)
@@ -308,6 +309,8 @@ open class DocumentRenderView @JvmOverloads constructor(
             val scaledPageHeight = toCurrentScale(document.getMaxPageHeight().toFloat())
             if (scaledPageHeight < height) {
                 contentDrawOffsetY = height.div(2) - scaledPageHeight.div(2)
+            } else {
+                contentDrawOffsetY = -(scaledPageHeight.div(2) - height.div(2))
             }
             val contentWidth: Float = document.getDocLen(zoom)
             if (contentWidth < width) { // whole document widthSpec visible on screen
@@ -326,7 +329,6 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     override fun onRestoreInstanceState(state: Parcelable?) {
         var superState: Parcelable? = null
-        var viewState: ViewState? = null
         if (state is Bundle) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 viewState = state.getParcelable("viewState", ViewState::class.java)!!
@@ -337,10 +339,6 @@ open class DocumentRenderView @JvmOverloads constructor(
             }
         }
         super.onRestoreInstanceState(superState)
-        viewState?.apply {
-            this@DocumentRenderView.zoom = this.zoomLevel
-            this@DocumentRenderView.currentPage = currentPage
-        }
     }
 
 
@@ -404,7 +402,7 @@ open class DocumentRenderView @JvmOverloads constructor(
     fun changeSwipeMode(swipeVertical: Boolean) {
         document.swipeVertical = swipeVertical
         animationManager.stopAll()
-        recalculatePageSizesAndSetDefaultXYOffsets(width, height) {
+        recalculatePageSizesAndSetDefaultXYOffsets{
             val jumpToPage = {
                 jumpToPage0(currentPage - 1, withAnimation = false)
             }
@@ -882,7 +880,6 @@ open class DocumentRenderView @JvmOverloads constructor(
                     offsetX = width - scaledPageWidth
                 }
             }
-//
             contentDrawOffsetX = offsetX
         } else {
 
@@ -949,7 +946,6 @@ open class DocumentRenderView @JvmOverloads constructor(
                 setDefaultContentDrawOffsets()
                 redraw()
                 callback?.invoke()
-                gotoPageIfApplicable()
             }
         }
     }
@@ -960,6 +956,14 @@ open class DocumentRenderView @JvmOverloads constructor(
         return this::document.isInitialized
     }
 
+    open fun onViewInitialized() {
+        viewState?.apply {
+            this@DocumentRenderView.zoom = this.zoomLevel
+            this@DocumentRenderView.currentPage = currentPage
+            gotoPageIfApplicable()
+        }
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (BuildConfig.DEBUG) {
@@ -968,11 +972,15 @@ open class DocumentRenderView @JvmOverloads constructor(
         if (isInEditMode || !isInitialized()) {
             return
         }
-        canvas?.let { drawBackground(it) }
+        if(!isViewInitalized && width > 0 && height > 0) {
+            isViewInitalized = true
+            onViewInitialized()
+        }
+        canvas.let { drawBackground(it) }
         synchronized(this) {
             if (busyTokensCounter > 0 && busyIndicator != null) {
                 animationManager.stopAll()
-                busyIndicator!!.draw(canvas!!)
+                busyIndicator!!.draw(canvas)
                 touchEventMgr.enabled = false
                 postInvalidateDelayed(REFRESH_RATE_IN_CASE_VIEW_BUZY)
                 return
@@ -981,7 +989,7 @@ open class DocumentRenderView @JvmOverloads constructor(
             }
         }
 
-        canvas?.apply {
+        canvas.apply {
             drawFilter = if (enableAntialiasing && drawFilter == null) {
                 antialiasFilter
             } else {
@@ -1078,7 +1086,6 @@ open class DocumentRenderView @JvmOverloads constructor(
                 (toCurrentScale(document.getMaxPageWidth() - page.modifiedSize.width).div(2))
             pageX =
                 contentDrawOffsetX + scaledPageStart + document.pageMargins.left;
-
             rightMarginToSubtract =
                 document.pageMargins.left + document.pageMargins.right
             pageWidthToDraw = page.modifiedSize.width

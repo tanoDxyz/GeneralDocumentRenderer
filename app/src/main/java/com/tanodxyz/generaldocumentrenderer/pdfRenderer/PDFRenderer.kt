@@ -184,7 +184,7 @@ class PDFRenderer(val renderView: DocumentRenderView) {
                 val canvas = Canvas(compressedBitmap)
                 canvas.drawBitmap(bitmap!!, 0F, 0F, null)
                 val bos = ByteArrayOutputStream()
-                compressedBitmap!!.compress(Bitmap.CompressFormat.JPEG, 100, bos)
+                compressedBitmap!!.compress(Bitmap.CompressFormat.JPEG, PAGE_JPEG_IMAGE_QUALITY, bos)
                 scaledBitmap =
                     BitmapFactory.decodeStream(ByteArrayInputStream(bos.toByteArray()))
                 bos.close()
@@ -226,10 +226,6 @@ class PDFRenderer(val renderView: DocumentRenderView) {
     class BitmapBlob(private val uniqueID: String, private var bitmap: Bitmap?) :
         CacheManager.Blob {
 
-        init {
-            println("zonsa: creatted for $uniqueID")
-        }
-
         override fun getUniqueID(): String {
             return uniqueID
         }
@@ -243,7 +239,6 @@ class PDFRenderer(val renderView: DocumentRenderView) {
         }
 
         override fun onRemove() {
-            println("zonsa: recycle for $uniqueID")
             bitmap.recycleSafely()
             bitmap = null
         }
@@ -261,6 +256,7 @@ class PDFRenderer(val renderView: DocumentRenderView) {
     }
 
     companion object {
+        const val PAGE_JPEG_IMAGE_QUALITY = 100
         fun key(pageNumber: Int, pageBounds: RectF): String {
             return "$pageNumber;${pageBounds.getWidth()}- ${pageBounds.getHeight()}"
         }

@@ -46,6 +46,14 @@ class PdfLoader(val renderView: DocumentRenderView) {
     fun prepareDocument(loadInRenderView: Boolean, onFinish: () -> Unit) {
         pdfRenderer?.getPageSizes { pdfPageSizesList ->
             document = Document(renderView.context)
+            document!![Document.PROPERTY_DOCUMENT_PAGE_FIT_POLICY] = Document.PageFitPolicy.BOTH
+            document?.documentFitPagePolicy = Document.PageFitPolicy.BOTH
+
+            document!!.swipeVertical = true
+
+            document!!.fitEachPage = true
+
+            document!!.pageFling = true
             for (i: Int in pdfPageSizesList.indices) {
                 val pdfPageSize = pdfPageSizesList[i]
                 val elements = mutableListOf<InteractiveElement>()

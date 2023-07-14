@@ -155,7 +155,7 @@ open class Document (context: Context, var pageSizeCalculator: PageSizeCalculato
 
     @Synchronized
     open fun recalculatePageSizesAndIndexes(documentRenderView: DocumentRenderView) {
-        val viewSize = Size(documentRenderView.width,documentRenderView.height)
+        val viewSize = Size(documentRenderView.measuredWidth,documentRenderView.measuredHeight)
         if (documentPageData.isEmpty()) {
             return
         }
