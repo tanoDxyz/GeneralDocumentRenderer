@@ -63,12 +63,12 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
 
     fun createAndAddPagesToDocument(renderView: DocumentRenderView,callback:(Document)->Unit) {
         Document(renderView.context).apply {
-            addPage(DocumentPage(0, mutableListOf(),Size(200,500)))
-            addPage(DocumentPage(1, mutableListOf(),Size(200,500)))
-            addPage(DocumentPage(2, mutableListOf(),Size(200,500)))
+            addPage(DocumentPage(0, mutableListOf(),Size(4000,500)))
+            addPage(DocumentPage(1, mutableListOf(),Size(2000,500)))
+            addPage(DocumentPage(2, mutableListOf(),Size(200,5000)))
             addPage(DocumentPage(3, mutableListOf(),Size(200,500)))
-            addPage(DocumentPage(4, mutableListOf(),Size(200,500)))
-            addPage(DocumentPage(5, mutableListOf(),Size(200,500)))
+            addPage(DocumentPage(4, mutableListOf(),Size(600,500)))
+            addPage(DocumentPage(5, mutableListOf(),Size(9100,500)))
             addPage(DocumentPage(6, mutableListOf(),Size(200,500)))
             callback(this)
         }
