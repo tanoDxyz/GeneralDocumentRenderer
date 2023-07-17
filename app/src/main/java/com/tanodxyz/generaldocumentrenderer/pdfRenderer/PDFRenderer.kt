@@ -123,6 +123,10 @@ class PDFRenderer(val renderView: DocumentRenderView) {
             renderView.threadPoolExecutor?.submit {
                 synchronized(requestStack) {
                     PageRenderOperationWrapper(pageNumber, pageBounds).apply {
+                        if(requestStack.contains(this)) {
+                            println("marko: duplicate of $this")
+                            return@submit
+                        }
                         this.callback = callback
                         requestStack.push(this)
                         LockSupport.unpark(this@PageRendererThread)
@@ -169,27 +173,27 @@ class PDFRenderer(val renderView: DocumentRenderView) {
                 matrix.postScale(desiredWidth / pdfPageWidth, desiredHeight / pdfPageHeight)
                 // Create a bitmap with the desired dimensions
                 bitmap = Bitmap.createBitmap(
+                    renderView.resources.displayMetrics,
                     desiredWidth.roundToInt(),
                     desiredHeight.roundToInt(),
                     Bitmap.Config.ARGB_8888
                 )
                 // Render the page with the transformation matrix
                 page.render(bitmap!!, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-
-                val compressedBitmap = Bitmap.createBitmap(
-                    bitmap!!.getWidth(),
-                    bitmap!!.getHeight(),
-                    Bitmap.Config.ARGB_8888
-                )
-                val canvas = Canvas(compressedBitmap)
-                canvas.drawBitmap(bitmap!!, 0F, 0F, null)
-                val bos = ByteArrayOutputStream()
-                compressedBitmap!!.compress(Bitmap.CompressFormat.JPEG, PAGE_JPEG_IMAGE_QUALITY, bos)
-                scaledBitmap =
-                    BitmapFactory.decodeStream(ByteArrayInputStream(bos.toByteArray()))
-                bos.close()
-                bitmap.recycleSafely()
-                compressedBitmap.recycleSafely()
+//                val compressedBitmap = Bitmap.createBitmap(
+//                    bitmap!!.getWidth(),
+//                    bitmap!!.getHeight(),
+//                    Bitmap.Config.ARGB_8888
+//                )
+//                val canvas = Canvas(compressedBitmap)
+//                canvas.drawBitmap(bitmap!!, 0F, 0F, null)
+//                val bos = ByteArrayOutputStream()
+//                bitmap!!.compress(Bitmap.CompressFormat.JPEG, PAGE_JPEG_IMAGE_QUALITY, bos)
+                scaledBitmap = bitmap
+//                    BitmapFactory.decodeStream(ByteArrayInputStream(bos.toByteArray()))
+//                bos.close()
+//                bitmap.recycleSafely()
+//                compressedBitmap.recycleSafely()
                 if (putInCache) {
                     renderView.cache.offer(BitmapBlob(key(pageNumber, pageBounds), scaledBitmap))
                 }
@@ -256,7 +260,7 @@ class PDFRenderer(val renderView: DocumentRenderView) {
     }
 
     companion object {
-        const val PAGE_JPEG_IMAGE_QUALITY = 100
+        const val PAGE_JPEG_IMAGE_QUALITY = 30
         fun key(pageNumber: Int, pageBounds: RectF): String {
             return "$pageNumber;${pageBounds.getWidth()}- ${pageBounds.getHeight()}"
         }

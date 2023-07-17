@@ -101,7 +101,6 @@ class DefaultScrollHandle @JvmOverloads constructor(
     fun isScrollHandleShown(): Boolean = visibility == VISIBLE
 
     override fun scroll(position: Float) {
-
         if (!isScrollHandleShown()) {
             show()
         } else {
@@ -178,7 +177,6 @@ class DefaultScrollHandle @JvmOverloads constructor(
 
             val x = event!!.x
             val y = event.y
-
             when (event!!.action) {
                 ACTION_DOWN, ACTION_POINTER_DOWN -> {
                     stopFling()
@@ -203,6 +201,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
                 ACTION_CANCEL, ACTION_UP, ACTION_POINTER_UP -> {
                     touched = false
                     redraw()
+
                     return true
                 }
             }

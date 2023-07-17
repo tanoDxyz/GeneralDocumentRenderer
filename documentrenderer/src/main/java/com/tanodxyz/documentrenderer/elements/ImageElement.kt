@@ -23,7 +23,7 @@ open class ImageElement(
     var drawUnloadedBitmapBox: Boolean = true
 ) : PageElement(page = page) {
 
-    private var bitmap: Bitmap? = null
+    protected var bitmap: Bitmap? = null
 
     override var type = "ImageElement"
 
@@ -41,9 +41,9 @@ open class ImageElement(
 
     // image
     @Synchronized
-    fun load(bitmap: Bitmap,redraw:Boolean = true) {
+    fun load(bitmap: Bitmap, redraw: Boolean = true) {
         this.bitmap = bitmap
-        if(redraw) {
+        if (redraw) {
             page.redraw()
         }
     }
@@ -66,7 +66,7 @@ open class ImageElement(
     }
 
     override fun getContentHeight(args: SparseArray<Any>?): Float {
-        return if(bitmap != null) {
+        return if (bitmap != null) {
             page.documentRenderView.toCurrentScale(bitmap!!.height.toFloat())
         } else {
             page.documentRenderView.toCurrentScale(DEFAULT_HEIGHT)
@@ -74,7 +74,7 @@ open class ImageElement(
     }
 
     override fun getContentWidth(args: SparseArray<Any>?): Float {
-        return if(bitmap != null) {
+        return if (bitmap != null) {
             page.documentRenderView.toCurrentScale(bitmap!!.width.toFloat())
         } else {
             page.documentRenderView.toCurrentScale(DEFAULT_WIDTH)
@@ -88,18 +88,20 @@ open class ImageElement(
             if (bitmap == null && drawUnloadedBitmapBox) {
                 drawUnloadedBitmapBox(canvas, boundsRelativeToPage, args)
             } else {
-                drawBitmap(canvas, bitmap!!, boundsRelativeToPage.toRect(), paint)
+                drawBitmap(canvas, args, bitmap!!, null, boundsRelativeToPage.toRect(), paint)
             }
         }
     }
 
     open fun drawBitmap(
         canvas: Canvas,
+        args: SparseArray<Any>?,
         bitmap: Bitmap,
+        sourceRect: Rect?,
         targetRect: Rect,
         paint: Paint
     ) {
-        canvas.drawBitmap(bitmap, null, targetRect, null)
+        canvas.drawBitmap(bitmap, sourceRect, targetRect, null)
     }
 
     override fun onEvent(iMotionEventMarker: IMotionEventMarker?): Boolean {

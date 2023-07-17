@@ -46,7 +46,6 @@ class PdfLoader(val renderView: DocumentRenderView) {
     fun prepareDocument(loadInRenderView: Boolean, onFinish: () -> Unit) {
         pdfRenderer?.getPageSizes { pdfPageSizesList ->
             document = Document(renderView.context)
-            document!![Document.PROPERTY_DOCUMENT_PAGE_FIT_POLICY] = Document.PageFitPolicy.BOTH
             document?.documentFitPagePolicy = Document.PageFitPolicy.BOTH
 
             document!!.swipeVertical = true
@@ -63,9 +62,7 @@ class PdfLoader(val renderView: DocumentRenderView) {
                     }
                     document?.addPage(this)
                 }
-                lazy {
-                    page.setUseScalingFactorForSnapshot(false)
-                }
+                page.setUseScalingFactorForSnapshot(false)
             }
             if (loadInRenderView) {
                 document?.let { renderView.loadDocument(it, onFinish) }

@@ -28,6 +28,7 @@ class PdfElement(page: DocumentPage, val pdfLoader: PdfLoader) : PageElement(pag
     init {
         textElement.setText("Loading Page".toSpannable())
     }
+
     private fun loadBitmap(callback: () -> Unit) {
         pdfLoader.loadPageNo(page.uniqueId, page.pageBounds) { loadedBitmap ->
             synchronized(lock) {
@@ -38,6 +39,10 @@ class PdfElement(page: DocumentPage, val pdfLoader: PdfLoader) : PageElement(pag
         }
     }
 
+
+    override fun onScale(currentZoom: Float) {
+        super.onScale(currentZoom)
+    }
 
     private fun bitmapIsValid(applyScaleCheck: Boolean = true): Boolean {
         val bitmapIsValid = this.bitmap.isValid()
@@ -75,22 +80,29 @@ class PdfElement(page: DocumentPage, val pdfLoader: PdfLoader) : PageElement(pag
                             null
                         )
                     } else {
-                        val textBounds = contentBounds.copy()
-                        val _100 = page.documentRenderView.toCurrentScale(100)
-                        textBounds.left += _100
-                        textBounds.top += _100
-                        textBounds.right = textBounds.left + (_100.times(3))
-                        textBounds.bottom = textBounds.top + (_100.times(3))
-                        textElement.setContentBounds(textBounds)
-                        textElement.draw(canvas,args)
                         loadBitmap {
                             redraw(true)
                         }
+                        canvas.drawTextElementWithArgs(contentBounds,args)
                     }
 
                 }
             }
         }
+    }
+
+    private fun Canvas.drawTextElementWithArgs(
+        contentBounds: RectF,
+        args: SparseArray<Any>?
+    ) {
+        val textBounds = contentBounds.copy()
+        val _100 = page.documentRenderView.toCurrentScale(100)
+        textBounds.left += _100
+        textBounds.top += _100
+        textBounds.right = textBounds.left + (_100.times(3))
+        textBounds.bottom = textBounds.top + (_100.times(3))
+        textElement.setContentBounds(textBounds)
+        textElement.draw(this, args)
     }
 
     override fun recycle() {

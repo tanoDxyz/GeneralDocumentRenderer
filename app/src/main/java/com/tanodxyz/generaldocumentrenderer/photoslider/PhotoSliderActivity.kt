@@ -1,49 +1,39 @@
-package com.tanodxyz.generaldocumentrenderer.pdfRenderer
+package com.tanodxyz.generaldocumentrenderer.photoslider
 
-import android.app.Activity
-import android.app.ProgressDialog
-import android.content.Context
-import android.content.Intent
-import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.annotation.RequiresApi
 import com.tanodxyz.documentrenderer.DocumentRenderView
 import com.tanodxyz.documentrenderer.elements.DefaultCircularProgressBarElement
 import com.tanodxyz.documentrenderer.extensions.DefaultScrollHandle
-import com.tanodxyz.documentrenderer.misc.DialogHandle
+import com.tanodxyz.generaldocumentrenderer.ProgressDialog
 import com.tanodxyz.generaldocumentrenderer.R
 
-class PdfViewActivity : AppCompatActivity() {
-    private lateinit var pdfLoader: PdfLoader
+class PhotoSliderActivity : AppCompatActivity() {
+    private lateinit var photoLoader: PhotoLoader
     private lateinit var progressDialog: ProgressDialog
     private lateinit var documentRenderView: DocumentRenderView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_pdf_view)
+        setContentView(R.layout.activity_photo_slider)
         init()
     }
 
-
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     private fun init() {
         documentRenderView = findViewById(R.id.documentRenderView)
 
-        progressDialog = ProgressDialog(this)
-        progressDialog.show()
-        pdfLoader = PdfLoader(documentRenderView)
+//        progressDialog = ProgressDialog(this)
+//        progressDialog.show()
+        photoLoader = PhotoLoader(documentRenderView)
         documentRenderView.setBusyStateIndicator(DefaultCircularProgressBarElement(this))
-        pdfLoader.loadFromAssets(assets, "ad.pdf")
-        pdfLoader.prepareDocument(true) {
+        photoLoader.prepareDocument(true) {
             documentRenderView.setScrollHandler(DefaultScrollHandle(this))
-            progressDialog.hide()
+//            progressDialog.hide()
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        pdfLoader.close()
+        photoLoader.close()
     }
-
 }

@@ -46,6 +46,7 @@ open class PageSnapShotElementImpl(
                         sdFactor = getScaleDownFactor(pageMaxSize)
                     }
                 }
+
                 val bitmap = Bitmap.createBitmap(
                     pageBounds.getWidth().div(sdFactor)
                         .roundToInt(),
@@ -63,8 +64,6 @@ open class PageSnapShotElementImpl(
 
     override fun useScalingForSnapshot(useScalingForSnapshot: Boolean) {
         this.useScalingForSnapshot = useScalingForSnapshot
-        recycle()
-        create(scaleLevel)
     }
 
 
@@ -130,7 +129,11 @@ open class PageSnapShotElementImpl(
             this.scaleLevel = scaleLevel
             val pageBounds = page.pageBounds
             val pageMaxSize = max(pageBounds.getWidth(), pageBounds.getHeight()).roundToInt()
-            val sdFactor: Float = getScaleDownFactor(pageMaxSize)
+            val sdFactor: Float = if(useScalingForSnapshot) {
+                getScaleDownFactor(pageMaxSize)
+            } else {
+                1F
+            }
             page.snapScaleDownFactor = sdFactor
             val bitmap = Bitmap.createBitmap(
                 pageBounds.getWidth().div(sdFactor)

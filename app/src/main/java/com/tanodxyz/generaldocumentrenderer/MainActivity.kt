@@ -1,27 +1,18 @@
 package com.tanodxyz.generaldocumentrenderer
 
-import android.content.Context
+import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.text.Spannable
-import android.text.SpannableString
-import android.text.style.RelativeSizeSpan
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.doOnLayout
 import com.tanodxyz.documentrenderer.*
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.elements.DefaultCircularProgressBarElement
-import com.tanodxyz.documentrenderer.elements.ImageElement
-import com.tanodxyz.documentrenderer.elements.InteractiveElement
+
 import com.tanodxyz.documentrenderer.extensions.DefaultScrollHandle
 import com.tanodxyz.documentrenderer.page.DocumentPage
-import com.tanodxyz.documentrenderer.pagesizecalculator.DefaultPageSizeCalculator
-import com.tanodxyz.generaldocumentrenderer.pdfRenderer.PDFRenderer
-import com.tanodxyz.generaldocumentrenderer.pdfRenderer.PdfLoader
-import com.tanodxyz.generaldocumentrenderer.pdfRenderer.PdfViewActivity
-import com.tanodxyz.generaldocumentrenderer.pdfRenderer.PdfViewActivity.Companion.launchActivity
+import com.tanodxyz.generaldocumentrenderer.photoslider.PhotoSliderActivity
+
 
 class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
     private lateinit var renderView: DocumentRenderView
@@ -34,7 +25,7 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
     }
 
     private fun init() {
-        PdfViewActivity.launchActivity(this)
+        launch<PhotoSliderActivity>()
         simpleIdleResource = SimpleIdlingResource()
         renderView.doOnLayout {
             createAndAddPagesToDocument(renderView) { document ->
@@ -84,4 +75,13 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
         simpleIdleResource?.setIdleState(idle)
     }
 
+
+    companion object {
+         inline fun <reified T:AppCompatActivity> AppCompatActivity.launch() {
+            Intent(this,T::class.java).apply {
+                this@launch.startActivity(this)
+            }
+             this.finish()
+        }
+    }
 }

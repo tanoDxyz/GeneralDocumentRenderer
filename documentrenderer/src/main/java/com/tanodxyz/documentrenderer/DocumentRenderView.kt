@@ -73,7 +73,6 @@ open class DocumentRenderView @JvmOverloads constructor(
     protected val antialiasFilter =
         PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     protected val pagePaint = Paint(Paint.ANTI_ALIAS_FLAG)
-    val pageBackgroundColor: Int get() = pagePaint.color
 
     protected var contentDrawOffsetX = 0F
     protected var contentDrawOffsetY = 0F
