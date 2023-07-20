@@ -9,7 +9,6 @@ import android.graphics.Typeface
 import android.os.Build
 import android.text.Layout
 import android.text.Spannable
-import android.text.SpannableString
 import android.text.StaticLayout
 import android.text.TextDirectionHeuristic
 import android.text.TextDirectionHeuristics
@@ -21,13 +20,11 @@ import android.widget.EditText
 import androidx.annotation.RequiresApi
 import androidx.core.text.toSpannable
 import com.tanodxyz.documentrenderer.R
-import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 import com.tanodxyz.documentrenderer.events.LongPressEvent
 import com.tanodxyz.documentrenderer.getHeight
 import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.misc.DialogHandle
 import com.tanodxyz.documentrenderer.page.DocumentPage
-import java.lang.Exception
 import java.lang.reflect.Constructor
 import kotlin.math.roundToInt
 
@@ -75,6 +72,14 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page),
         appliedLineBreaking = false
         layout = null
         page.redraw()
+    }
+
+    fun getText():Spannable? {
+        return if(this::spannable.isInitialized) {
+            this.spannable
+        } else {
+            null
+        }
     }
 
     override fun onLongPress(
@@ -311,5 +316,15 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page),
     companion object {
         const val DEFAULT_TEXT_SIZE = 22F //px
         const val DEFAULT_TEXT_COLOR = Color.BLACK
+        fun calculateTextHeight(
+            simpleTextElement: SimpleTextElement,
+            maxWidth: Int
+        ): Int {
+            val staticLayout = StaticLayout(
+                simpleTextElement.spannable, simpleTextElement.textPaint, maxWidth,
+                simpleTextElement.alignment, simpleTextElement.spacingmult, simpleTextElement.spacingAdd, simpleTextElement.includePadding
+            )
+            return staticLayout.height
+        }
     }
 }

@@ -14,6 +14,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Parcelable
 import android.util.AttributeSet
+import android.util.DisplayMetrics
 import android.view.MotionEvent
 import android.view.View
 import android.view.View.OnLayoutChangeListener
@@ -51,8 +52,9 @@ open class DocumentRenderView @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyleAttr), View.OnTouchListener,
     TouchEventsManager.TouchEventsListener, AnimationManager.AnimationListener {
 
-    private var viewState: ViewState? = null
-    private var layoutChangeListener =
+    var displayMetrics: DisplayMetrics? = null
+    protected var viewState: ViewState? = null
+    protected var layoutChangeListener =
         OnLayoutChangeListener { view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             if (left != oldLeft || top != oldTop || right != oldRight || bottom != oldBottom) {
                 onConfigurationChanged()
@@ -112,6 +114,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         this.setOnTouchListener(this)
         touchEventMgr = TouchEventsManager(this.context)
         touchEventMgr.registerListener(this)
+        displayMetrics = resources.displayMetrics
         this.addOnLayoutChangeListener(layoutChangeListener)
     }
 

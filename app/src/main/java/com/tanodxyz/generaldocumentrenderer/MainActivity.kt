@@ -11,6 +11,7 @@ import com.tanodxyz.documentrenderer.elements.DefaultCircularProgressBarElement
 
 import com.tanodxyz.documentrenderer.extensions.DefaultScrollHandle
 import com.tanodxyz.documentrenderer.page.DocumentPage
+import com.tanodxyz.generaldocumentrenderer.fileReader.FileReadingActivity
 import com.tanodxyz.generaldocumentrenderer.photoslider.PhotoSliderActivity
 
 
@@ -25,7 +26,7 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
     }
 
     private fun init() {
-        launch<PhotoSliderActivity>()
+        launch<FileReadingActivity>()
         simpleIdleResource = SimpleIdlingResource()
         renderView.doOnLayout {
             createAndAddPagesToDocument(renderView) { document ->

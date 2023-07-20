@@ -1,0 +1,69 @@
+travel planner(gmaps)
+schoolM__mgmt
+chat client.
+light man (alternative to post man )
+Virtual Whiteboard
+Voice Recorder
+AI-Generated Virtual Storyteller
+Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\CI\Config
+https://github.com/vpapadopou/qt-simple-paint/blob/master/canvaswidget.h
+================================================================================================================================
+
+
+
+
+
+
+
+type= null | data= {custom={"i":"8bf9a9be-8c53-4ab1-96a4-f1749ad5c495"}, pri=10, vis=1, alert=Explore our healthy 
+& nutritious selection of snacks for toddlers & finger food for babies (8months +)
+ , title=Little Melly 👶🥣🍪} | title=null | body=null
+
+
+
+
+ ===========================================================================================================================================================================
+ in case of one signal Notification Object's Title and body is null 
+ and bundle contain the following attributes
+
+ title = bundle.title
+ bodyOrMessage = bundle.alert
+
+
+ ========================================================================================================================================================================
+
+
+ in case of order cancel 
+ type= null | data= {data=564_BbhVRCiBXONxuhVyOA, type=20} | title=noknok | body=Order Canceled
+
+ we will parse type and order uid from bundle and  
+ title  = notif.title
+ bodyOrMessage = notif.body
+ ========================================================================================================================================================================
+
+
+  type= null | data= {data=Xaq0hmt-Sl22vnGrqn25xw, type=20} | title=noknok | body=Your order has been delivered.
+
+
+  ==========================================================================================================================================================================
+
+
+type= null | data= {type=42, title=Voucher Received, message=Your voucher information has been received. You can find your voucher codes information inside the voucher history} | title=Voucher Received | body=Your voucher information has been received. You can find your voucher codes information inside the voucher history
+
+
+
+================================================================================================================================================================================================================
+
+
+marko: type= null | data= {data=gMAEk0fDTDGvd8hi9k2w3A, type=20, click_action=REORDER, orderUid=gMAEk0fDTDGvd8hi9k2w3A} | title=Noknok LEB | body=Your order has been canceled because of unsuccessful payment. You can reorder by clicking the button below.
+
+
+==============================================================================================================================================================================================================================
+
+
+
+type= null | data= {amount=0.2, type=33, title=0.20 GHC has been added to your wallet! 💰, message=mariam nawaz, we hope you enjoy it.} | title=0.20 GHC has been added to your wallet! 💰 | body=mariam nawaz, we hope you enjoy it.
+
+
+========================================================================================================================================================================================
+

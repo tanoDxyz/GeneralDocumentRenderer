@@ -17,6 +17,9 @@
         android:theme="@style/Theme.GeneralDocumentRenderer"
         tools:targetApi="31">
         <activity
+            android:name=".fileReader.FileReadingActivity"
+            android:exported="false" />
+        <activity
             android:name=".photoslider.PhotoSliderActivity"
             android:exported="false" />
         <activity

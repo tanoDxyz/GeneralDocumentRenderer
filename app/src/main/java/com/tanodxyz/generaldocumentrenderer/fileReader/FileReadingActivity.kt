@@ -1,4 +1,4 @@
-package com.tanodxyz.generaldocumentrenderer.photoslider
+package com.tanodxyz.generaldocumentrenderer.fileReader
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -7,15 +7,18 @@ import com.tanodxyz.documentrenderer.elements.DefaultCircularProgressBarElement
 import com.tanodxyz.documentrenderer.extensions.DefaultScrollHandle
 import com.tanodxyz.generaldocumentrenderer.ProgressDialog
 import com.tanodxyz.generaldocumentrenderer.R
+import com.tanodxyz.generaldocumentrenderer.photoslider.PhotoLoader
 
-class PhotoSliderActivity : AppCompatActivity() {
-    private lateinit var photoLoader: PhotoLoader
+class FileReadingActivity : AppCompatActivity() {
+
+    private lateinit var fileReader: FileReader
     private lateinit var progressDialog: ProgressDialog
     private lateinit var documentRenderView: DocumentRenderView
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_photo_slider)
+        setContentView(R.layout.activity_file_reading)
         init()
     }
 
@@ -24,16 +27,13 @@ class PhotoSliderActivity : AppCompatActivity() {
 
         progressDialog = ProgressDialog(this)
         progressDialog.show()
-        photoLoader = PhotoLoader(documentRenderView)
+        fileReader = FileReader(documentRenderView)
         documentRenderView.setBusyStateIndicator(DefaultCircularProgressBarElement(this))
-        photoLoader.prepareDocument(true) {
+        fileReader.prepareDocument(true) {
+            println("marko: prpear done ")
             documentRenderView.setScrollHandler(DefaultScrollHandle(this))
             progressDialog.hide()
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        photoLoader.close()
-    }
 }

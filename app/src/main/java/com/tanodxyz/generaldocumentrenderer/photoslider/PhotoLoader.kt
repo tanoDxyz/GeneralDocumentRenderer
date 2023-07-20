@@ -169,6 +169,7 @@ class PhotoLoader(val renderView: DocumentRenderView) {
     }
 
 
+    // code from chat gpt
     private fun calculateInSampleSize(
         options: BitmapFactory.Options,
         reqWidth: Int,

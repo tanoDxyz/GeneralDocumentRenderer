@@ -52,6 +52,7 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
     protected var actualWidth = -1F
     protected var actualHeight = -1F
     var desiredWidth = 0F
+    var symmetric  = false
     var desiredHeight = 0F
     var margins = RectF(0F, 0F, 0F, 0F) //todo make protected
     protected var paddings = RectF(0F, 0F, 0F, 0F) //todo make protected
@@ -317,8 +318,17 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
             if (scaledMargins.bottom > 0) {
                 top -= scaledMargins.bottom
             }
-            right = (left + scaleDownWidth)
-            bottom = (top + scaledDownHeight)
+            if(symmetric) {
+                right = (left + scaleDownWidth) - scaledMargins.left.times(2)
+            } else {
+                right = (left + scaleDownWidth)
+            }
+
+            if(symmetric) {
+                bottom = (top + scaledDownHeight) - scaledMargins.top.times(2)
+            } else {
+                bottom = (top + scaledDownHeight)
+            }
         } else {
             left = page.pageBounds.left + scaledMargins.left
             top = page.pageBounds.top + scaledMargins.top
@@ -328,8 +338,17 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
             if (scaledMargins.bottom > 0) {
                 top -= scaledMargins.bottom
             }
-            right = (left + getContentWidth(mostRecentArgs))
-            bottom = (top + getContentHeight(mostRecentArgs))
+            if(symmetric) {
+                right = (left + getContentWidth(mostRecentArgs)) - (scaledMargins.left.times(2))
+            } else {
+                right = (left + getContentWidth(mostRecentArgs))
+            }
+
+            if(symmetric) {
+                bottom = (top + getContentHeight(mostRecentArgs)) - (scaledMargins.top.times(2))
+            } else {
+                bottom = (top + getContentHeight(mostRecentArgs))
+            }
         }
         elementContentBounds.apply {
             this.left = left
