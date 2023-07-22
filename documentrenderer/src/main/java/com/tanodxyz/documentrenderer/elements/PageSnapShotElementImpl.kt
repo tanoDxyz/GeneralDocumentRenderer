@@ -66,7 +66,6 @@ open class PageSnapShotElementImpl(
         this.useScalingForSnapshot = useScalingForSnapshot
     }
 
-
     private fun createSnap(scaleLevel: Float) {
         future = page.documentRenderView.threadPoolExecutor?.submit {
             create(scaleLevel)

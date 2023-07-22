@@ -7,6 +7,7 @@ import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.MAXIMUM_ZOOM
 import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.MINIMUM_ZOOM
+import kotlin.math.min
 
 class TouchEventsManager(val context: Context) :
     GestureDetector.SimpleOnGestureListener(),
@@ -42,13 +43,13 @@ class TouchEventsManager(val context: Context) :
         return retVal
     }
 
-    private fun hostCanRecieveTouchEvents(): Boolean {
+    private fun hostCanReceiveTouchEvents(): Boolean {
         return this.eventsListener?.canViewReceiveTouchEvents() == true
     }
 
     private fun finishScroll(motionEvent: MotionEvent?) {
         scrolling = false
-        if (hostCanRecieveTouchEvents()) {
+        if (hostCanReceiveTouchEvents()) {
             eventsListener?.onScrollEnd(motionEvent)
         }
     }
@@ -59,7 +60,7 @@ class TouchEventsManager(val context: Context) :
         distanceX: Float,
         distanceY: Float
     ): Boolean {
-        if (scrollingEnabled && hostCanRecieveTouchEvents()) {
+        if (scrollingEnabled && hostCanReceiveTouchEvents()) {
             // determine scroll direction
             return if (eventsListener == null) {
                 false
@@ -110,13 +111,13 @@ class TouchEventsManager(val context: Context) :
     }
 
     override fun onScale(detector: ScaleGestureDetector): Boolean {
-        if (scalingEnabled && hostCanRecieveTouchEvents()) {
+        if (scalingEnabled && hostCanReceiveTouchEvents()) {
             var dr = detector.scaleFactor
             val wantedZoom: Float = (eventsListener?.getCurrentZoom() ?: 1F) * dr
             val minZoom: Float =
-                Math.min(MINIMUM_ZOOM, eventsListener?.getMinZoom() ?: MINIMUM_ZOOM)
+                min(MINIMUM_ZOOM, eventsListener?.getMinZoom() ?: MINIMUM_ZOOM)
             val maxZoom: Float =
-                Math.min(MAXIMUM_ZOOM, eventsListener?.getMaxZoom() ?: MAXIMUM_ZOOM)
+                min(MAXIMUM_ZOOM, eventsListener?.getMaxZoom() ?: MAXIMUM_ZOOM)
             val currentZoom = eventsListener?.getCurrentZoom() ?: MINIMUM_ZOOM
             if (wantedZoom < minZoom) {
                 dr = minZoom / currentZoom
@@ -131,40 +132,40 @@ class TouchEventsManager(val context: Context) :
     }
 
     override fun onSingleTapUp(e: MotionEvent): Boolean {
-        if(hostCanRecieveTouchEvents()) {
+        if(hostCanReceiveTouchEvents()) {
             eventsListener?.onSingleTapUp(e)
         }
         return false
     }
 
     override fun onDoubleTapEvent(e: MotionEvent): Boolean {
-        if(hostCanRecieveTouchEvents()) {
+        if(hostCanReceiveTouchEvents()) {
             eventsListener?.onDoubleTapEvent(e)
         }
         return false
     }
 
     override fun onLongPress(e: MotionEvent) {
-        if(hostCanRecieveTouchEvents()) {
+        if(hostCanReceiveTouchEvents()) {
             eventsListener?.onLongPress(e)
         }
     }
 
     override fun onDown(e: MotionEvent): Boolean {
-        if(hostCanRecieveTouchEvents()) {
+        if(hostCanReceiveTouchEvents()) {
             eventsListener?.onDownEvent()
         }
         return true
     }
 
     override fun onShowPress(e: MotionEvent) {
-        if(hostCanRecieveTouchEvents()) {
+        if(hostCanReceiveTouchEvents()) {
             eventsListener?.onShowPress(e)
         }
     }
 
     override fun onDoubleTap(e: MotionEvent): Boolean {
-        if(!hostCanRecieveTouchEvents()) {
+        if(!hostCanReceiveTouchEvents()) {
             return false
         }
         if (scalingEnabled) {
@@ -172,10 +173,10 @@ class TouchEventsManager(val context: Context) :
                 this.onDoubleTap(e)
                 if (getCurrentZoom() < getMidZoom()) {
                     // zoom with animation
-                    zoomWithAnimation(e!!.x, e.y, getMidZoom())
+                    zoomWithAnimation(e.x, e.y, getMidZoom())
                 } else if (getCurrentZoom() < getMaxZoom()) {
                     // zoom with animation
-                    zoomWithAnimation(e!!.x, e.y, getMaxZoom())
+                    zoomWithAnimation(e.x, e.y, getMaxZoom())
                 } else {
                     resetZoomWithAnimation()
                 }
@@ -188,7 +189,7 @@ class TouchEventsManager(val context: Context) :
     }
 
     override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-        if(!hostCanRecieveTouchEvents()) {
+        if(!hostCanReceiveTouchEvents()) {
             return false
         }
         eventsListener?.onSingleTapConfirmed(e)
@@ -201,7 +202,7 @@ class TouchEventsManager(val context: Context) :
         velocityX: Float,
         velocityY: Float
     ): Boolean {
-        return if (flingingEnabled && hostCanRecieveTouchEvents()) {
+        return if (flingingEnabled && hostCanReceiveTouchEvents()) {
             return eventsListener?.onFling(e1, e2, velocityX, velocityY) ?: false
         } else {
             false
@@ -209,7 +210,7 @@ class TouchEventsManager(val context: Context) :
     }
 
     override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
-        return if (scalingEnabled && hostCanRecieveTouchEvents()) {
+        return if (scalingEnabled && hostCanReceiveTouchEvents()) {
             scaling = true
             eventsListener?.onScaleBegin()
             true
@@ -219,7 +220,7 @@ class TouchEventsManager(val context: Context) :
     }
 
     override fun onScaleEnd(detector: ScaleGestureDetector) {
-        if(hostCanRecieveTouchEvents()) {
+        if(hostCanReceiveTouchEvents()) {
             scaling = false
             eventsListener?.onScaleEnd()
         }

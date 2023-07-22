@@ -4,7 +4,6 @@ package com.tanodxyz.documentrenderer.pagesizecalculator
 import com.tanodxyz.documentrenderer.Size
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.document.Document.PageFitPolicy
-import com.tanodxyz.documentrenderer.page.DocumentPage
 
 
 class DefaultPageSizeCalculator : PageSizeCalculator() {

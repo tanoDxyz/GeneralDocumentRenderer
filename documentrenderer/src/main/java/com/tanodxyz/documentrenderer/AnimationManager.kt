@@ -9,7 +9,6 @@ import android.graphics.PointF
 import android.view.MotionEvent
 import android.view.animation.DecelerateInterpolator
 import android.widget.OverScroller
-import androidx.core.view.MotionEventCompat
 
 
 class AnimationManager(context: Context, private val animationListener: AnimationListener) {
@@ -31,10 +30,10 @@ class AnimationManager(context: Context, private val animationListener: Animatio
         stopAll()
         valueAnimator = ValueAnimator.ofFloat(xFrom, xTo).apply {
             val xAnimation = XAnimation()
-            setInterpolator(DecelerateInterpolator())
+            interpolator = DecelerateInterpolator()
             addUpdateListener(xAnimation)
             addListener(xAnimation)
-            setDuration(400)
+            duration = 400
             start()
         }
     }
@@ -56,10 +55,10 @@ class AnimationManager(context: Context, private val animationListener: Animatio
         stopAll()
         valueAnimator = ValueAnimator.ofFloat(yFrom, yTo).apply {
             val yAnimation = YAnimation()
-            setInterpolator(DecelerateInterpolator())
+            interpolator = DecelerateInterpolator()
             addUpdateListener(yAnimation)
             addListener(yAnimation)
-            setDuration(400)
+            duration = 400
             start()
         }
     }
@@ -67,11 +66,11 @@ class AnimationManager(context: Context, private val animationListener: Animatio
     fun startZoomAnimation(centerX: Float, centerY: Float, zoomFrom: Float, zoomTo: Float) {
         stopAll()
         valueAnimator = ValueAnimator.ofFloat(zoomFrom, zoomTo).apply {
-            setInterpolator(DecelerateInterpolator())
+            interpolator = DecelerateInterpolator()
             val zoomAnim = ZoomAnimation(centerX, centerY)
             addUpdateListener(zoomAnim)
             addListener(zoomAnim)
-            setDuration(400)
+            duration = 400
             start()
         }
     }
@@ -130,7 +129,7 @@ class AnimationManager(context: Context, private val animationListener: Animatio
     }
 
 
-    internal inner class XAnimation() :
+    internal inner class XAnimation :
         AnimatorListenerAdapter(),
         AnimatorUpdateListener {
         override fun onAnimationUpdate(animation: ValueAnimator) {
@@ -147,7 +146,7 @@ class AnimationManager(context: Context, private val animationListener: Animatio
         }
     }
 
-    internal inner class YAnimation() :
+    internal inner class YAnimation :
         AnimatorListenerAdapter(),
         AnimatorUpdateListener {
         override fun onAnimationUpdate(animation: ValueAnimator) {

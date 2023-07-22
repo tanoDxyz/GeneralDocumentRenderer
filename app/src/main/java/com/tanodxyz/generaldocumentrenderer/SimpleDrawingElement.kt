@@ -6,11 +6,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.SparseArray
-import androidx.core.graphics.plus
-import androidx.core.graphics.toRect
-import androidx.core.graphics.toRegion
 import androidx.core.text.toSpannable
-import com.tanodxyz.documentrenderer.copy
 import com.tanodxyz.documentrenderer.dpToPx
 import com.tanodxyz.documentrenderer.elements.ImageElement
 import com.tanodxyz.documentrenderer.elements.PageElement
@@ -35,7 +31,7 @@ class SimpleDrawingElement(resources: Resources, page: DocumentPage) :
     var imageElement = ImageElement(page)
 
     init {
-        moveable = true
+        movable = true
         debug = false
         _10Dp = resources.dpToPx(10)
         this.debugPaint.apply {

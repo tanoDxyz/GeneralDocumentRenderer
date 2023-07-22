@@ -12,7 +12,6 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.roundToInt
 
-// todo code check ok . line check ok . inheritance check ok.
 open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator? = null) {
     protected var maxHeightPageSize = Size(0, 0)
     protected var maxWidthPageSize = Size(0, 0)
@@ -90,7 +89,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
     companion object {
         const val PROPERTY_DOCUMENT_NAME = "com.gdr.documentName"
         const val PROPERTY_DOCUMENT_PAGE_FIT_POLICY = "com.gdr.documentPageFitPolicy"
-        const val PROPERTY_DOCUMENT_FIT_EACH_PAGE = "com.gdr.fiteachpage"
+        const val PROPERTY_DOCUMENT_FIT_EACH_PAGE = "com.gdr.fitEachPage"
         const val PROPERTY_DOCUMENT_SWIPE_VERTICAL = "com.gdr.swipeVertical"
         const val PROPERTY_DOCUMENT_PAGE_FLING = "com.gdr.page.fling"
         const val PROPERTY_NIGHT_MODE = "com.night.mode"

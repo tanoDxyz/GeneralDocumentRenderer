@@ -14,17 +14,17 @@ import android.view.MotionEvent.*
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import androidx.core.view.doOnLayout
 import com.tanodxyz.documentrenderer.DocumentRenderView
 import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.SCROLL_HANDLE_AND_PAGE_DISPLAY_BOX_HIDE_DELAY_MILLI_SECONDS
 import com.tanodxyz.documentrenderer.dpToPx
 import kotlin.math.roundToInt
 
 
-class DefaultScrollHandle @JvmOverloads constructor(
+open class DefaultScrollHandle @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : ScrollHandle, View(context, attrs, defStyleAttr) {
 
+    private var doOnNextLayout: (() -> Unit)? = null
     private var touched = false
     val DEFAULT_WIDTH = context.resources.dpToPx(24)
     val DEFAULT_HEIGHT = context.resources.dpToPx(35)
@@ -35,7 +35,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
     var widthScroller = 0F
     private val _2dp = context.resources.dpToPx(2)
     override var marginUsed = context.resources.dpToPx(16)
-    protected var drawOffset: Float = 0F
+    private var drawOffset: Float = 0F
 
     val scrollerBackgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = scrollColor
@@ -55,6 +55,11 @@ class DefaultScrollHandle @JvmOverloads constructor(
     private val handler_ = Handler(Looper.getMainLooper())
     private val hidePageScrollerRunnable = Runnable { hide(delayed = false) }
 
+
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(changed, left, top, right, bottom)
+        doOnNextLayout?.invoke()
+    }
 
     override fun attachTo(view: DocumentRenderView, onLayout: (() -> Unit)?) {
         view.removeView(this)
@@ -83,11 +88,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
             }
         }
         layoutParams = layoutParamsForThisView
-        onLayout?.apply {
-            doOnLayout {
-                this.invoke()
-            }
-        }
+        this.doOnNextLayout = onLayout
         view.addView(this)
         this.documentRenderView = view
         alpha = 0.6F
@@ -127,7 +128,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
 
 
     override fun show() {
-        visibility = View.VISIBLE
+        visibility = VISIBLE
     }
 
     override fun hide(delayed: Boolean) {
@@ -136,7 +137,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
                 hidePageScrollerRunnable, SCROLL_HANDLE_AND_PAGE_DISPLAY_BOX_HIDE_DELAY_MILLI_SECONDS
             )
         } else {
-            visibility = View.INVISIBLE
+            visibility = INVISIBLE
         }
     }
 
@@ -176,7 +177,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
 
             val x = event!!.x
             val y = event.y
-            when (event!!.action) {
+            when (event.action) {
                 ACTION_DOWN, ACTION_POINTER_DOWN -> {
                     stopFling()
                     handler_.removeCallbacks(hidePageScrollerRunnable)
@@ -214,7 +215,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
         if (isInEditMode) {
             return
         }
-        canvas.also { canvas ->
+        canvas.apply {
             documentRenderView?.apply {
                 val swipeVertical = isSwipeVertical()
                 oval.left = 0F

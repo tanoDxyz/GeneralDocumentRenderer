@@ -56,7 +56,7 @@ open class ImageElement(
         canvas.drawRect(boundsRelativeToPage, paint)
         val textSizeRelativeToSnap = args.textSizeRelativeToSnap(unloadedBitmapTextSize)
         textPaint.textSize = textSizeRelativeToSnap
-        val fm: Paint.FontMetrics = textPaint.getFontMetrics()
+        val fm: Paint.FontMetrics = textPaint.fontMetrics
         val textHeight = fm.bottom - fm.top + fm.leading
         val textDrawX =
             boundsRelativeToPage.left + page.documentRenderView.context.resources.dpToPx(8)
@@ -103,9 +103,4 @@ open class ImageElement(
     ) {
         canvas.drawBitmap(bitmap, sourceRect, targetRect, null)
     }
-
-    override fun onEvent(iMotionEventMarker: IMotionEventMarker?): Boolean {
-        return super.onEvent(iMotionEventMarker)
-    }
-
 }

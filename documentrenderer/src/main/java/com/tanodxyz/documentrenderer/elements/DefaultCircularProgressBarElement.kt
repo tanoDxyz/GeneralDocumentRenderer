@@ -1,20 +1,16 @@
 package com.tanodxyz.documentrenderer.elements
 
-import android.animation.PropertyValuesHolder
-import android.animation.ValueAnimator
+
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
-import android.text.StaticLayout
 import android.text.TextPaint
 import android.util.SparseArray
-import android.view.animation.AccelerateDecelerateInterpolator
 import com.tanodxyz.documentrenderer.R
 import com.tanodxyz.documentrenderer.dpToPx
 import com.tanodxyz.documentrenderer.spToPx
-import java.security.SecureRandom
 
 /**
  * subject to change
@@ -77,7 +73,6 @@ class DefaultCircularProgressBarElement(val context: Context) : IElement {
 
     private fun getCurrentPercentageToFill() =
         (360 * (currentPercentage / 100))
-
 
     private fun drawBackgroundArc(it: Canvas) {
         it.drawArc(ovalSpace, 0f, 360f, false, parentArcPaint)

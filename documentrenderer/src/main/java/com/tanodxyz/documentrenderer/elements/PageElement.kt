@@ -29,9 +29,12 @@ import java.security.SecureRandom
 import kotlin.math.roundToInt
 
 open class PageElement(var page: DocumentPage) : InteractiveElement {
-    open var moveable = true
+    open var movable = true
     var debug = false
     protected var mobileModeActivated = false
+    protected var usePreCalculatedBounds: Boolean = false
+    protected var actualWidth = -1F
+    protected var actualHeight = -1F
     var clickListener: OnClickListener? = null
     var longPressListener: OnLongPressListener? = null
     var doubleTapCompleteListener: OnDoubleTapCompleteListener? = null
@@ -45,12 +48,10 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
     var onScrollEndListener: OnScrollEndListener? = null
     var onShowPressListener: OnShowPressListener? = null
     var onSingleTapUpListener: OnSingleTapUpListener? = null
-    protected var usePreCalculatedBounds: Boolean = false
-
     var shouldChangeSizeBasedOnPageSizeCalculator = true
     var mostRecentArgs: SparseArray<Any>? = null
-    protected var actualWidth = -1F
-    protected var actualHeight = -1F
+    open var type: String = TAG
+    val elementContentBounds = RectF()
     var desiredWidth = 0F
     var symmetric  = false
     var desiredHeight = 0F
@@ -61,10 +62,6 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
         style = Paint.Style.STROKE
         strokeWidth = 8F
     }
-    open var type: String = TAG
-
-
-    val elementContentBounds = RectF()
 
     override fun getContentWidth(args: SparseArray<Any>?): Float {
         return page.documentRenderView.toCurrentScale(desiredWidth)
@@ -192,10 +189,10 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
         }
     }
 
-    override fun onEvent(iMotionEventMarker: IMotionEventMarker?): Boolean {
-        dispatchCallbacksToListenersIfAttached(iMotionEventMarker)
-        if (moveable) {
-            handleElementMovement(iMotionEventMarker)
+    override fun onEvent(event: IMotionEventMarker?): Boolean {
+        dispatchCallbacksToListenersIfAttached(event)
+        if (movable) {
+            handleElementMovement(event)
         }
 
         return false
@@ -218,7 +215,7 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
 
         if (mobileModeActivated && eventOccurredWithInBounds) {
             val deltaX = iMotionEventMarker!!.getX() - elementBounds.centerX()
-            val deltaY = iMotionEventMarker!!.getY() - elementBounds.centerY()
+            val deltaY = iMotionEventMarker.getY() - elementBounds.centerY()
             margins.left += deltaX
             margins.top += deltaY
         }
@@ -288,7 +285,6 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
         return arr
     }
 
-
     override fun setContentBounds(bounds: RectF) {
         elementContentBounds.left = bounds.left
         elementContentBounds.top = bounds.top
@@ -303,10 +299,10 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
         }
         val scaledMargins = getScaledMargins(drawSnapShot)
 
-        var left = 0F
-        var top = 0F
-        var right = 0F
-        var bottom = 0F
+        var left: Float
+        var top: Float
+        val right: Float
+        val bottom: Float
         if (drawSnapShot) {
             left = scaledMargins.left
             top = scaledMargins.top
@@ -318,16 +314,16 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
             if (scaledMargins.bottom > 0) {
                 top -= scaledMargins.bottom
             }
-            if(symmetric) {
-                right = (left + scaleDownWidth) - scaledMargins.left.times(2)
+            right = if(symmetric) {
+                (left + scaleDownWidth) - scaledMargins.left.times(2)
             } else {
-                right = (left + scaleDownWidth)
+                (left + scaleDownWidth)
             }
 
-            if(symmetric) {
-                bottom = (top + scaledDownHeight) - scaledMargins.top.times(2)
+            bottom = if(symmetric) {
+                (top + scaledDownHeight) - scaledMargins.top.times(2)
             } else {
-                bottom = (top + scaledDownHeight)
+                (top + scaledDownHeight)
             }
         } else {
             left = page.pageBounds.left + scaledMargins.left
@@ -338,16 +334,16 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
             if (scaledMargins.bottom > 0) {
                 top -= scaledMargins.bottom
             }
-            if(symmetric) {
-                right = (left + getContentWidth(mostRecentArgs)) - (scaledMargins.left.times(2))
+            right = if(symmetric) {
+                (left + getContentWidth(mostRecentArgs)) - (scaledMargins.left.times(2))
             } else {
-                right = (left + getContentWidth(mostRecentArgs))
+                (left + getContentWidth(mostRecentArgs))
             }
 
-            if(symmetric) {
-                bottom = (top + getContentHeight(mostRecentArgs)) - (scaledMargins.top.times(2))
+            bottom = if(symmetric) {
+                (top + getContentHeight(mostRecentArgs)) - (scaledMargins.top.times(2))
             } else {
-                bottom = (top + getContentHeight(mostRecentArgs))
+                (top + getContentHeight(mostRecentArgs))
             }
         }
         elementContentBounds.apply {
@@ -365,10 +361,10 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
         val tm = margins.top
         val rm = margins.right
         val bm = margins.bottom
-        var slm = 0F
-        var stm = 0F
-        var srm = 0F
-        var sbm = 0F
+        val slm: Float
+        val stm: Float
+        val srm: Float
+        val sbm: Float
         if (drawSnapShot) {
             slm = page.documentRenderView.toCurrentScale(lm.div(page.snapScaleDownFactor))
             stm = page.documentRenderView.toCurrentScale(tm.div(page.snapScaleDownFactor))
@@ -395,10 +391,10 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
         val tp = paddings.top
         val rp = paddings.right
         val bp = paddings.bottom
-        var slp = 0F
-        var stp = 0F
-        var srp = 0F
-        var sbp = 0F
+        val slp: Float
+        val stp: Float
+        val srp: Float
+        val sbp: Float
         if (drawSnapShot) {
             slp = page.documentRenderView.toCurrentScale(lp.div(page.snapScaleDownFactor))
             stp = page.documentRenderView.toCurrentScale(tp.div(page.snapScaleDownFactor))
@@ -494,7 +490,6 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
         fun onScaleEnd(eventMarker: ScaleEndEvent?, PageElement: PageElement)
     }
 
-
     interface OnScrollStartListener {
         fun onScrollStart(eventMarker: ScrollStartEvent?, pageElement: PageElement)
     }
@@ -515,7 +510,7 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
         const val DEFAULT_WIDTH = 200
         const val DEFAULT_HEIGHT = 100
         private const val PAGE_ELEMENT = "pageElement"
-        val TAG = PAGE_ELEMENT
+        const val TAG = PAGE_ELEMENT
         val colors = mutableListOf<Int>().apply {
             add(Color.GREEN)
             add(Color.RED)
@@ -527,5 +522,4 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
         }
         val secureRandom = SecureRandom()
     }
-
 }

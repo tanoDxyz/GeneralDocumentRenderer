@@ -9,7 +9,6 @@ import com.tanodxyz.documentrenderer.*
 import com.tanodxyz.documentrenderer.elements.InteractiveElement
 import com.tanodxyz.documentrenderer.elements.PageSnapShotElementImpl
 import com.tanodxyz.documentrenderer.events.*
-import com.tanodxyz.documentrenderer.pagesizecalculator.PageSizeCalculator
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException

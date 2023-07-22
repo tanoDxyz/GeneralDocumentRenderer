@@ -8,7 +8,7 @@ import android.graphics.drawable.ColorDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.Window
-import com.tanodxyz.documentrenderer.R
+
 
 abstract class DialogHandle(
     protected val windowContext: Context,
@@ -36,14 +36,14 @@ abstract class DialogHandle(
         }
     }
 
-    fun setOnShowListener(callback: androidx.core.util.Consumer<DialogInterface?>) {
+    fun setOnShowListener(callback: (DialogInterface?)->Unit) {
         dialog?.setOnShowListener {
-            callback.accept(it)
+            callback(it)
         }
     }
 
-    fun setOnDismissListener(callback: androidx.core.util.Consumer<DialogInterface?>) {
-        dialog?.setOnDismissListener { callback.accept(it) }
+    fun setOnDismissListener(callback: (DialogInterface?)->Unit) {
+        dialog?.setOnDismissListener { callback(it) }
     }
 
     open fun show(): Pair<Boolean, Throwable?> {

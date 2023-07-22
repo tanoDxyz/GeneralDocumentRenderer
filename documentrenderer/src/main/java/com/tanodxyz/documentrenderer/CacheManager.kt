@@ -1,9 +1,7 @@
 package com.tanodxyz.documentrenderer
 
-import android.graphics.Bitmap
-import android.os.Bundle
 import android.util.LruCache
-import java.util.UUID
+
 
 class CacheManager(memoryFactor: Int) {
     private var lruCache: LruCache<String, Blob>

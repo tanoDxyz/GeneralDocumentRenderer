@@ -18,8 +18,6 @@ import android.util.SparseArray
 import android.view.View
 import android.widget.EditText
 import androidx.annotation.RequiresApi
-import androidx.core.text.toSpannable
-import com.tanodxyz.documentrenderer.DocumentRenderView
 import com.tanodxyz.documentrenderer.R
 import com.tanodxyz.documentrenderer.events.LongPressEvent
 import com.tanodxyz.documentrenderer.getHeight
@@ -38,30 +36,24 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page),
         this.color = DEFAULT_TEXT_COLOR
         this.textSize = DEFAULT_TEXT_SIZE
     }
+    protected var layout: StaticLayout? = null
     var textSizePixels: Float = textPaint.textSize
     private var scaleLevelForWhichSizeMeasured = -1F
     var ellipseSize = TextUtils.TruncateAt.END
     var alignment = Layout.Alignment.ALIGN_NORMAL
-    var textDirectionHeuristics = TextDirectionHeuristics.LTR
+    var textDirectionHeuristics: TextDirectionHeuristic = TextDirectionHeuristics.LTR
     var spacingmult = 1.0F
     var spacingAdd = 2.0F
-
     var textColor:Int = textPaint.color
     var includePadding = false
     var allowTextEditing = true
-    override var moveable = !allowTextEditing
+    override var movable = !allowTextEditing
     @RequiresApi(Build.VERSION_CODES.M)
     var lineBreakingStrategy = Layout.BREAK_STRATEGY_SIMPLE
-
     @RequiresApi(Build.VERSION_CODES.M)
     var hyphenationFrequency = Layout.HYPHENATION_FREQUENCY_NONE
-
     @RequiresApi(Build.VERSION_CODES.P)
     var useLineSpacingFromFallbacks = false
-
-
-    protected var layout: StaticLayout? = null
-
     override var type = "TextElement"
 
     init {
@@ -86,13 +78,12 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page),
 
     override fun onLongPress(
         eventMarker: LongPressEvent?,
-        pageElementImpl: PageElement
+        pageElement: PageElement
     ) {
         if (allowTextEditing) {
             showTextEditDialog()
         }
     }
-
 
     fun setTypeFace(typeface: Typeface) {
         textPaint.typeface = typeface
@@ -144,7 +135,6 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page),
             ex.printStackTrace()
         }
     }
-
 
     override fun getContentHeight(args: SparseArray<Any>?): Float {
         if (desiredHeight > 0) {
