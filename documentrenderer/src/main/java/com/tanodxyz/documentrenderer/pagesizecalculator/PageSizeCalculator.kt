@@ -13,6 +13,7 @@ abstract class PageSizeCalculator {
     open fun reset() {}
 
     companion object {
+        const val DISPLAY_METRICS: String = "com.displayMetrics"
         const val FIT_POLICY = Document.PROPERTY_DOCUMENT_PAGE_FIT_POLICY
         const val MAX_WIDTH_PAGE_SIZE = "com.maxWidthSize"
         const val MAX_HEIGHT_PAGE_SIZE = "com.maxHeightSize"

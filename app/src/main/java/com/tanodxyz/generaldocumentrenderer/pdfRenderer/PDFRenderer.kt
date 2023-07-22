@@ -124,7 +124,6 @@ class PDFRenderer(val renderView: DocumentRenderView) {
                 synchronized(requestStack) {
                     PageRenderOperationWrapper(pageNumber, pageBounds).apply {
                         if(requestStack.contains(this)) {
-                            println("marko: duplicate of $this")
                             return@submit
                         }
                         this.callback = callback

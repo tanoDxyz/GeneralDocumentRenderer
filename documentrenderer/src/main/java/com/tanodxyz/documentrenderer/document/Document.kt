@@ -10,6 +10,8 @@ import com.tanodxyz.documentrenderer.pagesizecalculator.DefaultPageSizeCalculato
 import com.tanodxyz.documentrenderer.pagesizecalculator.PageSizeCalculator
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.math.roundToInt
+
 // todo code check ok . line check ok . inheritance check ok.
 open class Document (context: Context, var pageSizeCalculator: PageSizeCalculator? = null) {
     protected var maxHeightPageSize = Size(0, 0)
@@ -176,6 +178,7 @@ open class Document (context: Context, var pageSizeCalculator: PageSizeCalculato
                 PageSizeCalculator.FIT_EACH_PAGE,
                 get<Boolean>(PROPERTY_DOCUMENT_FIT_EACH_PAGE) ?: false
             )
+            put(PageSizeCalculator.DISPLAY_METRICS,documentRenderView.displayMetrics!!)
         }
         // setup page size calculator
         pageSizeCalculator!!.setup(props)
@@ -212,6 +215,16 @@ open class Document (context: Context, var pageSizeCalculator: PageSizeCalculato
             }
             documentPage.onMeasurementDone(documentRenderView)
         }
+    }
+
+    fun getPageSizeWithMargins(page: DocumentPage):Size {
+        val horizontalMargins = pageMargins.left + pageMargins.right
+        val verticalMargins = pageMargins.top + pageMargins.bottom
+        val originalSize = page.originalSize
+        val size = Size(originalSize.width, originalSize.height)
+        size.width -= horizontalMargins.roundToInt()
+        size.height -= verticalMargins.roundToInt()
+        return size
     }
 
     @Synchronized

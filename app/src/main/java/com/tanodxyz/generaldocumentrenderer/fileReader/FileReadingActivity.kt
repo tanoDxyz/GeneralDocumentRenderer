@@ -30,7 +30,6 @@ class FileReadingActivity : AppCompatActivity() {
         fileReader = FileReader(documentRenderView)
         documentRenderView.setBusyStateIndicator(DefaultCircularProgressBarElement(this))
         fileReader.prepareDocument(true) {
-            println("marko: prpear done ")
             documentRenderView.setScrollHandler(DefaultScrollHandle(this))
             progressDialog.hide()
         }

@@ -1,0 +1,502 @@
+Stack Overflow
+About
+Products
+For Teams
+Search…
+Home
+PUBLIC
+Questions
+Tags
+Users
+Companies
+COLLECTIVES
+Explore Collectives
+TEAMS
+Stack Overflow for Teams – Start collaborating and sharing organizational knowledge. 
+Measuring text height to be drawn on Canvas ( Android )
+Asked 12 years, 10 months ago
+Modified 1 year, 1 month ago
+Viewed 120k times
+
+Report this ad
+156
+
+Any straight forward way to measure the height of text? The way I am doing it now is by using Paint's measureText() to get the width, then by trial and error finding a value to get an approximate height. I've also been messing around with FontMetrics, but all these seem like approximate methods that suck.
+
+I am trying to scale things for different resolutions. I can do it, but I end up with incredibly verbose code with lots of calculations to determine relative sizes. I hate it! There has to be a better way.
+
+androidgraphicsviewandroid-canvas
+Share
+Improve this question
+Follow
+edited Feb 7, 2017 at 1:33
+Suragch's user avatar
+Suragch
+481k309309 gold badges13621362 silver badges13901390 bronze badges
+asked Sep 6, 2010 at 21:12
+Danedo's user avatar
+Danedo
+2,18355 gold badges2929 silver badges3737 bronze badges
+Add a comment
+8 Answers
+Sorted by:
+
+Highest score (default)
+303
+
+There are different ways to measure the height depending on what you need.
+
+#1 getTextBounds
+If you are doing something like precisely centering a small amount of fixed text, you probably want getTextBounds. You can get the bounding rectangle like this
+
+Rect bounds = new Rect();
+mTextPaint.getTextBounds(mText, 0, mText.length(), bounds);
+int height = bounds.height();
+As you can see for the following images, different strings will give different heights (shown in red).
+
+enter image description here
+
+These differing heights could be a disadvantage in some situations when you just need a constant height no matter what the text is. See the next section.
+
+#2 Paint.FontMetrics
+You can calculate the hight of the font from the font metrics. The height is always the same because it is obtained from the font, not any particular text string.
+
+Paint.FontMetrics fm = mTextPaint.getFontMetrics();
+float height = fm.descent - fm.ascent;
+The baseline is the line that the text sits on. The descent is generally the furthest a character will go below the line and the ascent is generally the furthest a character will go above the line. To get the height you have to subtract ascent because it is a negative value. (The baseline is y=0 and y descreases up the screen.)
+
+Look at the following image. The heights for both of the strings are 234.375.
+
+enter image description here
+
+If you want the line height rather than just the text height, you could do the following:
+
+float height = fm.bottom - fm.top + fm.leading; // 265.4297
+These are the bottom and top of the line. The leading (interline spacing) is usually zero, but you should add it anyway.
+
+The images above come from this project. You can play around with it to see how Font Metrics work.
+
+#3 StaticLayout
+For measuring the height of multi-line text you should use a StaticLayout. I talked about it in some detail in this answer, but the basic way to get this height is like this:
+
+String text = "This is some text. This is some text. This is some text. This is some text. This is some text. This is some text.";
+
+TextPaint myTextPaint = new TextPaint();
+myTextPaint.setAntiAlias(true);
+myTextPaint.setTextSize(16 * getResources().getDisplayMetrics().density);
+myTextPaint.setColor(0xFF000000);
+
+int width = 200;
+Layout.Alignment alignment = Layout.Alignment.ALIGN_NORMAL;
+float spacingMultiplier = 1;
+float spacingAddition = 0;
+boolean includePadding = false;
+
+StaticLayout myStaticLayout = new StaticLayout(text, myTextPaint, width, alignment, spacingMultiplier, spacingAddition, includePadding);
+
+float height = myStaticLayout.getHeight(); 
+Share
+Improve this answer
+Follow
+edited May 23, 2022 at 9:38
+Top-Master's user avatar
+Top-Master
+7,55455 gold badges3939 silver badges6969 bronze badges
+answered Feb 7, 2017 at 13:58
+Suragch's user avatar
+Suragch
+481k309309 gold badges13621362 silver badges13901390 bronze badges
+2
+@MichealJohnson, I added the app as a GitHub project here. – 
+Suragch
+ Mar 3, 2017 at 0:15
+1
+What does "getTextSize" give you, then? – 
+android developer
+ May 13, 2018 at 14:34
+1
+Paint's getTextSize() gives you the font size in pixel units (as opposed to sp units). @androiddeveloper – 
+Suragch
+ May 13, 2018 at 23:16 
+2
+What is the relationship of the font size in pixel units to the measured height and to the FontMetrics dimensions? That is a question that I would like to explore more. – 
+Suragch
+ May 13, 2018 at 23:24
+1
+@JimLeask, You can use Autosizing TextViews. But if you are drawing text on canvas yourself then you have to set the font, measure it, reset the font, measure it...until you have the desired height. – 
+Suragch
+ Nov 23, 2018 at 2:54 
+Show 9 more comments
+145
+
+What about paint.getTextBounds() (object method)
+
+Share
+Improve this answer
+Follow
+edited Nov 13, 2017 at 20:27
+Alon's user avatar
+Alon
+60199 silver badges1919 bronze badges
+answered Sep 27, 2010 at 15:02
+bramp's user avatar
+bramp
+9,57155 gold badges3939 silver badges4646 bronze badges
+2
+This yields very odd results, when I evaluate the height of a text. A short text results in a height of 12, whereas a REALLY long text results in a height of 16 (given a font size of 16). Makes no sense to me (android 2.3.3) – 
+AgentKnopf
+ Feb 20, 2012 at 16:07
+40
+The variance in height is where you have descenders in the text, i.e. 'High' is taller than 'Low' because of the part of the g below the line – 
+FrinkTheBrave
+ Nov 8, 2012 at 13:32
+If you don't want variances, use Paint.FontMetrics instead. – 
+Top-Master
+ May 23, 2022 at 9:48
+Add a comment
+91
+
+@bramp's answer is correct - partially, in that it does not mention that the calculated boundaries will be the minimum rectangle that contains the text fully with implicit start coordinates of 0, 0.
+
+This means, that the height of, for example "Py" will be different from the height of "py" or "hi" or "oi" or "aw" because pixel-wise they require different heights.
+
+This by no means is an equivalent to FontMetrics in classic java.
+
+While width of a text is not much of a pain, height is.
+
+In particular, if you need to vertically center-align the drawn text, try getting the boundaries of the text "a" (without quotes), instead of using the text you intend to draw. Works for me...
+
+Here's what I mean:
+
+Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.LINEAR_TEXT_FLAG);
+
+paint.setStyle(Paint.Style.FILL);
+paint.setColor(color);
+paint.setTextAlign(Paint.Align.CENTER);
+paint.setTextSize(textSize);
+
+Rect bounds = new Rect();
+paint.getTextBounds("a", 0, 1, bounds);
+
+buffer.drawText(this.myText, canvasWidth >> 1, (canvasHeight + bounds.height()) >> 1, paint);
+// remember x >> 1 is equivalent to x / 2, but works much much faster
+Vertically center aligning the text means vertically center align the bounding rectangle - which is different for different texts (caps, long letters etc). But what we actually want to do is to also align the baselines of rendered texts, such that they did not appear elevated or grooved. So, as long as we know the center of the smallest letter ("a" for example) we then can reuse its alignment for the rest of the texts. This will center align all the texts as well as baseline-align them.
+
+Share
+Improve this answer
+Follow
+edited Jul 21, 2017 at 23:39
+Suragch's user avatar
+Suragch
+481k309309 gold badges13621362 silver badges13901390 bronze badges
+answered Aug 2, 2012 at 7:02
+Nar Gar's user avatar
+Nar Gar
+2,58122 gold badges2525 silver badges2828 bronze badges
+27
+Haven't seen x >> 1 for ages. Upvoting only for that :) – 
+keaukraine
+ Dec 13, 2012 at 13:00
+70
+A good modern compiler will see x / 2 and optimize it to x >> 1 – 
+intrepidis
+ Mar 15, 2013 at 0:59 
+what is buffer in this example? Is it the canvas passed to the draw(Canvas) method? – 
+AutonomousApps
+ Apr 19, 2018 at 21:15
+@AutonomousApps yes, it's the canvas – 
+Chisko
+ Jun 5, 2018 at 22:48
+Add a comment
+
+Report this ad
+16
+
+The height is the text size you have set on the Paint variable.
+
+Another way to find out the height is
+
+mPaint.getTextSize();
+Share
+Improve this answer
+Follow
+answered Jun 17, 2014 at 14:33
+kimnod's user avatar
+kimnod
+18111 silver badge99 bronze badges
+Add a comment
+3
+
+You could use the android.text.StaticLayout class to specify the bounds required and then call getHeight(). You can draw the text (contained in the layout) by calling its draw(Canvas) method.
+
+Share
+Improve this answer
+Follow
+answered Mar 15, 2013 at 1:17
+intrepidis's user avatar
+intrepidis
+2,86111 gold badge3434 silver badges3636 bronze badges
+Add a comment
+2
+
+You can simply get the text size for a Paint object using getTextSize() method. For example:
+
+Paint mTextPaint = new Paint (Paint.ANTI_ALIAS_FLAG);
+//use densityMultiplier to take into account different pixel densities
+final float densityMultiplier = getContext().getResources()
+            .getDisplayMetrics().density;  
+mTextPaint.setTextSize(24.0f*densityMultiplier);
+
+//...
+
+float size = mTextPaint.getTextSize();
+Share
+Improve this answer
+Follow
+answered Dec 15, 2012 at 16:30
+moondroid's user avatar
+moondroid
+1,7301717 silver badges2020 bronze badges
+Where does the 24.0f come from? – 
+Erigami
+ Feb 17, 2015 at 2:29
+24.0f it's just an example for a text size – 
+moondroid
+ Feb 17, 2015 at 9:25
+Add a comment
+1
+
+You must use Rect.width() and Rect.Height() which returned from getTextBounds() instead. That works for me.
+
+Share
+Improve this answer
+Follow
+edited Apr 6, 2012 at 12:39
+Ant4res's user avatar
+Ant4res
+1,21711 gold badge1818 silver badges3636 bronze badges
+answered Apr 6, 2012 at 8:07
+Putti's user avatar
+Putti
+1111 bronze badge
+2
+Not if you're dealing with multiple segments of texts. The reason is in my answer above. – 
+Nar Gar
+ Sep 12, 2012 at 12:55
+Add a comment
+0
+
+If anyone still has problem, this is my code.
+
+I have a custom view which is square (width = height) and I want to assign a character to it. onDraw() shows how to get height of character, although I'm not using it. Character will be displayed in the middle of view.
+
+public class SideBarPointer extends View {
+
+    private static final String TAG = "SideBarPointer";
+
+    private Context context;
+    private String label = "";
+    private int width;
+    private int height;
+
+    public SideBarPointer(Context context) {
+        super(context);
+        this.context = context;
+        init();
+    }
+
+    public SideBarPointer(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        this.context = context;
+        init();
+    }
+
+    public SideBarPointer(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+        this.context = context;
+        init();
+    }
+
+    private void init() {
+//        setBackgroundColor(0x64FF0000);
+    }
+
+    @Override
+    public void onMeasure(int widthMeasureSpec, int heightMeasureSpec){
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+        height = this.getMeasuredHeight();
+        width = this.getMeasuredWidth();
+
+        setMeasuredDimension(width, width);
+    }
+
+    protected void onDraw(Canvas canvas) {
+        float mDensity = context.getResources().getDisplayMetrics().density;
+        float mScaledDensity = context.getResources().getDisplayMetrics().scaledDensity;
+
+        Paint previewPaint = new Paint();
+        previewPaint.setColor(0x0C2727);
+        previewPaint.setAlpha(200);
+        previewPaint.setAntiAlias(true);
+
+        Paint previewTextPaint = new Paint();
+        previewTextPaint.setColor(Color.WHITE);
+        previewTextPaint.setAntiAlias(true);
+        previewTextPaint.setTextSize(90 * mScaledDensity);
+        previewTextPaint.setShadowLayer(5, 1, 2, Color.argb(255, 87, 87, 87));
+
+        float previewTextWidth = previewTextPaint.measureText(label);
+//        float previewTextHeight = previewTextPaint.descent() - previewTextPaint.ascent();
+        RectF previewRect = new RectF(0, 0, width, width);
+
+        canvas.drawRoundRect(previewRect, 5 * mDensity, 5 * mDensity, previewPaint);
+        canvas.drawText(label, (width - previewTextWidth)/2, previewRect.top - previewTextPaint.ascent(), previewTextPaint);
+
+        super.onDraw(canvas);
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+        Log.e(TAG, "Label: " + label);
+
+        this.invalidate();
+    }
+}
+Share
+Improve this answer
+Follow
+answered Jun 7, 2013 at 9:47
+Hesam's user avatar
+Hesam
+52.1k7373 gold badges222222 silver badges365365 bronze badges
+4
+-1 for allocations in onDraw(): It would yield a ton of performance benefits if you were to declare the fields in the class (initiate in constructor) and re-use them in onDraw(). – 
+zoltish
+ Oct 31, 2015 at 7:45
+Add a comment
+Your Answer
+Sign up or log in
+Post as a guest
+Name
+Email
+Required, but never shown
+
+By clicking “Post Your Answer”, you agree to our terms of service and acknowledge that you have read and understand our privacy policy and code of conduct.
+
+Not the answer you're looking for? Browse other questions tagged androidgraphicsviewandroid-canvas or ask your own question.
+The Overflow Blog
+Improving time to first byte: Q&A with Dana Lawson of Netlify
+What it’s like to be on the Python Steering Council (Ep. 592)
+Featured on Meta
+Colors update: A more detailed look
+Stack Overflow at WeAreDevelopers World Congress in Berlin
+Temporary policy: Generative AI (e.g., ChatGPT) is banned
+Launching 2 new collectives: PHP and NLP
+Conclusions from title-drafting and question-content assistance experiments...
+
+Report this ad
+Linked
+984
+Auto Scale TextView Text to Fit within Bounds
+201
+Android Paint: .measureText() vs .getTextBounds()
+112
+Meaning of top, ascent, baseline, descent, bottom, and leading in Android's FontMetrics
+45
+Getting height of text view before rendering to layout
+43
+How is StaticLayout used in Android?
+10
+How do I indent a text line in TextView in android?
+8
+Android: Measure Text Height on a Canvas
+5
+Draw text inside a filled rectangle using Canvas Android
+6
+Get the text height including the font size and set that height
+3
+What is the unit for TextPaint setTextSize in Android?
+See more linked questions
+Related
+137
+Measuring text width to be drawn on Canvas ( Android )
+6
+How to know the size of a text when using Canvas.drawText()
+10
+Getting height and width of a text using Canvas
+2
+Get canvas height without drawing
+8
+Android: Measure Text Height on a Canvas
+23
+How to Measure TextView Height Based on Device Width and Font Size?
+4
+Draw text on Canvas with custom Height - Android
+1
+How to find the text width from android canvas?
+0
+Android / Java: Canvas.drawText() set text height in px
+0
+Calculate baseline y for drawing text on canvas in Android
+Hot Network Questions
+Should developers fix bugs in their own code?
+No manual entry for termios
+Why is there no mechanism for disciplining judges whose decisions get overturned because they make errors of law?
+Is there a popular expression in English equivalent of Russian "water wears away a stone"?
+Is this "asbestos siding"?
+What are the implications of requesting someone sign a document with false information?
+Find limit of recursive complex sequence
+This article in a major Australian newspaper says Aussies just gained visa-free access to Japan. Didn't we already have it?
+What language design features made Lisp useful for Artificial Intelligence research?
+Will synthetic data (e.g. from a generative model) produce valid statistical inference?
+Help with smoke detectors?
+(Cops) Fast and Golfiest Season 1: The Lord of the Strings
+Were cartridge slots cheaper at the back?
+Why can't a fiber bundle be written as a cartesian product?
+Why did these algae grow like this in the pool? Are these curves the gravitational equivalents of the bell curve?
+how to make normal command `ls` and the wildcard `*` in zsh
+Stanislaw Lem short story about robot listening to dying crew members communicate in Morse code
+cp some/path/**/**/*.h is not including .h files at all depths
+Why gold is always measured with a balance and not with a scale?
+How to Encourage Players to Engage in Diplomacy and Negotiations Instead of Resorting to Combat?
+Is every integer representable as the sum of four Fibonacci squares?
+Are there any legal provisions that concern males entering various types of business establishments without a shirt?
+Is what my DM did impacting player agency in a negative way?
+Mains Plug Soldering Wires
+ Question feed
+
+STACK OVERFLOW
+Questions
+Help
+PRODUCTS
+Teams
+Advertising
+Collectives
+Talent
+COMPANY
+About
+Press
+Work Here
+Legal
+Privacy Policy
+Terms of Service
+Contact Us
+Cookie Settings
+Cookie Policy
+STACK EXCHANGE NETWORK
+Technology
+Culture & recreation
+Life & arts
+Science
+Professional
+Business
+API
+Data
+Blog
+Facebook
+Twitter
+LinkedIn
+Instagram
+Site design / logo © 2023 Stack Exchange Inc; user contributions licensed under CC BY-SA. rev 2023.7.21.43541
+

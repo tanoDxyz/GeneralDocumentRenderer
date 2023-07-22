@@ -17,6 +17,6 @@ interface InteractiveElement : IElement,IEventHandler {
 
     fun reset()
     fun recycle()
-    fun pageMeasurementDone(documentRenderView: DocumentRenderView)
+    fun pageMeasurementDone(documentRenderView: DocumentRenderView){}
     fun onScale(currentZoom: Float){}
 }

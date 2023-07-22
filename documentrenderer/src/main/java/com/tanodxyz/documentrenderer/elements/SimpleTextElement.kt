@@ -19,6 +19,7 @@ import android.view.View
 import android.widget.EditText
 import androidx.annotation.RequiresApi
 import androidx.core.text.toSpannable
+import com.tanodxyz.documentrenderer.DocumentRenderView
 import com.tanodxyz.documentrenderer.R
 import com.tanodxyz.documentrenderer.events.LongPressEvent
 import com.tanodxyz.documentrenderer.getHeight
@@ -47,7 +48,7 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page),
 
     var textColor:Int = textPaint.color
     var includePadding = false
-    var allowTextEditing = false
+    var allowTextEditing = true
     override var moveable = !allowTextEditing
     @RequiresApi(Build.VERSION_CODES.M)
     var lineBreakingStrategy = Layout.BREAK_STRATEGY_SIMPLE
@@ -64,6 +65,7 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page),
     override var type = "TextElement"
 
     init {
+        debug = false
         longPressListener = this
     }
 
@@ -130,6 +132,8 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page),
     override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
         super.draw(canvas, args)
         try {
+            val contentHeight = getContentHeight(args)
+            println("marko: CONTENT HEIGHT IS $contentHeight ${page.pageBounds.getHeight()}")
             initTextLayout(args)
             canvas.apply {
                 save()
@@ -321,7 +325,7 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page),
             maxWidth: Int
         ): Int {
             val staticLayout = StaticLayout(
-                simpleTextElement.spannable, simpleTextElement.textPaint, maxWidth,
+                simpleTextElement.spannable, simpleTextElement.textPaint, (maxWidth -  if(simpleTextElement.symmetric)  simpleTextElement.margins.left.times(2) else 0F).roundToInt(),
                 simpleTextElement.alignment, simpleTextElement.spacingmult, simpleTextElement.spacingAdd, simpleTextElement.includePadding
             )
             return staticLayout.height

@@ -1,5 +1,6 @@
 package com.tanodxyz.documentrenderer.pagesizecalculator
 
+import android.util.DisplayMetrics
 import com.tanodxyz.documentrenderer.Size
 
 class UnBoundedPageSizeCalculator:PageSizeCalculator() {
@@ -9,7 +10,8 @@ class UnBoundedPageSizeCalculator:PageSizeCalculator() {
     override var optimalMaxHeightPageSize: Size = Size(0, 0)
 
     override fun setup(args: HashMap<String, Any>) {
-        viewSize = Size(Int.MAX_VALUE,Int.MAX_VALUE)
+        val displayMetrics = args[DISPLAY_METRICS] as DisplayMetrics
+        viewSize = Size(displayMetrics.widthPixels,displayMetrics.heightPixels)
         optimalMaxWidthPageSize = viewSize
         optimalMaxHeightPageSize = viewSize
     }
@@ -18,8 +20,8 @@ class UnBoundedPageSizeCalculator:PageSizeCalculator() {
         if (pageSize.width <= 0 || pageSize.height <= 0) {
             return viewSize
         }
-        val maxWidth = Int.MAX_VALUE
-        val maxHeight = Int.MAX_VALUE
+        val maxWidth = viewSize.width
+        val maxHeight = viewSize.height
 
         val w = if (pageSize.width > maxWidth) {
             maxWidth
