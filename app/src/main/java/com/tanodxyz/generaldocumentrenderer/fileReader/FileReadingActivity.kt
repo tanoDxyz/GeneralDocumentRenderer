@@ -2,6 +2,7 @@ package com.tanodxyz.generaldocumentrenderer.fileReader
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import com.tanodxyz.documentrenderer.DocumentRenderView
 import com.tanodxyz.documentrenderer.elements.DefaultCircularProgressBarElement
 import com.tanodxyz.documentrenderer.extensions.DefaultScrollHandle

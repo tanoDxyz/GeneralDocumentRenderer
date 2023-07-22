@@ -92,7 +92,10 @@ open class DocumentPage(
     }
 
     open fun dispatchDrawCallToIndividualElements(canvas: Canvas, args: SparseArray<Any>) {
-        elements.forEach { iElement -> iElement.draw(canvas, args) }
+        elements.forEach { iElement ->
+            iElement.draw(canvas, args)
+            documentRenderView.renderListener?.onPageElementRendered(iElement)
+        }
     }
 
     override fun onEvent(event: IMotionEventMarker?): Boolean {

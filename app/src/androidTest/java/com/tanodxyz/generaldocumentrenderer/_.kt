@@ -30,7 +30,7 @@ class BuzyFree(val buzy: Boolean = true) :
     override fun perform(uiController: UiController?, view: View) {
         val renderView: DocumentRenderView = view as DocumentRenderView
         if (buzy) {
-            renderView.buzy()
+            renderView.busy()
             stateAfterAction = !renderView.isFree()
         } else {
             renderView.free()

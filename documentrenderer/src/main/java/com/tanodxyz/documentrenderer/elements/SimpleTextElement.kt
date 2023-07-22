@@ -132,8 +132,6 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page),
     override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
         super.draw(canvas, args)
         try {
-            val contentHeight = getContentHeight(args)
-            println("marko: CONTENT HEIGHT IS $contentHeight ${page.pageBounds.getHeight()}")
             initTextLayout(args)
             canvas.apply {
                 save()

@@ -13,7 +13,7 @@ import kotlin.collections.ArrayList
 import kotlin.math.roundToInt
 
 // todo code check ok . line check ok . inheritance check ok.
-open class Document (context: Context, var pageSizeCalculator: PageSizeCalculator? = null) {
+open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator? = null) {
     protected var maxHeightPageSize = Size(0, 0)
     protected var maxWidthPageSize = Size(0, 0)
     protected val documentMeta = HashMap<String, Any?>()
@@ -157,11 +157,11 @@ open class Document (context: Context, var pageSizeCalculator: PageSizeCalculato
 
     @Synchronized
     open fun recalculatePageSizesAndIndexes(documentRenderView: DocumentRenderView) {
-        val viewSize = Size(documentRenderView.measuredWidth,documentRenderView.measuredHeight)
+        val viewSize = Size(documentRenderView.measuredWidth, documentRenderView.measuredHeight)
         if (documentPageData.isEmpty()) {
             return
         }
-        if(viewSize.width <= 0 || viewSize.height <=  0) {
+        if (viewSize.width <= 0 || viewSize.height <= 0) {
             return
         }
 
@@ -178,7 +178,7 @@ open class Document (context: Context, var pageSizeCalculator: PageSizeCalculato
                 PageSizeCalculator.FIT_EACH_PAGE,
                 get<Boolean>(PROPERTY_DOCUMENT_FIT_EACH_PAGE) ?: false
             )
-            put(PageSizeCalculator.DISPLAY_METRICS,documentRenderView.displayMetrics!!)
+            put(PageSizeCalculator.DISPLAY_METRICS, documentRenderView.displayMetrics!!)
         }
         // setup page size calculator
         pageSizeCalculator!!.setup(props)
@@ -217,7 +217,7 @@ open class Document (context: Context, var pageSizeCalculator: PageSizeCalculato
         }
     }
 
-    fun getPageSizeWithMargins(page: DocumentPage):Size {
+    fun getPageSizeWithMargins(page: DocumentPage): Size {
         val horizontalMargins = pageMargins.left + pageMargins.right
         val verticalMargins = pageMargins.top + pageMargins.bottom
         val originalSize = page.originalSize
@@ -259,7 +259,13 @@ open class Document (context: Context, var pageSizeCalculator: PageSizeCalculato
     }
 
     @Synchronized
+    open fun isEmpty(): Boolean = getPagesCount() < 1
+
+    @Synchronized
     open fun getPagesToBeDrawn(currentPage: Int, viewSize: Int): List<DocumentPage> {
+        if (isEmpty()) {
+            return mutableListOf()
+        }
         val page = currentPage - 1
         val pagesToBeDrawn = mutableListOf<DocumentPage>()
         if (page <= 0) {

@@ -1,10 +1,9 @@
 package com.tanodxyz.documentrenderer
 
-import android.os.Bundle
 import android.os.Parcel
 import android.os.Parcelable
 
-class ViewState(
+class SavedState(
     var currentPage: Int = 0,
     var zoomLevel: Float = 0F
 ) : Parcelable {
@@ -20,12 +19,12 @@ class ViewState(
         return 0
     }
 
-    companion object CREATOR : Parcelable.Creator<ViewState> {
-        override fun createFromParcel(parcel: Parcel): ViewState {
-            return ViewState(parcel)
+    companion object CREATOR : Parcelable.Creator<SavedState> {
+        override fun createFromParcel(parcel: Parcel): SavedState {
+            return SavedState(parcel)
         }
 
-        override fun newArray(size: Int): Array<ViewState?> {
+        override fun newArray(size: Int): Array<SavedState?> {
             return arrayOfNulls(size)
         }
     }

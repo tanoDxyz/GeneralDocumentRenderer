@@ -26,6 +26,7 @@
         android:maxHeight="450dp"
         android:minHeight="100dp"
         android:gravity="top|start"
+        android:textColor="@android:color/black"
         android:background="@drawable/rounded_edit_text_bg"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>

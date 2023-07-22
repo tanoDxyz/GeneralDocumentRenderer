@@ -5,7 +5,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
@@ -17,7 +16,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.core.view.doOnLayout
 import com.tanodxyz.documentrenderer.DocumentRenderView
-import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.SCROLL_HANDLE_AND_PAGE_DISPLAY_BOX_HIDE_DELAY_MILLISECS
+import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.SCROLL_HANDLE_AND_PAGE_DISPLAY_BOX_HIDE_DELAY_MILLI_SECONDS
 import com.tanodxyz.documentrenderer.dpToPx
 import kotlin.math.roundToInt
 
@@ -134,7 +133,7 @@ class DefaultScrollHandle @JvmOverloads constructor(
     override fun hide(delayed: Boolean) {
         if (delayed) {
             handler_.postDelayed(
-                hidePageScrollerRunnable, SCROLL_HANDLE_AND_PAGE_DISPLAY_BOX_HIDE_DELAY_MILLISECS
+                hidePageScrollerRunnable, SCROLL_HANDLE_AND_PAGE_DISPLAY_BOX_HIDE_DELAY_MILLI_SECONDS
             )
         } else {
             visibility = View.INVISIBLE
