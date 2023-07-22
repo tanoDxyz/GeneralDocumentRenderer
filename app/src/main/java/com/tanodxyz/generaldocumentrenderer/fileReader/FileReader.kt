@@ -60,6 +60,7 @@ class FileReader(val renderView: DocumentRenderView) {
                 maxScreenWidth - document!!.pageMargins.left - document!!.pageMargins.right
             val maxAvailableHeightToPageElements =
                 maxScreenHeight - document!!.pageMargins.top - document!!.pageMargins.bottom
+
             val availableWidthToTextElementWithMargins = maxAvailableWidthToPageElements - (textElementMargins.times(2))
             val availableHeightToTextElementWithMargins = maxAvailableHeightToPageElements - (textElementMargins.times(2))
 
@@ -83,13 +84,21 @@ class FileReader(val renderView: DocumentRenderView) {
 
             fun addCurrentElementsToDocument() {
                 currentTextElement setup textElementMargins
-                currentTextElement.desiredWidth = availableWidthToTextElementWithMargins + textElementMargins.times(2)
+                currentTextElement.desiredWidth = availableWidthToTextElementWithMargins + textElementMargins.times(2) // we are
+                // adding this because textElement internally handles these margins. and also availableWidthToTextElementWithMargins was created to be used externally out of the text element.
                 currentTextElement.desiredHeight = availableHeightToTextElementWithMargins + textElementMargins.times(2)
                 currentPage.elements.add(currentTextElement)
                 currentPage.setUseScalingFactorForSnapshot(false)
                 document!!.addPage(currentPage)
             }
 
+            /**
+             * work as follows
+             * for each line add it to textMeasuring element until it reaches certain height (max element height)
+             * once that is reached add text element to page and add page to document.
+             * then create new page and text element and continue adding lines.
+             * it is an example and in real world scenarios text should not be handled based on lines
+             */
             linesList?.forEach { line ->
                 textMeasuringElement.setText(
                     textMeasuringElement.getSpannableStringBuilder().append('\n').append(line)
@@ -110,59 +119,6 @@ class FileReader(val renderView: DocumentRenderView) {
             if(textHeightUsed < availableHeightToTextElementWithMargins ) {
                 addCurrentElementsToDocument()
             }
-//            val leftMargin = 32
-//            val topMargin = 32
-//
-//            var pageUniqueId = 0
-//
-//            val maxHeight = displayMetrics.heightPixels
-//            val maxWidth = displayMetrics.widthPixels
-//
-//            val textElementWidth = maxWidth - leftMargin - topMargin.toFloat()
-//            val textElementHeight = maxHeight - (topMargin.times(2)).toFloat()
-//
-//            val pageSize = Size(maxWidth,maxHeight)
-//
-//            var currentDocumentPage = DocumentPage(uniqueId = pageUniqueId, originalSize = pageSize)
-//            var currentTextElement = SimpleTextElement(currentDocumentPage)
-//
-//            val textMeasuringElement = SimpleTextElement(currentDocumentPage)
-//
-//            var textHeightUsed = 0
-//            textMeasuringElement.symmetric = true
-//            textMeasuringElement applyLeftTopMargin leftMargin.toFloat()
-//
-//            linesList?.forEach { line->
-//
-//                textMeasuringElement.setText(SpannableStringBuilder(textMeasuringElement.getText()?:"").append('\n').append(line))
-//                textHeightUsed =
-//                    SimpleTextElement.calculateTextHeight(textMeasuringElement, textElementWidth.roundToInt())
-//
-//                if((textHeightUsed + (leftMargin + topMargin)) < textElementHeight) {
-//                    currentTextElement.setText(SpannableStringBuilder(currentTextElement.getText()?:"").append('\n').append(line))
-//                } else {
-//                    currentTextElement applyLeftTopMargin leftMargin.toFloat()
-//                    currentTextElement.desiredHeight = maxHeight.toFloat()
-//                    currentTextElement.symmetric = true
-//                    currentDocumentPage.elements.add(currentTextElement)
-//                    currentDocumentPage.setUseScalingFactorForSnapshot(false)
-//                    document!!.addPage(currentDocumentPage)
-//                    currentDocumentPage = DocumentPage(++pageUniqueId, originalSize = pageSize)
-//                    currentTextElement = SimpleTextElement(currentDocumentPage)
-//                    currentTextElement.setText(line.toSpannable())
-//                    textHeightUsed = 0
-//                    textMeasuringElement.setText("".toSpannable())
-//                }
-//            }
-//
-//            if(textHeightUsed < maxHeight) {
-//                currentTextElement applyLeftTopMargin leftMargin.toFloat()
-//                currentTextElement.desiredHeight = maxHeight.toFloat()
-//                currentTextElement.symmetric = true
-//                currentDocumentPage.elements.add(currentTextElement)
-//                currentDocumentPage.setUseScalingFactorForSnapshot(false)
-//                document!!.addPage(currentDocumentPage)
-//            }
             if (loadInRenderView) {
                 renderView.loadDocument(document!!, onFinish)
             } else {
