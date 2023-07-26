@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">General Document Renderer</string>
+    <string name="pdf_reader">PDF Reader</string>
+    <string name="examples">Examples</string>
+    <string name="file_reader">File Reader</string>
+    <string name="photo_slide_show">Photo Slide Show</string>
+    <string name="canvas">Canvas</string>
 </resources>

@@ -11,69 +11,67 @@ import com.tanodxyz.documentrenderer.elements.DefaultCircularProgressBarElement
 
 import com.tanodxyz.documentrenderer.extensions.DefaultScrollHandle
 import com.tanodxyz.documentrenderer.page.DocumentPage
+import com.tanodxyz.generaldocumentrenderer.canvas.SimpleDrawingSurfaceActivity
 import com.tanodxyz.generaldocumentrenderer.fileReader.FileReadingActivity
+import com.tanodxyz.generaldocumentrenderer.pdfRenderer.PdfViewActivity
 import com.tanodxyz.generaldocumentrenderer.photoslider.PhotoSliderActivity
 
+/**
+ * simpleIdleResource = SimpleIdlingResource()
+renderView.doOnLayout {
+createAndAddPagesToDocument(renderView) { document ->
 
-class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
-    private lateinit var renderView: DocumentRenderView
-    var simpleIdleResource: SimpleIdlingResource? = null
+document[Document.PROPERTY_DOCUMENT_PAGE_FIT_POLICY] = Document.PageFitPolicy.BOTH
+document.documentFitPagePolicy = Document.PageFitPolicy.BOTH
+
+document.swipeVertical = true
+
+document.fitEachPage = true
+
+document.pageFling = true
+
+renderView.loadDocument(document)
+
+// for testing.
+renderView.idleStateCallback = this
+
+renderView.setBusyStateIndicator(DefaultCircularProgressBarElement(this))
+renderView.setScrollHandler(DefaultScrollHandle(this))
+
+}
+
+}
+
+
+var simpleIdleResource: SimpleIdlingResource? = null
+AppCompatActivity(), DocumentRenderView.IdleStateCallback
+override fun renderViewState(idle: Boolean) {
+simpleIdleResource?.setIdleState(idle)
+}
+ */
+
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        renderView = findViewById(R.id.documentRenderView)
         init()
     }
 
     private fun init() {
-        launch<FileReadingActivity>()
-        simpleIdleResource = SimpleIdlingResource()
-        renderView.doOnLayout {
-            createAndAddPagesToDocument(renderView) { document ->
-
-                document[Document.PROPERTY_DOCUMENT_PAGE_FIT_POLICY] = Document.PageFitPolicy.BOTH
-                document.documentFitPagePolicy = Document.PageFitPolicy.BOTH
-
-                document.swipeVertical = true
-
-                document.fitEachPage = true
-
-                document.pageFling = true
-
-                renderView.loadDocument(document)
-
-                // for testing.
-                renderView.idleStateCallback = this
-
-                renderView.setBusyStateIndicator(DefaultCircularProgressBarElement(this))
-                renderView.setScrollHandler(DefaultScrollHandle(this))
-
-            }
-
+        supportActionBar?.title = getString(R.string.examples)
+        findViewById<View>(R.id.pdfReaderButton).setOnClickListener {
+            launch<PdfViewActivity>()
         }
-    }
-
-    fun createAndAddPagesToDocument(renderView: DocumentRenderView,callback:(Document)->Unit) {
-        Document(renderView.context).apply {
-            addPage(DocumentPage(0, mutableListOf(),Size(4000,500)))
-            addPage(DocumentPage(1, mutableListOf(),Size(2000,500)))
-            addPage(DocumentPage(2, mutableListOf(),Size(200,5000)))
-            addPage(DocumentPage(3, mutableListOf(),Size(200,500)))
-            addPage(DocumentPage(4, mutableListOf(),Size(600,500)))
-            addPage(DocumentPage(5, mutableListOf(),Size(9100,500)))
-            addPage(DocumentPage(6, mutableListOf(),Size(200,500)))
-            callback(this)
+        findViewById<View>(R.id.fileReaderButton).setOnClickListener {
+            launch<FileReadingActivity>()
         }
-    }
+        findViewById<View>(R.id.photoSlideShowButton).setOnClickListener {
+            launch<PhotoSliderActivity>()
+        }
 
-    fun switchSwipeModeClicked(view: View) {
-        renderView.changeSwipeMode()
-    }
-
-
-
-    override fun renderViewState(idle: Boolean) {
-        simpleIdleResource?.setIdleState(idle)
+        findViewById<View>(R.id.canvasButton).setOnClickListener {
+            launch<SimpleDrawingSurfaceActivity>()
+        }
     }
 
 
@@ -82,7 +80,6 @@ class MainActivity : AppCompatActivity(), DocumentRenderView.IdleStateCallback {
             Intent(this,T::class.java).apply {
                 this@launch.startActivity(this)
             }
-             this.finish()
         }
     }
 }

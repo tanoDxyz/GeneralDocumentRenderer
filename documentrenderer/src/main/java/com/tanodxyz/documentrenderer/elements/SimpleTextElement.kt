@@ -18,6 +18,7 @@ import android.util.SparseArray
 import android.view.View
 import android.widget.EditText
 import androidx.annotation.RequiresApi
+import androidx.core.text.toSpannable
 import com.tanodxyz.documentrenderer.R
 import com.tanodxyz.documentrenderer.events.LongPressEvent
 import com.tanodxyz.documentrenderer.getHeight

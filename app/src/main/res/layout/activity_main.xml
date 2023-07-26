@@ -1,21 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
     android:layout_width="match_parent"
+    android:layout_margin="16dp"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <Button
+        android:layout_marginTop="24dp"
+        android:id="@+id/pdfReaderButton"
+        android:text="@string/pdf_reader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
 
-    <com.tanodxyz.documentrenderer.DocumentRenderView
-        app:layout_constraintTop_toTopOf="parent"
-        android:id="@+id/documentRenderView"
-        android:visibility="visible"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+    <Button
+        android:layout_marginTop="24dp"
+        android:id="@+id/fileReaderButton"
+        android:text="@string/file_reader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
 
+    <Button
+        android:layout_marginTop="24dp"
+        android:id="@+id/photoSlideShowButton"
+        android:text="@string/photo_slide_show"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <Button
+        android:layout_marginTop="24dp"
+        android:id="@+id/canvasButton"
+        android:text="@string/canvas"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+</androidx.appcompat.widget.LinearLayoutCompat>
