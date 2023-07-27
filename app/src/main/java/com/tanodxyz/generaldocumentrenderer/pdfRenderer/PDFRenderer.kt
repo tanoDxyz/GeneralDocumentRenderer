@@ -4,7 +4,6 @@ import android.content.res.AssetManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.RectF
 import android.graphics.pdf.PdfRenderer
@@ -30,7 +29,11 @@ import java.util.concurrent.locks.LockSupport
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-
+/**
+ * This class loads PDF file and renders individual pages on request using android framework
+ * default apis.[PdfRenderer]
+ *
+ */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 
 class PDFRenderer(val renderView: DocumentRenderView) {
@@ -79,18 +82,27 @@ class PDFRenderer(val renderView: DocumentRenderView) {
     }
 
 
-    inner class PageRendererThread : java.lang.Thread("PageRenderThread") {
+    /**
+     * When someone wants a page to be rendered they call it using [PdfLoader.loadPageNo] and which in turn
+     * calls [PDFRenderer.loadPageNew] and request is generated and put in the stack.
+     * This class or Thread responsibility is to serve that request by loading specific page.
+     * if that page already exists for selected scale level. it is just fetched from cache otherwise
+     * a new page is rendered.
+     */
+    inner class PageRendererThread : Thread("PageRenderThread") {
         private val requestStack = Stack<PageRenderOperationWrapper>()
         private val iCanRun = AtomicBoolean(true)
         override fun run() {
             while (iCanRun.get()) {
                 LockSupport.park(this)
                 synchronized(requestStack) {
-                    val mostRecentPageRequestNumber = if(requestStack.empty().not()) requestStack.peek().pageNumber else -1
+                    val mostRecentPageRequestNumber = if (requestStack.empty().not())
+                        requestStack.peek().pageNumber else -1
                     while (requestStack.empty().not()) {
                         val request = requestStack.pop()
-                        if(mostRecentPageRequestNumber <=  -1 ||
-                            abs(request.pageNumber - mostRecentPageRequestNumber) > 10) {
+                        if (mostRecentPageRequestNumber <= -1 ||
+                            abs(request.pageNumber - mostRecentPageRequestNumber) > 10
+                        ) {
                             return@synchronized
                         }
                         if (request.isValid()) {
@@ -123,7 +135,7 @@ class PDFRenderer(val renderView: DocumentRenderView) {
             renderView.threadPoolExecutor?.submit {
                 synchronized(requestStack) {
                     PageRenderOperationWrapper(pageNumber, pageBounds).apply {
-                        if(requestStack.contains(this)) {
+                        if (requestStack.contains(this)) {
                             return@submit
                         }
                         this.callback = callback
@@ -179,20 +191,7 @@ class PDFRenderer(val renderView: DocumentRenderView) {
                 )
                 // Render the page with the transformation matrix
                 page.render(bitmap!!, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-//                val compressedBitmap = Bitmap.createBitmap(
-//                    bitmap!!.getWidth(),
-//                    bitmap!!.getHeight(),
-//                    Bitmap.Config.ARGB_8888
-//                )
-//                val canvas = Canvas(compressedBitmap)
-//                canvas.drawBitmap(bitmap!!, 0F, 0F, null)
-//                val bos = ByteArrayOutputStream()
-//                bitmap!!.compress(Bitmap.CompressFormat.JPEG, PAGE_JPEG_IMAGE_QUALITY, bos)
                 scaledBitmap = bitmap
-//                    BitmapFactory.decodeStream(ByteArrayInputStream(bos.toByteArray()))
-//                bos.close()
-//                bitmap.recycleSafely()
-//                compressedBitmap.recycleSafely()
                 if (putInCache) {
                     renderView.cache.offer(BitmapBlob(key(pageNumber, pageBounds), scaledBitmap))
                 }

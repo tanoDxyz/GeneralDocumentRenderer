@@ -29,7 +29,7 @@ import java.security.SecureRandom
 import kotlin.math.roundToInt
 
 open class PageElement(var page: DocumentPage) : InteractiveElement {
-    open var movable = true
+    open var movable = false
     var debug = false
     protected var mobileModeActivated = false
     protected var usePreCalculatedBounds: Boolean = false

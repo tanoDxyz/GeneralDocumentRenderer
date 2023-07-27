@@ -4,6 +4,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.IdlingRegistry
 import androidx.test.espresso.matcher.ViewMatchers
+import com.tanodxyz.generaldocumentrenderer.fileReader.FileReadingActivity
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -11,14 +12,14 @@ import org.junit.Before
 import org.junit.Test
 
 class PageElementDepTest {
-    private lateinit var activityScenario: ActivityScenario<MainActivity>
-    private lateinit var activity: MainActivity
+    private lateinit var activityScenario: ActivityScenario<FileReadingActivity>
+    private lateinit var activity: FileReadingActivity
     private lateinit var idlingResource: SimpleIdlingResource
 
     @Before
     fun setupIdlingResource() {
         activityScenario = ActivityScenario.launch(
-            MainActivity::class.java
+            FileReadingActivity::class.java
         )
         activityScenario.onActivity {
             activity = it

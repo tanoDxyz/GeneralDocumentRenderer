@@ -7,14 +7,11 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import androidx.annotation.RequiresApi
-import androidx.core.util.lruCache
 import com.tanodxyz.documentrenderer.DocumentRenderView
-import com.tanodxyz.documentrenderer.Size
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.elements.InteractiveElement
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.generaldocumentrenderer.pdfRenderer.PDFRenderer.Companion.key
-import java.lang.Exception
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class PdfLoader(val renderView: DocumentRenderView) {

@@ -17,11 +17,18 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import kotlin.concurrent.thread
 
-
+/**
+ * This example class basically reads a file from assets and display the content in it.
+ * it uses pretty simple algorithm which work as follows.
+ *
+ * Read whole file line by line and then fit each line on the page until all page height is consumed.
+ * if so than create another page repeat the process.
+ */
 class FileReader(val renderView: DocumentRenderView) {
 
     private var document: Document? = null
     fun prepareDocument(loadInRenderView: Boolean, onFinish: () -> Unit) {
+        val handler = Handler(Looper.getMainLooper())
 
         infix fun PageElement.applyLeftTopMargin(margin: Float) {
             margins.left = margin
@@ -37,7 +44,6 @@ class FileReader(val renderView: DocumentRenderView) {
             return SpannableStringBuilder(this.getText() ?: "")
         }
 
-        val handler = Handler(Looper.getMainLooper())
         thread {
             val displayMetrics = renderView.resources.displayMetrics
             var linesList: List<String>? = null
@@ -126,6 +132,4 @@ class FileReader(val renderView: DocumentRenderView) {
             }
         }
     }
-
-
 }

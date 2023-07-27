@@ -8,6 +8,9 @@ import com.tanodxyz.documentrenderer.extensions.DefaultScrollHandle
 import com.tanodxyz.generaldocumentrenderer.ProgressDialog
 import com.tanodxyz.generaldocumentrenderer.R
 
+/**
+ * Creates a simple slide show from images in assets using pageFling feature that library provides.
+ */
 class PhotoSliderActivity : AppCompatActivity() {
     private lateinit var photoLoader: PhotoLoader
     private lateinit var progressDialog: ProgressDialog
@@ -24,7 +27,9 @@ class PhotoSliderActivity : AppCompatActivity() {
 
         progressDialog = ProgressDialog(this)
         progressDialog.show()
+
         photoLoader = PhotoLoader(documentRenderView)
+
         documentRenderView.setBusyStateIndicator(DefaultCircularProgressBarElement(this))
         photoLoader.prepareDocument(true) {
             documentRenderView.setScrollHandler(DefaultScrollHandle(this))

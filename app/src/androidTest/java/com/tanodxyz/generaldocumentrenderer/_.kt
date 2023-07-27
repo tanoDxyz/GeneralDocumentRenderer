@@ -16,7 +16,7 @@ import java.security.SecureRandom
 import kotlin.concurrent.thread
 
 
-class BuzyFree(val buzy: Boolean = true) :
+class BusyFree(val buzy: Boolean = true) :
     ViewAction {
     var stateAfterAction: Boolean = false
     override fun getConstraints(): Matcher<View> {
@@ -103,10 +103,10 @@ class PageElementDepCoordinatesAction : ViewAction {
         Log.i(
             TAG,
             "pageElementDrawnRelativeToPageCoordinates: PageBounds = ${documentPage.pageBounds} " +
-                    "|||||| elementBoundsRelativeToPage = ${pageElement.elementsContainerBounds}"
+                    "|||||| elementBoundsRelativeToPage = ${pageElement.elementContentBounds}"
         )
-        return pageElement.elementsContainerBounds.left >= documentPage.pageBounds.left &&
-                pageElement.elementsContainerBounds.top >= documentPage.pageBounds.top
+        return pageElement.elementContentBounds.left >= documentPage.pageBounds.left &&
+                pageElement.elementContentBounds.top >= documentPage.pageBounds.top
     }
 }
 
@@ -130,8 +130,8 @@ class PageElementDepScaleAction : ViewAction {
         documentPage = document.getPage(0)!!
         pageElement = documentPage.elements[0] as PageElement
 
-        val xBeforeZoom = pageElement.elementsContainerBounds.left
-        val yBeforeZoom = pageElement.elementsContainerBounds.top
+        val xBeforeZoom = pageElement.elementContentBounds.left
+        val yBeforeZoom = pageElement.elementContentBounds.top
         val xPage = documentPage.pageBounds.left
         val yPage = documentPage.pageBounds.top
         if(xBeforeZoom < xPage || yBeforeZoom < yPage) {
@@ -139,8 +139,8 @@ class PageElementDepScaleAction : ViewAction {
         }
         renderView.zoomTo(DocumentRenderView.MAXIMUM_ZOOM)
         renderView.redraw()
-        val xAfterZoom = pageElement.elementsContainerBounds.left
-        val yAfterZoom = pageElement.elementsContainerBounds.top
+        val xAfterZoom = pageElement.elementContentBounds.left
+        val yAfterZoom = pageElement.elementContentBounds.top
         val xPageAfterZoom = documentPage.pageBounds.left
         val yPageAfterZoom = documentPage.pageBounds.top
         if(xAfterZoom < xPageAfterZoom || yAfterZoom < yPageAfterZoom) {
@@ -154,10 +154,10 @@ class PageElementDepScaleAction : ViewAction {
         Log.i(
             TAG,
             "pageElementDrawnRelativeToPageCoordinates: PageBounds = ${documentPage.pageBounds} " +
-                    "|||||| elementBoundsRelativeToPage = ${pageElement.elementsContainerBounds}"
+                    "|||||| elementBoundsRelativeToPage = ${pageElement.elementContentBounds}"
         )
-        return pageElement.elementsContainerBounds.left >= documentPage.pageBounds.left &&
-                pageElement.elementsContainerBounds.top >= documentPage.pageBounds.top
+        return pageElement.elementContentBounds.left >= documentPage.pageBounds.left &&
+                pageElement.elementContentBounds.top >= documentPage.pageBounds.top
     }
 }
 

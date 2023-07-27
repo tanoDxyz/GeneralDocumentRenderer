@@ -19,28 +19,25 @@ import com.tanodxyz.documentrenderer.hasGenericMotionEvent
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import kotlin.math.roundToInt
 
+
 class SimpleDrawingElement(resources: Resources, page: DocumentPage) :
     PageElement(page) {
     private var bitmap: Bitmap? = null
     private var canvas: Canvas? = null
-    private var _10Dp = 0F
     private var redBrushColorChooser = BrushColorChooser(page,Color.RED,"Red")
     private var yellowBrushColorChooser = BrushColorChooser(page,Color.YELLOW,"Yellow")
     private var blueBrushColorChooser = BrushColorChooser(page,Color.BLUE,"Blue")
+    var imageElement = ImageElement(page)
     var textElement = SimpleTextElement(page).apply {
         setText("Green Brush Selected".toSpannable())
         textColor = Color.BLACK
     }
 
-    var imageElement = ImageElement(page)
 
     init {
-        movable = true
-        debug = false
-        _10Dp = resources.dpToPx(10)
         this.debugPaint.apply {
             color = Color.GREEN
-            strokeWidth = _10Dp
+            strokeWidth = resources.dpToPx(10)
             strokeCap = Paint.Cap.ROUND
             style = Paint.Style.FILL
         }
@@ -54,23 +51,25 @@ class SimpleDrawingElement(resources: Resources, page: DocumentPage) :
         return page.pageBounds.getWidth()
     }
 
-    override fun onEvent(iMotionEventMarker: IMotionEventMarker?): Boolean {
-        super.onEvent(iMotionEventMarker)
-        if (iMotionEventMarker.hasGenericMotionEvent()
-            && isEventOccurredWithInBounds(iMotionEventMarker, true)
+    override fun onEvent(event: IMotionEventMarker?): Boolean {
+        super.onEvent(event)
+
+        if (event.hasGenericMotionEvent()
+            && isEventOccurredWithInBounds(event, true)
         ) {
-            val redBrushColorChooserTapped = redBrushColorChooser.onEvent(iMotionEventMarker)
-            val yellowBrushColorChooserTapped = yellowBrushColorChooser.onEvent(iMotionEventMarker)
-            val blueBrushColorChooserTapped = blueBrushColorChooser.onEvent(iMotionEventMarker)
+            val redBrushColorChooserTapped = redBrushColorChooser.onEvent(event)
+            val yellowBrushColorChooserTapped = yellowBrushColorChooser.onEvent(event)
+            val blueBrushColorChooserTapped = blueBrushColorChooser.onEvent(event)
+
             if(!redBrushColorChooserTapped && !yellowBrushColorChooserTapped && !blueBrushColorChooserTapped) {
                 val contentBounds = getContentBounds(mostRecentArgs.shouldDrawSnapShot())
-                val x = (iMotionEventMarker?.getX() ?: 0f) - contentBounds.left
-                val y = (iMotionEventMarker?.getY() ?: 0f) - contentBounds.top
+                val x = (event?.getX() ?: 0f) - contentBounds.left
+                val y = (event?.getY() ?: 0f) - contentBounds.top
                 canvas?.drawPoint(x, y, debugPaint)
             }
         }
 
-        return true;
+        return true
     }
 
     override fun draw(canvas: Canvas, args: SparseArray<Any>?) {
@@ -85,12 +84,10 @@ class SimpleDrawingElement(resources: Resources, page: DocumentPage) :
             this.canvas = Canvas(bitmap!!)
             imageElement.load(bitmap!!, false)
         }
-
         imageElement.setContentBounds(contentBounds)
-        imageElement.draw(canvas, args)
-        textElement.draw(canvas, args)
 
-        // set bounds for red brush to draw inside another element
+
+
         val leftTopMarginFromParent = page.documentRenderView.toCurrentScale(50)
         val redBrushContentBounds = contentBounds.copy().apply {
             left += leftTopMarginFromParent
@@ -101,8 +98,8 @@ class SimpleDrawingElement(resources: Resources, page: DocumentPage) :
         redBrushColorChooser.setContentBounds(redBrushContentBounds)
         redBrushColorChooser.draw(canvas, args)
 
-        // set for yellow brush chooser
-        // set bounds for red brush to draw inside another element
+
+
         val yellowBrushContentBounds = contentBounds.copy().apply {
             left += page.documentRenderView.toCurrentScale(100) + leftTopMarginFromParent
             right = left + yellowBrushColorChooser.getContentWidth(args)
@@ -114,8 +111,7 @@ class SimpleDrawingElement(resources: Resources, page: DocumentPage) :
         yellowBrushColorChooser.draw(canvas, args)
 
 
-        // set for blue brush chooser
-        // set bounds for red brush to draw inside another element
+
         val blueBrushContentBounds = contentBounds.copy().apply {
             left += page.documentRenderView.toCurrentScale(200) + leftTopMarginFromParent
             right = left + blueBrushColorChooser.getContentWidth(args)
@@ -126,6 +122,8 @@ class SimpleDrawingElement(resources: Resources, page: DocumentPage) :
         blueBrushColorChooser.setContentBounds(blueBrushContentBounds)
         blueBrushColorChooser.draw(canvas, args)
 
+        imageElement.draw(canvas, args)
+        textElement.draw(canvas, args)
     }
 
 

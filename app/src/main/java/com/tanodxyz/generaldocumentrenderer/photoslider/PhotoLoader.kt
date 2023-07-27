@@ -12,7 +12,11 @@ import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.generaldocumentrenderer.R
 import kotlin.concurrent.thread
 
-
+/**
+ * This example class just loads some variable size images from assets and scale them according to
+ * page sizes we need in our document and create photo slide show.
+ * it uses [DocumentRenderView] pageFling mechanism which suits slide shows.
+ */
 class PhotoLoader(val renderView: DocumentRenderView) {
     private var document: Document? = null
 
@@ -103,6 +107,9 @@ class PhotoLoader(val renderView: DocumentRenderView) {
             val imageElement1 = PhotoElement(page1)
             imageElement1.load(_a,false)
             elements1.add(imageElement1)
+            // we are disabling the scaling factors as they will reduce the image quality when
+            // user scales the images.
+            // so when scaling factor is disabled original image will be scaled on scale gestures.
             page1.setUseScalingFactorForSnapshot(false)
             document?.addPage(page1)
 
@@ -169,7 +176,7 @@ class PhotoLoader(val renderView: DocumentRenderView) {
     }
 
 
-    // code from chat gpt
+    // copied from gpt
     private fun calculateInSampleSize(
         options: BitmapFactory.Options,
         reqWidth: Int,
@@ -181,8 +188,6 @@ class PhotoLoader(val renderView: DocumentRenderView) {
         if (height > reqHeight || width > reqWidth) {
             val halfHeight = height / 2
             val halfWidth = width / 2
-
-            // Calculate the largest inSampleSize value that is a power of 2 and keeps both height and width larger than the requested height and width.
             while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
                 inSampleSize *= 2
             }

@@ -1,9 +1,6 @@
 package com.tanodxyz.generaldocumentrenderer.pdfRenderer
 
-import android.app.Activity
-import android.app.ProgressDialog
-import android.content.Context
-import android.content.Intent
+
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -11,9 +8,12 @@ import androidx.annotation.RequiresApi
 import com.tanodxyz.documentrenderer.DocumentRenderView
 import com.tanodxyz.documentrenderer.elements.DefaultCircularProgressBarElement
 import com.tanodxyz.documentrenderer.extensions.DefaultScrollHandle
-import com.tanodxyz.documentrenderer.misc.DialogHandle
 import com.tanodxyz.generaldocumentrenderer.R
+import com.tanodxyz.generaldocumentrenderer.ProgressDialog
 
+/**
+ * Loads and renders pdf file using android default framework apis.
+ */
 class PdfViewActivity : AppCompatActivity() {
     private lateinit var pdfLoader: PdfLoader
     private lateinit var progressDialog: ProgressDialog
@@ -32,9 +32,14 @@ class PdfViewActivity : AppCompatActivity() {
 
         progressDialog = ProgressDialog(this)
         progressDialog.show()
+
+
         pdfLoader = PdfLoader(documentRenderView)
+
         documentRenderView.setBusyStateIndicator(DefaultCircularProgressBarElement(this))
+
         pdfLoader.loadFromAssets(assets, "ad.pdf")
+
         pdfLoader.prepareDocument(true) {
             documentRenderView.setScrollHandler(DefaultScrollHandle(this))
             progressDialog.hide()

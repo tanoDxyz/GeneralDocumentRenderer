@@ -2,9 +2,7 @@ package com.tanodxyz.generaldocumentrenderer.pdfRenderer
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Matrix
-import android.graphics.Paint
-import android.graphics.Rect
+
 import android.graphics.RectF
 import android.util.SparseArray
 import androidx.core.graphics.toRect
@@ -12,13 +10,16 @@ import androidx.core.text.toSpannable
 import com.tanodxyz.documentrenderer.copy
 import com.tanodxyz.documentrenderer.elements.PageElement
 import com.tanodxyz.documentrenderer.elements.SimpleTextElement
-import com.tanodxyz.documentrenderer.events.IMotionEventMarker
-import com.tanodxyz.documentrenderer.events.ScaleEvent
-import com.tanodxyz.documentrenderer.getHeight
-import com.tanodxyz.documentrenderer.getWidth
 import com.tanodxyz.documentrenderer.page.DocumentPage
-import com.tanodxyz.documentrenderer.recycleSafely
 
+/**
+ * Each [PdfElement] draws bitmap onto page canvas or drawing surface and it works as follows.
+ *
+ * initially when page is rendered by [com.tanodxyz.documentrenderer.DocumentRenderView].
+ * a call to [PdfElement]'s [PdfElement.draw] method is made.
+ * which checks if the [PdfElement] has [Bitmap] for [currentScaleLevel].
+ * if so just draw the bitmap otherwise load it using [PdfLoader].
+ */
 class PdfElement(page: DocumentPage, val pdfLoader: PdfLoader) : PageElement(page) {
     private var currentScaleLevel = -1F
     private var bitmap: Bitmap? = null
@@ -27,6 +28,8 @@ class PdfElement(page: DocumentPage, val pdfLoader: PdfLoader) : PageElement(pag
 
     init {
         textElement.setText("Loading Page".toSpannable())
+
+        page.drawPageSnapShot = true
     }
 
     private fun loadBitmap(callback: () -> Unit) {
@@ -39,10 +42,6 @@ class PdfElement(page: DocumentPage, val pdfLoader: PdfLoader) : PageElement(pag
         }
     }
 
-
-    override fun onScale(currentZoom: Float) {
-        super.onScale(currentZoom)
-    }
 
     private fun bitmapIsValid(applyScaleCheck: Boolean = true): Boolean {
         val bitmapIsValid = this.bitmap.isValid()
