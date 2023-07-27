@@ -12,6 +12,10 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.math.roundToInt
 
+/**
+ * As the name suggests
+ * This class encapsulates set of data and operations required for [DocumentRenderView] to render pages.
+ */
 open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator? = null) {
     protected var maxHeightPageSize = Size(0, 0)
     protected var maxWidthPageSize = Size(0, 0)
@@ -20,6 +24,10 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
     protected var originalMaxPageWidth = Size(0, 0)
     protected var originalMaxPageHeight = Size(0, 0)
     protected var contentLength = 0F
+
+    /**
+     * these page indexes are used in various calculations.
+     */
     internal lateinit var pageIndexes: MutableList<PointF>
 
     var pageMargins: RectF = RectF(
@@ -28,6 +36,10 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         context.resources.dpToPx(2), // right margin
         context.resources.dpToPx(2) // bottom margin
     )
+
+    /**
+     * used to round the corner of pages.
+     */
     var pageCorners: Float = 0.0F
 
     fun <T> get(property: String): T? {
@@ -48,6 +60,10 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
             this[PROPERTY_DOCUMENT_NAME] = value
         }
 
+    /**
+     * Used by [PageSizeCalculator] to size or shape the pages accordingly.
+     * see [PageFitPolicy]
+     */
     var documentFitPagePolicy: PageFitPolicy
         get() {
             return get<PageFitPolicy>(PROPERTY_DOCUMENT_PAGE_FIT_POLICY) ?: PageFitPolicy.NONE
@@ -56,24 +72,47 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
             this[PROPERTY_DOCUMENT_PAGE_FIT_POLICY] = value
         }
 
+    /**
+     * Indicates that pages will swipe vertically.
+     */
     var swipeVertical: Boolean
         get() = get<Boolean>(PROPERTY_DOCUMENT_SWIPE_VERTICAL) ?: true
         set(value) {
             this[PROPERTY_DOCUMENT_SWIPE_VERTICAL] = value
         }
 
+    /**
+     * If night mode is active. it's user's responsibility to design [com.tanodxyz.documentrenderer.elements.InteractiveElement]
+     * in such a way that each individual element changes its visual appearance.
+     */
     var nightMode: Boolean
         get() = get<Boolean>(PROPERTY_NIGHT_MODE) ?: false
         set(value) {
             this[PROPERTY_NIGHT_MODE] = value
         }
 
+    /**
+     * It is the page back color when no content or elements are rendered onto it.
+     * it is white and black respectively for day and night modes.
+     */
     var pageBackColor: Int
         get() = get<Int>(PROPERTY_PAGE_BACK_COLOR) ?: Color.WHITE
         set(value) {
             this[PROPERTY_PAGE_BACK_COLOR] = value
         }
 
+    /**
+     * This property tells [DocumentRenderView] that whenever fling is detected.
+     * swipe single page only.
+     * if the page is scaled or zoomed - in that case page fling will cause the page
+     * x,y bounds to move to the edge of the page.
+     *
+     * so it is summarised as follows.
+     * when page is completely visible any fling will cause the page to go off-screen completely (swipe)
+     * but if the page is partially visible (zoomed or scaled) than fling will cause the page to move to the edge of the page in fling's direction.
+     * @see [https://github.com/tanoDxyz/GeneralDocumentRenderer/blob/main/app/src/main/java/com/tanodxyz/generaldocumentrenderer/photoslider/PhotoSliderActivity.kt]
+     *
+     */
     var pageFling: Boolean
         get() = get<Boolean>(PROPERTY_DOCUMENT_PAGE_FLING) ?: false
         set(value) {
