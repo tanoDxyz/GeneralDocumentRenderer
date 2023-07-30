@@ -13,7 +13,8 @@ import com.tanodxyz.documentrenderer.dpToPx
 import com.tanodxyz.documentrenderer.spToPx
 
 /**
- * subject to change
+ * An [IElement] that can be attached to [com.tanodxyz.documentrenderer.DocumentRenderView].
+ * it basically shows indeterminate loader with some text on the right side.
  */
 class DefaultCircularProgressBarElement(val context: Context) : IElement {
     var textToDisplay: String = context.getString(R.string.loading)

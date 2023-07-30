@@ -5,6 +5,13 @@ import com.tanodxyz.documentrenderer.Size
 import com.tanodxyz.documentrenderer.document.Document
 import com.tanodxyz.documentrenderer.document.Document.PageFitPolicy
 
+/**
+ * This page size calculator's algorithm is based on barteksc page size calculator which is used
+ * in android pdf viewer.
+ * although it has little modifications.
+ * @see PageFitPolicy
+ * @see  [Document.fitEachPage]
+ */
 
 class DefaultPageSizeCalculator : PageSizeCalculator() {
     private var fitPolicy: PageFitPolicy = PageFitPolicy.BOTH

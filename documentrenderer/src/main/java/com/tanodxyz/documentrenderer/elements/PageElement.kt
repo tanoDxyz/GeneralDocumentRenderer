@@ -28,8 +28,20 @@ import com.tanodxyz.documentrenderer.reset
 import java.security.SecureRandom
 import kotlin.math.roundToInt
 
+/**
+ * simple implementation of [InteractiveElement].
+ * it supports different predefined event listeners.
+ *
+ */
 open class PageElement(var page: DocumentPage) : InteractiveElement {
+    /**
+     * It will make the element movable on long press.
+     */
     open var movable = false
+
+    /**
+     * rectangle is drawn around content bounds.
+     */
     var debug = false
     protected var mobileModeActivated = false
     protected var usePreCalculatedBounds: Boolean = false
@@ -53,10 +65,15 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
     open var type: String = TAG
     val elementContentBounds = RectF()
     var desiredWidth = 0F
+
+    /**
+     * Equal margins will be applied to element from all sides.
+     * only Left and Top margins are used for this purpose.
+     */
     var symmetric  = false
     var desiredHeight = 0F
-    var margins = RectF(0F, 0F, 0F, 0F) //todo make protected
-    protected var paddings = RectF(0F, 0F, 0F, 0F) //todo make protected
+    var margins = RectF(0F, 0F, 0F, 0F)
+    var paddings = RectF(0F, 0F, 0F, 0F)
     protected val debugPaint = Paint().apply {
         color = Color.RED
         style = Paint.Style.STROKE
@@ -280,7 +297,6 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
     fun SparseArray<Any>?.addFlag(flag: Int, value: Boolean = true): SparseArray<Any> {
         val arr =
             this ?: SparseArray<Any>(1)
-
         arr.put(flag, value)
         return arr
     }

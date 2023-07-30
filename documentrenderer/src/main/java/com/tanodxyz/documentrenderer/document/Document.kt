@@ -105,12 +105,12 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
      * This property tells [DocumentRenderView] that whenever fling is detected.
      * swipe single page only.
      * if the page is scaled or zoomed - in that case page fling will cause the page
-     * x,y bounds to move to the edge of the page.
+     * x,y bounds to move to the edge of the page. (left,top,right,bottom) depending on the fling direction.
      *
-     * so it is summarised as follows.
+     * so it can be  summarised as follows.
      * when page is completely visible any fling will cause the page to go off-screen completely (swipe)
      * but if the page is partially visible (zoomed or scaled) than fling will cause the page to move to the edge of the page in fling's direction.
-     * @see [https://github.com/tanoDxyz/GeneralDocumentRenderer/blob/main/app/src/main/java/com/tanodxyz/generaldocumentrenderer/photoslider/PhotoSliderActivity.kt]
+     * [pageFlingExample](https://github.com/tanoDxyz/GeneralDocumentRenderer/blob/main/app/src/main/java/com/tanodxyz/generaldocumentrenderer/photoslider/PhotoSliderActivity.kt)
      *
      */
     var pageFling: Boolean
@@ -119,6 +119,14 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
             this[PROPERTY_DOCUMENT_PAGE_FLING] = value
         }
 
+    /**
+     * If there is variance in page sizes. this flag will make sure to choose a single page size for all
+     * the pages.
+     * in order words after setting this flag all of the pages in this [Document] will be of same specific size.
+     * this flag is implemented by [PageSizeCalculator]. on setting a custom [PageSizeCalculator] it is
+     * the implementor's responsibility to handle the implementation.
+     * @see [DefaultPageSizeCalculator]
+     */
     var fitEachPage: Boolean
         get() = get<Boolean>(PROPERTY_DOCUMENT_FIT_EACH_PAGE) ?: true
         set(value) {
@@ -255,6 +263,13 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         }
     }
 
+    /**
+     * Usually when we load a document by providing pages and their respective sizes.
+     * some calculations are performed on page sizes by accounting their margins.
+     * At compile time we don't know how those calculations will affect the original page size we provided.
+     * so this method allows the user to get the runtime effect of those calculations on [DocumentPage].
+     * ### Note by runtime we mean when [DocumentRenderView] renders the document to screen.
+     */
     fun getPageSizeWithMargins(page: DocumentPage): Size {
         val horizontalMargins = pageMargins.left + pageMargins.right
         val verticalMargins = pageMargins.top + pageMargins.bottom
@@ -265,11 +280,18 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         return size
     }
 
+    /**
+     * @see[DocumentRenderView.toCurrentScale]
+     */
     @Synchronized
     open fun toCurrentScale(size: Number, zoom: Float): Float {
         return size.toFloat() * zoom
     }
 
+    /**
+     * Return the length of whole document for both vertical and horizontal mode.
+     * @param zoom content length will be scaled to match [zoom] leve.
+     */
     @Synchronized
     fun getDocLen(zoom: Float): Float {
         return getTotalContentLength() * zoom
@@ -299,6 +321,15 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
     @Synchronized
     open fun isEmpty(): Boolean = getPagesCount() < 1
 
+    /**
+     * This method provides the number of pages that will cover
+     * #### the view width in horizontal mode and
+     * #### the view height in vertical mode.
+     * imagine a [Document] is a horizontal line of separate blocks (pages).
+     * this method moves a window or some fix length 2D surface over this line and at any instant
+     * it covers some blocks.
+     * those blocks or pages will be shown in [DocumentRenderView]
+     */
     @Synchronized
     open fun getPagesToBeDrawn(currentPage: Int, viewSize: Int): List<DocumentPage> {
         if (isEmpty()) {
@@ -352,6 +383,9 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
         return pagesToBeDrawn
     }
 
+    /**
+     * If [com.tanodxyz.documentrenderer.elements.InteractiveElement] inside [DocumentPage]s hold some references to resources and must be released.
+     */
     @Synchronized
     open fun close() {
         documentPageData.forEach { it.recycle() }

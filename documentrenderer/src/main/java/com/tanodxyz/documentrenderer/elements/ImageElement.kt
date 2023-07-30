@@ -13,6 +13,9 @@ import com.tanodxyz.documentrenderer.dpToPx
 import com.tanodxyz.documentrenderer.events.IMotionEventMarker
 import com.tanodxyz.documentrenderer.page.DocumentPage
 
+/**
+ * A [PageElement] that simply renders [Bitmap] on [DocumentPage]
+ */
 open class ImageElement(
     page: DocumentPage,
     var unloadedBitmapRectangleColor: Int = Color.BLACK,

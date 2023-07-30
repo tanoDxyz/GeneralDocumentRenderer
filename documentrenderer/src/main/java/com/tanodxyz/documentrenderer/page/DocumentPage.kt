@@ -14,6 +14,17 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.io.Serializable
 
+/**
+ * This class encapsulates an individual page properties and behaviours in [com.tanodxyz.documentrenderer.document]
+ * >
+ * ### Each [DocumentPage] has a unique id which starts from 0.
+ * ### elements which are going to be rendered by [DocumentRenderView]
+ * ### Bounds on the screen.
+ * ### Page size.
+ * ### PageSnapShot which is going to be rendered when page is scaled using scale/zoom gesture.
+ * when [DocumentPage.drawPageSnapShot] is true and [MotionEvent.ACTION_DOWN] is triggered when [DocumentPage] is touched.
+ * [PageSnapshotElement] is created or updated which later will be used upon scaling/scrolling.
+ */
 open class DocumentPage(
     val uniqueId: Int = -1,
     val elements: MutableList<InteractiveElement> = mutableListOf(),
@@ -33,6 +44,9 @@ open class DocumentPage(
         return pageBounds.getWidth()
     }
 
+    /**
+     * When [PageSnapshotElement]
+     */
     fun setUseScalingFactorForSnapshot(useScalingForSnapshot:Boolean) {
         pageSnapShotElement.useScalingForSnapshot(useScalingForSnapshot)
     }

@@ -19,6 +19,23 @@ import com.tanodxyz.documentrenderer.DocumentRenderView.Companion.SCROLL_HANDLE_
 import com.tanodxyz.documentrenderer.dpToPx
 import kotlin.math.roundToInt
 
+/**
+ * Scroll Button that can be used to fast-forward or backward [com.tanodxyz.documentrenderer.document.Document] pages
+ * inside [DocumentRenderView].
+ *
+ * This implementation works as follows.
+ * >
+ * In [DocumentRenderView] vertical swipe mode
+ * the total length or height of scroller is [DocumentRenderView.getHeight].
+ *
+ * In [DocumentRenderView] horizontal swipe mode
+ *  the total length or width of scroller is [DocumentRenderView.getWidth]
+ *
+ *  inside this length there is a scroll button that user can touch and move vertical or horizontal
+ *  depending on the [DocumentRenderView]s swipe mode.
+ *
+ *
+ */
 
 open class DefaultScrollHandle @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
@@ -94,7 +111,7 @@ open class DefaultScrollHandle @JvmOverloads constructor(
         alpha = 0.6F
     }
 
-    override fun detach() {
+    override fun detach(view: DocumentRenderView) {
         this.documentRenderView?.removeView(this)
     }
 
@@ -120,10 +137,10 @@ open class DefaultScrollHandle @JvmOverloads constructor(
         }
     }
 
-    override val scrollBarWidth: Float
+    override val scrollButtonWidth: Float
         get() = widthScroller
 
-    override val scrollBarHeight: Float
+    override val scrollButtonHeight: Float
         get() = heightScroller
 
 
@@ -134,7 +151,8 @@ open class DefaultScrollHandle @JvmOverloads constructor(
     override fun hide(delayed: Boolean) {
         if (delayed) {
             handler_.postDelayed(
-                hidePageScrollerRunnable, SCROLL_HANDLE_AND_PAGE_DISPLAY_BOX_HIDE_DELAY_MILLI_SECONDS
+                hidePageScrollerRunnable,
+                SCROLL_HANDLE_AND_PAGE_DISPLAY_BOX_HIDE_DELAY_MILLI_SECONDS
             )
         } else {
             visibility = INVISIBLE

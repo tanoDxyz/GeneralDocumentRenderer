@@ -3,6 +3,10 @@ package com.tanodxyz.documentrenderer.pagesizecalculator
 import android.util.DisplayMetrics
 import com.tanodxyz.documentrenderer.Size
 
+/**
+ * The calculation algorithm is same as that of [FixPageSizeCalculator] with one major difference that
+ * instead of View size for max size check - Screen size is used.
+ */
 class UnBoundedPageSizeCalculator:PageSizeCalculator() {
 
     override var viewSize: Size = Size(0, 0)

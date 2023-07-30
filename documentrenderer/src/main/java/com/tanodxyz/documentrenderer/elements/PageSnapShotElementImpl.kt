@@ -16,6 +16,25 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
+/**
+ * An implementation of [PageSnapshotElement] that create page snapshots on background thread.
+ * while creating snapshot of pages this class uses a simple technique which is called
+ * **Snapshot dimension ranges**
+ * >
+ * ### Snapshot Dimension Ranges ###
+ * It is a List of [Pair]s.
+ * As [DocumentRenderView] has [DocumentRenderView.MAXIMUM_ZOOM] level.
+ * so basically we start from 0 until we reaches [DocumentRenderView.MAXIMUM_ZOOM] and
+ * for each zoom/scale level we create a **Pair - (ScaleDownFactor,Page Size Range).**
+ * >
+ *### what is Pair (scaleDownFactor, PageSizeRange)?
+ *
+ * ***scaleDownFactor is the floating point value which will be used to divide the page.width and
+ * page.height i.e. `snapShotWidth = PageWidth/scaleDownFactor , snapShotHeight = pageHeight/scaleDownFactor`***
+ *
+ * ***PageSizeRange is the range which has two values - `start , end` and in simple terms it is the size range for which scaleDownFactor will be used.***
+ *
+ */
 open class PageSnapShotElementImpl(
     page: DocumentPage,
 ) : PageSnapshotElement(page) {
@@ -30,7 +49,6 @@ open class PageSnapShotElementImpl(
         this[DocumentPage.RE_DRAW_WITH_RELATIVE_TO_ORIGIN_SNAPSHOT_] = true
     }
 
-    // worker thread
     override fun getBitmap(scaleDown: Boolean, callback: (Bitmap?) -> Unit) {
         val pageBounds = page.pageBounds
         val threadPool = page.documentRenderView.threadPoolExecutor
@@ -164,7 +182,6 @@ open class PageSnapShotElementImpl(
     companion object {
         val snapDimenRanges: MutableList<Pair<Float, IntRange>> =
             mutableListOf()
-
         @Synchronized
         fun setSnapDimenRanges(
             level: Int = DocumentRenderView.MAXIMUM_ZOOM.roundToInt(),

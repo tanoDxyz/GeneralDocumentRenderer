@@ -28,9 +28,13 @@ import com.tanodxyz.documentrenderer.page.DocumentPage
 import java.lang.reflect.Constructor
 import kotlin.math.roundToInt
 
+/**
+ * [StaticLayout] based text rendering [PageElement].
+ */
 open class SimpleTextElement(page: DocumentPage) : PageElement(page),
     PageElement.OnLongPressListener {
     private var editTextDialog: EditTextDialog? = null
+    private var scaleLevelForWhichSizeMeasured = -1F
     protected var appliedLineBreaking = false
     protected lateinit var spannable: Spannable
     protected var textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -39,20 +43,22 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page),
     }
     protected var layout: StaticLayout? = null
     var textSizePixels: Float = textPaint.textSize
-    private var scaleLevelForWhichSizeMeasured = -1F
     var ellipseSize = TextUtils.TruncateAt.END
     var alignment = Layout.Alignment.ALIGN_NORMAL
     var textDirectionHeuristics: TextDirectionHeuristic = TextDirectionHeuristics.LTR
     var spacingmult = 1.0F
     var spacingAdd = 2.0F
-    var textColor:Int = textPaint.color
+    var textColor: Int = textPaint.color
     var includePadding = false
     var allowTextEditing = true
     override var movable = !allowTextEditing
+
     @RequiresApi(Build.VERSION_CODES.M)
     var lineBreakingStrategy = Layout.BREAK_STRATEGY_SIMPLE
+
     @RequiresApi(Build.VERSION_CODES.M)
     var hyphenationFrequency = Layout.HYPHENATION_FREQUENCY_NONE
+
     @RequiresApi(Build.VERSION_CODES.P)
     var useLineSpacingFromFallbacks = false
     override var type = "TextElement"
@@ -69,8 +75,8 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page),
         page.redraw()
     }
 
-    fun getText():Spannable? {
-        return if(this::spannable.isInitialized) {
+    fun getText(): Spannable? {
+        return if (this::spannable.isInitialized) {
             this.spannable
         } else {
             null
@@ -128,7 +134,7 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page),
             canvas.apply {
                 save()
                 val leftAndTop = args.getLeftAndTop()
-                translate(leftAndTop.x , leftAndTop.y )
+                translate(leftAndTop.x, leftAndTop.y)
                 layout?.draw(this)
                 restore()
             }
@@ -314,8 +320,13 @@ open class SimpleTextElement(page: DocumentPage) : PageElement(page),
             maxWidth: Int
         ): Int {
             val staticLayout = StaticLayout(
-                simpleTextElement.spannable, simpleTextElement.textPaint, (maxWidth -  if(simpleTextElement.symmetric)  simpleTextElement.margins.left.times(2) else 0F).roundToInt(),
-                simpleTextElement.alignment, simpleTextElement.spacingmult, simpleTextElement.spacingAdd, simpleTextElement.includePadding
+                simpleTextElement.spannable,
+                simpleTextElement.textPaint,
+                (maxWidth - if (simpleTextElement.symmetric) simpleTextElement.margins.left.times(2) else 0F).roundToInt(),
+                simpleTextElement.alignment,
+                simpleTextElement.spacingmult,
+                simpleTextElement.spacingAdd,
+                simpleTextElement.includePadding
             )
             return staticLayout.height
         }

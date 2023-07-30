@@ -2,6 +2,12 @@ package com.tanodxyz.documentrenderer.pagesizecalculator
 
 import com.tanodxyz.documentrenderer.Size
 
+/**
+ * This class calculates page sizes based on [com.tanodxyz.documentrenderer.DocumentRenderView] dimensions.
+ * page width corresponds to view width and page height to view height.
+ * so if provided page height > view height than view height will be used otherwise page height will be used.
+ * same applies for width.
+ */
 class FixPageSizeCalculator : PageSizeCalculator() {
 
     override var viewSize: Size = Size(0, 0)

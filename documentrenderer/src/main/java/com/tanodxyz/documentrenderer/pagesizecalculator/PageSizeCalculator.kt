@@ -3,6 +3,9 @@ package com.tanodxyz.documentrenderer.pagesizecalculator
 import com.tanodxyz.documentrenderer.Size
 import com.tanodxyz.documentrenderer.document.Document
 
+/**
+ * This class helps in calculating page sizes based on specific nature of it's implementation.
+ */
 abstract class PageSizeCalculator {
     abstract fun setup(args: HashMap<String, Any>)
     abstract fun calculate(pageSize: Size): Size

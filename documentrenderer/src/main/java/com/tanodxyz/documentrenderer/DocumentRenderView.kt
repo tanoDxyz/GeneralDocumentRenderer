@@ -38,6 +38,7 @@ import com.tanodxyz.documentrenderer.events.ShowPressEvent
 import com.tanodxyz.documentrenderer.events.SingleTapConfirmedEvent
 import com.tanodxyz.documentrenderer.events.SingleTapUpEvent
 import com.tanodxyz.documentrenderer.extensions.ScrollHandle
+import com.tanodxyz.documentrenderer.extensions.ViewExtension
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.page.ObjectViewState
 import com.tanodxyz.documentrenderer.pagesizecalculator.PageSizeCalculator
@@ -48,14 +49,40 @@ import java.util.concurrent.ThreadPoolExecutor
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-
+/**
+ * Typical usage of the view is.
+ *
+ * `val renderView = findViewById(...)`
+ *
+ *  `val document = Document(context)`
+ *
+ *  `val pages = List<DocumentPage>(10000)`
+ *
+ *  `document.addPages(pages)`
+ *
+ *  `renderView.loadDocument(document)`
+ *>
+ *  The View works as follows.
+ *
+ *  [Document] is a long strip of blocks ( [DocumentPage]).
+ *
+ *  the view works as a scrollable window and this windows can be moved via flings and scrolls.
+ *
+ */
 open class DocumentRenderView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr),
     View.OnTouchListener,
     TouchEventsManager.TouchEventsListener, AnimationManager.AnimationListener {
 
+    /**
+     * current saved state which will be restored if for some reason is view recreated.
+     */
     protected var viewState: SavedState? = null
+
+    /**
+     * If any configuration changes occurs the method [DocumentRenderView.onConfigurationChanged] will be triggered.
+     */
     protected var layoutChangeListener =
         OnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             if (left != oldLeft || top != oldTop || right != oldRight || bottom != oldBottom) {
@@ -63,12 +90,35 @@ open class DocumentRenderView @JvmOverloads constructor(
             }
         }
 
+    /**
+     * View extensions that are attached to the view.
+     * @see [ViewExtension]
+     */
+    protected var viewExtensions:MutableList<ViewExtension> = mutableListOf()
+
+    /**
+     * View size for current running configuration
+     */
     private lateinit var viewSize: Size
     protected var canShowPageCountBox: Boolean = true
+
+    /**
+     * Scroll attached to View.
+     */
     protected var scroller: ScrollHandle? = null
+
+    /**
+     * when view is doing some job or processing document and not able to render document at the instant
+     * this busyIndicator will be drawn.
+     * view will not process any touch events in the mean time.
+     */
     protected var busyIndicator: IElement? = null
     protected var currentPageForImmediateTouchEvent: Int = 0
     internal lateinit var document: Document
+
+    /**
+     * Counts number of times [busy] was called
+     */
     protected var busyTokensCounter = 0
     internal var eventsIdentityHelper = EventsIdentityHelper()
     protected var touchEventMgr: TouchEventsManager
@@ -76,9 +126,26 @@ open class DocumentRenderView @JvmOverloads constructor(
     protected val antialiasFilter =
         PaintFlagsDrawFilter(0, Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     protected val pagePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    /**
+     * it is the x value from where view will start drawing document pages.
+     */
     protected var contentDrawOffsetX = 0F
+
+    /**
+     * it is the x value from where view will start drawing document pages.
+     */
+
     protected var contentDrawOffsetY = 0F
+
+    /**
+     * It is the current page visible on screen
+     */
     protected var currentPage = 1
+
+    /**
+     * current scale or zoom level
+     */
     protected var zoom = MINIMUM_ZOOM
     protected var animationManager: AnimationManager
     protected var _handler: Handler? = null
@@ -97,9 +164,26 @@ open class DocumentRenderView @JvmOverloads constructor(
     var cache = CacheManager(CACHE_FACTOR)
     var onViewStateListener: OnViewStateListener? = null
     var renderListener: RenderListener? = null
+
+    /**
+     * Setting it to false will make the [DocumentRenderView] not to receive any touch events and hence no
+     * scrolling, flinging or scaling but individual pages will receive those touch events and the view will be redrawn.
+     * it is useful when you are interacting with an element in any page and don't want the parent or [DocumentRenderView] to scroll or move.
+     */
     var canProcessTouchEvents = true
     var idleStateCallback: IdleStateCallback? = null
     val _16Dp = resources.dpToPx(16)
+
+    /**
+     * ***this flag indicates that events should be dispatched to the pages who generated it.***
+     * setting it to false means that any pages that [DocumentRenderView] has drawn - the event will be dispatched to all of them and it will be the page's responsibility to
+     * check if they want to use that particular event.
+     * it is necessary to set it to false . for example if the view is scaling and user start scrolling as well in that case if
+     * this flag is true the pages that were not visible but are now due to user's double scroll and scale gesture will not receive
+     * scale gesture.
+     *
+     * `it is one use case of keeping it to false but it is up to you`
+     */
     var eventsDispatchedToPropagatingPageOnly = false
     private var pageNumberBoxBackgroundRectangle = RectF(0F, 0F, 0F, 0F)
     private val minZoom = DEFAULT_MIN_SCALE
@@ -171,12 +255,24 @@ open class DocumentRenderView @JvmOverloads constructor(
     val isFlinging: Boolean get() = eventsIdentityHelper.isFlinging()
     val pageSizeCalculator: PageSizeCalculator? get() = document.pageSizeCalculator
 
+    /**
+     * If you are doing something long-running and needs to show progress bar with some text.
+     * call the following method.
+     * when you are done with the long-running process and is free now.
+     * call [free].
+     * it can be called multiple times.
+     *
+     * ### For each [busy] call corresponding [free] call is necessary.
+     */
     @Synchronized
     fun busy() {
         ++busyTokensCounter
         redraw()
     }
 
+    /**
+     * Releases View from busy state.
+     */
     @Synchronized
     fun free() {
         if (busyTokensCounter > 0) {
@@ -257,10 +353,23 @@ open class DocumentRenderView @JvmOverloads constructor(
 
     fun setScrollHandler(scrollHandle: ScrollHandle) {
         if (this.scroller != null) {
-            this.scroller?.detach()
+            this.scroller?.detach(this)
         }
         scrollHandle.attachTo(this)
         this.scroller = scrollHandle
+    }
+
+    fun attachViewExtension(viewExtension: ViewExtension) {
+        if(this.viewExtensions.contains(viewExtension).not()) {
+            viewExtension.attachTo(this)
+            this.viewExtensions.add(viewExtension)
+        }
+    }
+
+    fun removeViewExtension(viewExtension: ViewExtension) {
+        if(viewExtensions.remove(viewExtension)) {
+            viewExtension.detach(this)
+        }
     }
 
     override fun onDetachedFromWindow() {
@@ -411,7 +520,7 @@ open class DocumentRenderView @JvmOverloads constructor(
                 jumpToPage.invoke()
             }
             scroller?.apply {
-                detach()
+                detach(this@DocumentRenderView)
                 attachTo(this@DocumentRenderView) {
                     jumpToPage.invoke()
                 }
@@ -465,6 +574,11 @@ open class DocumentRenderView @JvmOverloads constructor(
         changeSwipeMode(!document.swipeVertical)
     }
 
+    /**
+     * Programmatically you can send events to pages that are in focus.
+     *
+     * ***Focused pages are those which will be drawn on next View's draw call***
+     */
     fun dispatchEventToThePagesInFocus(iMotionEventMarker: IMotionEventMarker) {
         if (canViewReceiveTouchEvents()) {
             eventsIdentityHelper.feed(iMotionEventMarker)
@@ -486,6 +600,9 @@ open class DocumentRenderView @JvmOverloads constructor(
         }
     }
 
+    /**
+     * @return list of all pages that are either visible or partially visible.
+     */
     fun findAllVisiblePagesOnScreen(): List<DocumentPage> {
         val visiblePages = mutableListOf<DocumentPage>()
         val documentPages = document.getDocumentPages()
@@ -679,6 +796,10 @@ open class DocumentRenderView @JvmOverloads constructor(
         }
     }
 
+    /**
+     * @param pageBounds of [DocumentPage]
+     * @return the current view state of [DocumentPage] in the form of [ObjectViewState]
+     */
     fun getPageViewState(pageBounds: RectF): ObjectViewState {
         val viewBounds = RectF(0F, 0F, width.toFloat(), height.toFloat())
         val viewBoundsRelativeToPageBounds =
@@ -722,15 +843,6 @@ open class DocumentRenderView @JvmOverloads constructor(
         return currentPage
     }
 
-    open fun checkDoPageFling(velocityX: Float, velocityY: Float): Boolean {
-        val absX = abs(velocityX)
-        val absY = abs(velocityY)
-        return if (document.swipeVertical) absY > absX else absX > absY
-    }
-
-    /**
-     * page number starting from zero
-     */
     protected fun findPageBoundsFor(pageNo: Int, contentDrawX: Float): RectF {
         val normalizedPageNo = if (pageNo <= 0) 0 else pageNo
         val pageX: Float
@@ -824,7 +936,6 @@ open class DocumentRenderView @JvmOverloads constructor(
             }
         }
 
-
         animationManager.startFlingAnimation(
             contentDrawOffsetX.roundToInt(),
             contentDrawOffsetY.roundToInt(),
@@ -837,10 +948,21 @@ open class DocumentRenderView @JvmOverloads constructor(
         )
     }
 
+    /**
+     * This is widely used method and implies that provided [size] will be scaled to match [DocumentRenderView]s
+     * zoom/scale level.
+     * @param size number for example width,height or anything that needs to be scaled appropriately.
+     *
+     */
     open fun toCurrentScale(size: Number): Float {
         return size.toFloat() * zoom
     }
 
+    /**
+     * An element that will be shown when [busy] method is called.
+     *
+     * ***Remember unless [free] is called [IElement.draw] will be called continuously with some delay.***
+     */
     open fun setBusyStateIndicator(iElement: IElement) {
         this.busyIndicator = iElement
     }
@@ -954,6 +1076,9 @@ open class DocumentRenderView @JvmOverloads constructor(
         return this::document.isInitialized
     }
 
+    /**
+     * called when any layout pass is complete but called only once for each configuration the view is in.
+     */
     open fun onViewInitialized() {
         viewState?.apply {
             this@DocumentRenderView.zoom = this.zoomLevel
@@ -1073,7 +1198,7 @@ open class DocumentRenderView @JvmOverloads constructor(
         val drawY = if (scroller == null || document.swipeVertical) {
             height - (pageNumberDisplayBoxXAndYMargin + textBounds.height() + _16Dp)
         } else {
-            height - (scroller!!.scrollBarHeight + scroller!!.marginUsed
+            height - (scroller!!.scrollButtonHeight + scroller!!.marginUsed
                     + pageNumberDisplayBoxXAndYMargin + textBounds.height() + _16Dp)
         }
         pageNumberDisplayBoxPaint.color = pageNumberDisplayBoxBackgroundColor
@@ -1221,6 +1346,12 @@ open class DocumentRenderView @JvmOverloads constructor(
     companion object {
         var MINIMUM_ZOOM = 1.0F
         var MAXIMUM_ZOOM = 5f
+
+        /**
+         * It is used to create LRU cache for storing blobs or other data.
+         * it is calculated as follows.
+         * `maxMemoryAvailableToProcessInKbs / CACHE_FACTOR`
+         */
         var CACHE_FACTOR = 1
         val DEFAULT_MAX_SCALE = MAXIMUM_ZOOM
         val DEFAULT_MID_SCALE = MAXIMUM_ZOOM.div(2)
