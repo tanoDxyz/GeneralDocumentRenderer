@@ -83,6 +83,10 @@ open class DocumentPage(
                     }
                 } else {
                     canvas.dispatchDrawCallToIndividualElements()
+                    if(argsToElements[RE_DRAW_WITH_RELATIVE_TO_ORIGIN_SNAPSHOT_] == true) {
+                        pageSnapShotElement.draw(canvas)
+                        argsToElements[RE_DRAW_WITH_RELATIVE_TO_ORIGIN_SNAPSHOT_] = false
+                    }
                 }
             } else {
                 pageSnapShotElement.recycle()

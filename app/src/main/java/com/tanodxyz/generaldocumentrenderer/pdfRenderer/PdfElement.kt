@@ -71,7 +71,7 @@ class PdfElement(page: DocumentPage, val pdfLoader: PdfLoader) : PageElement(pag
                 if (args.shouldDrawSnapShot()) {
                     drawSnapShot(canvas)
                 } else {
-                    if (bitmapIsValid()) {
+                    if (bitmapIsValid(applyScaleCheck = true)) {
                         canvas.drawBitmap(
                             bitmap!!,
                             null,
@@ -79,6 +79,13 @@ class PdfElement(page: DocumentPage, val pdfLoader: PdfLoader) : PageElement(pag
                             null
                         )
                     } else {
+                        val bitmapIsValid = bitmapIsValid(applyScaleCheck = false)
+
+                        if(bitmapIsValid) {
+                            //tell the parent page to draw snapshot as the image is not loaded .
+                            // try removing this line.
+                            args.addFlag(DocumentPage.RE_DRAW_WITH_RELATIVE_TO_ORIGIN_SNAPSHOT_,true)
+                        }
                         loadBitmap {
                             redraw(true)
                         }

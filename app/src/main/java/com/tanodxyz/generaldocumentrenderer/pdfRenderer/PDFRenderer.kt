@@ -191,7 +191,20 @@ class PDFRenderer(val renderView: DocumentRenderView) {
                 )
                 // Render the page with the transformation matrix
                 page.render(bitmap!!, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                scaledBitmap = bitmap
+                val compressedBitmap = Bitmap.createBitmap(
+                    bitmap!!.width,
+                    bitmap!!.height,
+                    Bitmap.Config.ARGB_8888
+                )
+                val canvas = Canvas(compressedBitmap)
+                canvas.drawBitmap(bitmap!!, 0F, 0F, null)
+                val bos = ByteArrayOutputStream()
+                compressedBitmap!!.compress(Bitmap.CompressFormat.JPEG, 10, bos)
+                scaledBitmap =
+                    BitmapFactory.decodeStream(ByteArrayInputStream(bos.toByteArray()))
+                bos.close()
+                bitmap.recycleSafely()
+                compressedBitmap.recycleSafely()
                 if (putInCache) {
                     renderView.cache.offer(BitmapBlob(key(pageNumber, pageBounds), scaledBitmap))
                 }
