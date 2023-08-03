@@ -4,11 +4,13 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.PointF
 import android.graphics.RectF
+import android.graphics.pdf.PdfDocument.Page
 import com.tanodxyz.documentrenderer.*
 import com.tanodxyz.documentrenderer.page.DocumentPage
 import com.tanodxyz.documentrenderer.pagesizecalculator.DefaultPageSizeCalculator
 import com.tanodxyz.documentrenderer.pagesizecalculator.PageSizeCalculator
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.collections.ArrayList
 import kotlin.math.roundToInt
 
@@ -24,7 +26,7 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
     protected var originalMaxPageWidth = Size(0, 0)
     protected var originalMaxPageHeight = Size(0, 0)
     protected var contentLength = 0F
-
+    var pageUniqueIdWrapper = PageUniqueIdWrapper()
     /**
      * these page indexes are used in various calculations.
      */
@@ -381,6 +383,12 @@ open class Document(context: Context, var pageSizeCalculator: PageSizeCalculator
             }
         }
         return pagesToBeDrawn
+    }
+
+    class PageUniqueIdWrapper {
+        private val atInteger = AtomicInteger(0)
+        val pageUniqueId: Int
+            get() = atInteger.getAndIncrement()
     }
 
     /**

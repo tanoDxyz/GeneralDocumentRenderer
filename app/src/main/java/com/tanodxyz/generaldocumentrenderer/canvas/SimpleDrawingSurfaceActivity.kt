@@ -27,7 +27,7 @@ open class SimpleDrawingSurfaceActivity : AppCompatActivity() {
 
         Document(this).apply {
 
-            val documentPage = DocumentPage(0, originalSize = pageSize)
+            val documentPage = DocumentPage(pageUniqueIdWrapper.pageUniqueId, originalSize = pageSize)
 
             val simpleDrawingElement = SimpleDrawingElement(resources, documentPage)
 

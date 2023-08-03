@@ -117,7 +117,7 @@ open class DocumentPage(
 
     override fun onEvent(event: IMotionEventMarker?): Boolean {
         event?.apply {
-            if (this is GenericMotionEvent && !this.hasNoMotionEvent()) {
+            if (this is GenericMotionEvent && this.hasGenericMotionEvent()) {
                 if (this.motionEvent?.action == MotionEvent.ACTION_DOWN) {
                     if(drawPageSnapShot) {
                         pageSnapShotElement.preparePageSnapshot(documentRenderView.getCurrentZoom())
@@ -128,7 +128,6 @@ open class DocumentPage(
             }
         }
         elements.forEach { iElement -> iElement.onEvent(event) }
-
         return true
     }
 
