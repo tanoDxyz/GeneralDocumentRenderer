@@ -1,17 +1,18 @@
 pluginManagement {
     repositories {
-        gradlePluginPortal()
-        google()
         mavenCentral()
         maven { url 'https://jitpack.io' }
+        gradlePluginPortal()
+        google()
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        google()
         mavenCentral()
         maven { url 'https://jitpack.io' }
+        google()
     }
 }
 rootProject.name = "General Document Renderer"
