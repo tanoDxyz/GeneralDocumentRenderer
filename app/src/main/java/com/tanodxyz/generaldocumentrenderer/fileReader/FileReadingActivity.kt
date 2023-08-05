@@ -32,6 +32,8 @@ class FileReadingActivity : AppCompatActivity(), DocumentRenderView.IdleStateCal
     }
 
     private fun init() {
+        supportActionBar?.setTitle(R.string.file_reader)
+
         simpleIdleResource = SimpleIdlingResource()
 
         documentRenderView = findViewById(R.id.renderView)

@@ -19,6 +19,8 @@ open class SimpleDrawingSurfaceActivity : AppCompatActivity() {
     }
 
     open fun init() {
+        supportActionBar?.setTitle(R.string.canvas)
+
         val displayMetrics = resources.displayMetrics
         val desiredWidth = displayMetrics.widthPixels.toFloat()
         val desiredHeight = displayMetrics.heightPixels.toFloat().div(1.5f)

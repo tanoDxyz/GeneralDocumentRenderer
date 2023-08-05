@@ -23,6 +23,8 @@ class PhotoSliderActivity : AppCompatActivity() {
     }
 
     private fun init() {
+        supportActionBar?.setTitle(R.string.photo_slide_show)
+
         documentRenderView = findViewById(R.id.documentRenderView)
 
         progressDialog = ProgressDialog(this)

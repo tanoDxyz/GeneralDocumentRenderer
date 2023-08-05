@@ -28,6 +28,8 @@ class PdfViewActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     private fun init() {
+        supportActionBar?.setTitle(R.string.pdf_reader)
+
         documentRenderView = findViewById(R.id.documentRenderView)
 
         progressDialog = ProgressDialog(this)

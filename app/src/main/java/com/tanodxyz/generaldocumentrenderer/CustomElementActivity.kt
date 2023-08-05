@@ -23,6 +23,8 @@ class CustomElementActivity : AppCompatActivity() {
     }
 
     private fun init() {
+        supportActionBar?.setTitle(R.string.customElement)
+
         val document = Document(this,DefaultPageSizeCalculator())
         document.pageBackColor = Color.MAGENTA
         document.pageMargins.apply {

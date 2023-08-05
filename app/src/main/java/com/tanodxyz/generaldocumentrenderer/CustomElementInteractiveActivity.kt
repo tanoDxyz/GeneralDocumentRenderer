@@ -24,6 +24,8 @@ class CustomElementInteractiveActivity : AppCompatActivity() {
 
     private fun init() {
 
+        supportActionBar?.setTitle(R.string.customElementInteractive)
+
         val document = Document(this, DefaultPageSizeCalculator())
 
         document.pageBackColor = Color.MAGENTA
@@ -66,6 +68,7 @@ class CustomElementInteractiveActivity : AppCompatActivity() {
             }
         }
         init {
+            // on Long press element can be moved across page.
             movable = true
             clickListener = this
         }
