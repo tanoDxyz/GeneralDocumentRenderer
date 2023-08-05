@@ -3,10 +3,10 @@ Introduction
 
 General Document Renderer (GDR) is a tiny library that allows general content to be rendered to the canvas in the form of pages.  
 e.g.  
-* - you want to render pdf file and you have pdf pages in the form of bitmaps or pngs.  
-* - you want a paint app.  
-* - you want to load a content of a large file in the text format.  
-* - you want to create a simple slide show.  
+*  you want to render pdf file and you have pdf pages in the form of bitmaps or pngs.  
+*  you want a paint app.  
+*  you want to load a content of a large file in the text format.  
+*  you want to create a simple slide show.  
 and many more ...  
 
 #### Following Screenshots are taken from examples that are included in sample app.  
