@@ -3,10 +3,10 @@ Introduction
 
 General Document Renderer (GDR) is a tiny library that allows general content to be rendered to the canvas in the form of pages.  
 e.g.  
-1 - you want to render pdf file and you have pdf pages in the form of bitmaps or pngs.  
-2 - you want a paint app.  
-3 - you want to load a content of a large file in the text format.  
-4 - you want to create a simple slide show.  
+* - you want to render pdf file and you have pdf pages in the form of bitmaps or pngs.  
+* - you want a paint app.  
+* - you want to load a content of a large file in the text format.  
+* - you want to create a simple slide show.  
 and many more ...  
 
 #### Following Screenshots are taken from examples that are included in sample app.  
@@ -20,7 +20,22 @@ and many more ...
 ![ScreenShot](https://github.com/tanoDxyz/GeneralDocumentRenderer/blob/main/custom_element.png)
 
 
+#### Add to Project
+Using GDR is easy! Just add the following to your **application's root build.gradle** file or **settings.gradle**
+``` kotlin
 
+ allprojects {
+    repositories {
+        ...
+        maven { url 'https://jitpack.io' }
+    }
+ }
+```
+And then add the dependency to the module level build.gradle file.
+
+``` kotlin
+implementation 'com.github.tanoDxyz:GeneralDocumentRenderer:v0.1'
+```
 
 ## Usage
 First document is created and than pages are added to it.  
