@@ -35,4 +35,18 @@
         android:text="@string/canvas"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
+
+    <Button
+        android:text="@string/customElement"
+        android:id="@+id/customElement"
+        android:layout_marginTop="24dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <Button
+        android:text="@string/customElementInteractive"
+        android:id="@+id/customElementInteractive"
+        android:layout_marginTop="24dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
 </androidx.appcompat.widget.LinearLayoutCompat>

@@ -35,7 +35,7 @@ abstract class PageSnapshotElement(page: DocumentPage) : PageElement(page) {
     /**
      * @param useScalingForSnapshot [true] means to create the page snapshot based on some
      * defined scaling algorithm.
-     * [false] means to not use any scaling and just use the original page bounds for creating bitmaps.
+     * [false] means to not use any scaling and just use the original page bounds for creating snapShot bitmaps.
      */
     abstract fun useScalingForSnapshot(useScalingForSnapshot: Boolean)
 }

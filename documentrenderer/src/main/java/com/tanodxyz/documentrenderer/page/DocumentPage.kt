@@ -26,7 +26,7 @@ import java.io.Serializable
  * [PageSnapshotElement] is created or updated which later will be used upon scaling/scrolling.
  */
 open class DocumentPage(
-    val uniqueId: Int = -1,
+    val uniqueId: Int = 0,
     val elements: MutableList<InteractiveElement> = mutableListOf(),
     val originalSize: Size = Size(
         0,
@@ -45,7 +45,7 @@ open class DocumentPage(
     }
 
     /**
-     * When [PageSnapshotElement]
+     * @see [PageSnapshotElement.useScalingForSnapshot]
      */
     fun setUseScalingFactorForSnapshot(useScalingForSnapshot:Boolean) {
         pageSnapShotElement.useScalingForSnapshot(useScalingForSnapshot)

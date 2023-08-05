@@ -16,7 +16,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.GeneralDocumentRenderer"
         tools:targetApi="31">
-
+        <activity
+            android:name=".CustomElementInteractiveActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CustomElementActivity"
+            android:exported="false" />
         <activity
             android:name=".canvas.SimpleDrawingSurfaceActivity"
             android:exported="false" />

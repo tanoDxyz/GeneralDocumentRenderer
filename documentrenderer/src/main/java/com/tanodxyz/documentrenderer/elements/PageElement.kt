@@ -69,6 +69,8 @@ open class PageElement(var page: DocumentPage) : InteractiveElement {
     /**
      * Equal margins will be applied to element from all sides.
      * only Left and Top margins are used for this purpose.
+     * use it when you know that width is equal to parent [DocumentRenderView.getWidth] and
+     * height respectively.
      */
     var symmetric  = false
     var desiredHeight = 0F

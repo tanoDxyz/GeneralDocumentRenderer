@@ -16,40 +16,6 @@ import com.tanodxyz.generaldocumentrenderer.fileReader.FileReadingActivity
 import com.tanodxyz.generaldocumentrenderer.pdfRenderer.PdfViewActivity
 import com.tanodxyz.generaldocumentrenderer.photoslider.PhotoSliderActivity
 
-/**
- * simpleIdleResource = SimpleIdlingResource()
-renderView.doOnLayout {
-createAndAddPagesToDocument(renderView) { document ->
-
-document[Document.PROPERTY_DOCUMENT_PAGE_FIT_POLICY] = Document.PageFitPolicy.BOTH
-document.documentFitPagePolicy = Document.PageFitPolicy.BOTH
-
-document.swipeVertical = true
-
-document.fitEachPage = true
-
-document.pageFling = true
-
-renderView.loadDocument(document)
-
-// for testing.
-renderView.idleStateCallback = this
-
-renderView.setBusyStateIndicator(DefaultCircularProgressBarElement(this))
-renderView.setScrollHandler(DefaultScrollHandle(this))
-
-}
-
-}
-
-
-var simpleIdleResource: SimpleIdlingResource? = null
-AppCompatActivity(), DocumentRenderView.IdleStateCallback
-override fun renderViewState(idle: Boolean) {
-simpleIdleResource?.setIdleState(idle)
-}
- */
-
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,6 +37,14 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.canvasButton).setOnClickListener {
             launch<SimpleDrawingSurfaceActivity>()
+        }
+
+        findViewById<View>(R.id.customElement).setOnClickListener {
+            launch<CustomElementActivity>()
+        }
+
+        findViewById<View>(R.id.customElementInteractive).setOnClickListener {
+            launch<CustomElementInteractiveActivity>()
         }
     }
 

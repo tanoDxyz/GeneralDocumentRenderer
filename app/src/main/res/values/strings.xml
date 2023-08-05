@@ -5,4 +5,6 @@
     <string name="file_reader">File Reader</string>
     <string name="photo_slide_show">Photo Slide Show</string>
     <string name="canvas">Canvas</string>
+    <string name="customElement">Custom Element</string>
+    <string name="customElementInteractive">Custom Element Interactive</string>
 </resources>
