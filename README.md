@@ -9,10 +9,16 @@ e.g.
 4 - you want to create a simple slide show.  
 and many more ...  
 
-#### Following Screenshots are taken from examples that are included in sample app with library.  
-![ScreenShot](https://github.com/tanoDxyz/GDownload/blob/main/screen_shot_main.png)
-![ScreenShot](https://github.com/tanoDxyz/GDownload/blob/main/screenshot_group.png)
-![ScreenShot](https://github.com/tanoDxyz/GDownload/blob/main/screenshot_single.png)
+#### Following Screenshots are taken from examples that are included in sample app.  
+![ScreenShot](https://github.com/tanoDxyz/GeneralDocumentRenderer/blob/main/main_.png)
+![ScreenShot](https://github.com/tanoDxyz/GeneralDocumentRenderer/blob/main/pdf_reader.png)
+![ScreenShot](https://github.com/tanoDxyz/GeneralDocumentRenderer/blob/main/file_reader_1.png)
+![ScreenShot](https://github.com/tanoDxyz/GeneralDocumentRenderer/blob/main/file_reader_2.png)
+![ScreenShot](https://github.com/tanoDxyz/GeneralDocumentRenderer/blob/main/canvas.png)
+![ScreenShot](https://github.com/tanoDxyz/GeneralDocumentRenderer/blob/main/photo_1.png)
+![ScreenShot](https://github.com/tanoDxyz/GeneralDocumentRenderer/blob/main/photo_2.png)
+![ScreenShot](https://github.com/tanoDxyz/GeneralDocumentRenderer/blob/main/custom_element.png)
+
 
 
 
